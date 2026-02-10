@@ -15,6 +15,8 @@ Description:
 import argparse
 import os
 import sys
+import subprocess
+import shlex
 from typing import List, Tuple
 import numpy as np
 import yaml
@@ -51,18 +53,18 @@ class ALSPipeline():
     
     def load_data(self) -> None:
         """
-        Load flight metadata and raster elevation tiles using the config file.
+        Load flight metadata and build a generic raster grid using the config file.
 
         Output:
             None
         """
-        self.timer.start("Flight & raster loading")
+        self.timer.start("Flight & grid loading")
         fd = FlightData(self.config)
         rl = RasterLoader(self.config, flight_bounds=fd.bounds)
         self.raster = rl.raster
         self.raster_mesh = (rl.x_mesh, rl.y_mesh)
         self.flight_data = fd  
-        self.timer.stop("Flight & raster loading")
+        self.timer.stop("Flight & grid loading")
 
 
     def generate_footprint(self) -> None:
@@ -120,6 +122,7 @@ class ALSPipeline():
         self.extraction_state = window.control_panel.extraction_state
         self.patch_list = window.control_panel.new_patches_instance
         self.output_dir = window.control_panel.output_dir 
+        self.execute_limatch = window.control_panel.execute_limatch
         
     def extract(self):
         """
@@ -130,30 +133,20 @@ class ALSPipeline():
         """
         self.timer.start("Patch extraction (all flights)")
 
-        if self.config["EXTRACTION_MODE"] in ["Extra_Bytes", "binary"]:
-            all_patches_flat = [patch for group in self.patch_list for patch in group]
-            flight_ids = sorted(set(f for pair in self.footprint.superpos_flight_pairs for f in pair))
+        if self.config["EXTRACTION_MODE"] != "independent":
+            raise ValueError(
+                f"Unsupported EXTRACTION_MODE: {self.config['EXTRACTION_MODE']}. "
+                "Only 'independent' is supported in this minimal pipeline."
+            )
 
-            tasks = []
-            for flight_id in flight_ids:
-                pair_dir = f"{self.output_dir}/Flight_{flight_id}"
-                tasks.append((
-                    flight_id, all_patches_flat, self.config["LAS_DIR"], self.output_dir,
+        for (flight_i, flight_j), patch_group in zip(self.footprint.superpos_flight_pairs, self.patch_list):
+            for flight_id in [flight_i, flight_j]:
+                pair_dir = f"{self.output_dir}/Flights_{flight_i}_{flight_j}"
+                os.makedirs(pair_dir, exist_ok=True)
+                self.process_flight(
+                    flight_id, patch_group, self.config["LAS_DIR"], self.output_dir,
                     pair_dir, self.footprint.superpos_flight_pairs, self.pg.contours_list
-                ))
-
-            for args in tqdm(tasks, desc="Extracting patches per flight", unit="flight"):
-                self.process_flight(*args)
-
-        elif self.config["EXTRACTION_MODE"] == "independent":
-            for (flight_i, flight_j), patch_group in zip(self.footprint.superpos_flight_pairs, self.patch_list):
-                for flight_id in [flight_i, flight_j]:
-                    pair_dir = f"{self.output_dir}/Flights_{flight_i}_{flight_j}"
-                    os.makedirs(pair_dir, exist_ok=True)
-                    self.process_flight(
-                        flight_id, patch_group, self.config["LAS_DIR"], self.output_dir,
-                        pair_dir, self.footprint.superpos_flight_pairs, self.pg.contours_list
-                    )
+                )
 
         self.timer.stop("Patch extraction (all flights)")
 
@@ -231,9 +224,31 @@ class ALSPipeline():
         
         if self.extraction_state: # Unlocked in GUI
             self.extract()
+            if getattr(self, "execute_limatch", False):
+                self.run_limatch()
         
         self.timer.stop("ALS total time")
         self.timer.summary()
+
+    def run_limatch(self) -> None:
+        """
+        Run LiMatch submodule command after extraction.
+
+        Requires LIMATCH_CMD in config. Optionally uses LIMATCH_CWD as working directory.
+        """
+        cmd = self.config.get("LIMATCH_CMD")
+        if not cmd:
+            raise ValueError("LIMATCH_CMD is not set in the config. It must be a command to run LiMatch.")
+
+        cwd = self.config.get("LIMATCH_CWD")
+        if isinstance(cmd, str):
+            cmd_list = shlex.split(cmd)
+        else:
+            cmd_list = list(cmd)
+
+        env = os.environ.copy()
+        env["PATCH_OUTPUT_DIR"] = self.output_dir
+        subprocess.run(cmd_list, check=True, cwd=cwd or None, env=env)
         
         
 if __name__ == "__main__":

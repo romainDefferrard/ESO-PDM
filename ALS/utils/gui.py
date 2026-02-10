@@ -165,6 +165,9 @@ class ControlPanel(QWidget):
         # Checkbox
         self.checkBox = QCheckBox("Single band along centerline")
         self.checkBox.stateChanged.connect(self.toggle_band_mode)
+        self.limatch_checkbox = QCheckBox("Execute LiMatch")
+        self.limatch_checkbox.stateChanged.connect(self.toggle_limatch)
+        self.execute_limatch = False
 
         self.flight_label = QLabel(f"Flight pairs: {self.flight_pairs[self.plot_window.plot_index]}")
         layout.addWidget(self.flight_label)
@@ -179,6 +182,7 @@ class ControlPanel(QWidget):
         layout.addWidget(self.distance_label)
         layout.addWidget(self.distance_input)
         layout.addWidget(self.checkBox)
+        layout.addWidget(self.limatch_checkbox)
 
         self.layout_dividerLine(layout)
 
@@ -270,8 +274,12 @@ class ControlPanel(QWidget):
         self.plot_window.update_plot()
         self.new_patches_instance = patches_instance
 
+    def toggle_limatch(self, state):
+        self.execute_limatch = (state == 2)
+
     def proceed_extraction(self):
         self.update_all_patches()
+        self.execute_limatch = self.limatch_checkbox.isChecked()
         self.extraction_state = True  # Update state to break main loop
         self.window().close() 
 

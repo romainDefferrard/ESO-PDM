@@ -4,43 +4,34 @@ Author: Romain Defferrard
 Date: 04-06-2025
 
 Description:
-    This module defines the RasterLoader class, which either loads a buffered
-    DTM raster window (SwissDTM mode) or builds a blank grid (Generic mode).
+    This module defines the RasterLoader class, which builds a blank grid
+    for the Generic footprint mode.
 
     The main output is an instance providing:
-        - self.raster: 2D numpy array.
-        - self.x_mesh, self.y_mesh: 2D arrays of Swiss projected coordinates (e.g., LV95 or LV03).
+        - self.raster: 2D numpy array (zeros).
+        - self.x_mesh, self.y_mesh: 2D arrays of projected coordinates.
         - self.map_bounds: Buffered bounding box derived from flight area.
 """
 import numpy as np
-import rasterio
 from typing import List
 
 
 class RasterLoader:
     def __init__(self, config: dict, flight_bounds: List[float]) -> None:
         """
-        Initializes RasterLoader and loads the raster or builds the grid.
+        Initializes RasterLoader and builds the grid.
 
         Input:
             config (dict): configuration dictionary.
-                - FOOTPRINT_MODE (str): "Generic" or "SwissDTM".
-                - GRID_RES (float): Grid resolution [m] (Generic).
-                - GRID_BUFFER (float): Buffer distance [m] (Generic).
-                - DTM_PATH (str): Path to raster file (SwissDTM).
-                - RASTER_BUFFER (float): Buffer distance [m] (SwissDTM).
+                - GRID_RES (float): Grid resolution [m].
+                - GRID_BUFFER (float): Buffer distance [m].
             flight_bounds (list[float]): [E_min, E_max, N_min, N_max] bounds of flight area.
 
         Output:
             None (but sets self.raster, self.x_mesh, self.y_mesh, self.map_bounds)
         """
-        self.mode = config.get("FOOTPRINT_MODE", "Generic")
-        if self.mode == "SwissDTM":
-            self.file_path = config["DTM_PATH"]
-            self.buffer = config["RASTER_BUFFER"]
-        else:
-            self.grid_res = config["GRID_RES"]
-            self.buffer = config["GRID_BUFFER"]
+        self.grid_res = config["GRID_RES"]
+        self.buffer = config["GRID_BUFFER"]
         self.flight_bounds = flight_bounds
         
         self.map_bounds = {}
@@ -54,7 +45,7 @@ class RasterLoader:
 
     def load(self) -> np.ndarray:
         """
-        Loads a DTM window (SwissDTM) or builds a blank grid (Generic).
+        Builds a blank grid (Generic).
 
         Input:
             None
@@ -62,22 +53,6 @@ class RasterLoader:
         Output:
             np.ndarray: A blank raster array aligned with the grid.
         """
-        if self.mode == "SwissDTM":
-            with rasterio.open(self.file_path) as src:
-                res_x, res_y = src.res
-                x_coords = np.arange(self.map_bounds[0], self.map_bounds[1] + res_x, res_x)
-                y_coords = np.arange(self.map_bounds[3], self.map_bounds[2] - res_y, -res_y)
-                self.x_mesh, self.y_mesh = np.meshgrid(x_coords, y_coords)
-
-                row_start, col_start = src.index(x_coords[0], y_coords[0])
-                row_end, col_end = src.index(x_coords[-1], y_coords[-1])
-
-                window = rasterio.windows.Window.from_slices(
-                    (row_start, row_end + 1), (col_start, col_end + 1)
-                )
-                self.raster = src.read(1, window=window)
-                return self.raster
-
         res = float(self.grid_res)
         x_coords = np.arange(self.map_bounds[0], self.map_bounds[1] + res, res)
         y_coords = np.arange(self.map_bounds[3], self.map_bounds[2] - res, -res)

@@ -9,9 +9,7 @@ Description:
     can be done using a fast geometric filter (Transformation in patch frame) on each patch.
 
     Supported extraction modes:
-        - 'binary'      : (RECOMMANDED) saves patch membership in a separate binary file. 
         - 'independent' : saves each patch as a separate file.
-        - 'Extra_Bytes' : adds patch membership info as extra dimensions in-place.
 
     Supported input formats: .las, .laz, .TXYZS, .txt
 
@@ -23,9 +21,7 @@ import laspy
 import numpy as np
 import pandas as pd
 import os
-import copy
 import logging
-from laspy import ExtraBytesParams
 from typing import List
 import copy
 
@@ -202,14 +198,11 @@ class LasExtractor:
         Output:
             None
         """
-        if self.extraction_mode == "independent":
-            self.extract_independant(patches, flight_id, pair_dir)
-        elif self.extraction_mode == "Extra_Bytes":
-            self.encode_patches_extrabytes(patches, output_dir)
-        elif self.extraction_mode == "binary": 
-            self.encode_patches_binary(patches, flight_id, output_dir)
-        else:
-            raise ValueError(f"Unknown extraction mode: {self.extraction_mode}")
+        if self.extraction_mode != "independent":
+            raise ValueError(
+                f"Unknown extraction mode: {self.extraction_mode}. Only 'independent' is supported."
+            )
+        self.extract_independant(patches, flight_id, pair_dir)
         
     def extract_independant(self, patches: List[Patch], flight_id: str, pair_dir: str):
         """
@@ -241,128 +234,6 @@ class LasExtractor:
             else:
                 self.write_las(output_file)    
     
-    def encode_patches_extrabytes(self, patches: List[Patch], output_dir: str) -> None:
-        """
-        Encodes patch membership directly into the LAS file using ExtraBytes dimensions.
-
-        For each patch, this method identifies the points inside it using a fast geometric filter,
-        then annotates those points with the patch ID in dedicated extra byte fields (e.g., 'patch_ids_1').
-        If a point belongs to multiple patches, additional fields like 'patch_ids_2', 'patch_ids_3', etc. are added.
-
-        A separate counter field 'num_patches' keeps track of how many patches each point belongs to.
-        This information is written back into the original LAS file, replacing it in-place.
-
-        Inputs:
-            patches (List[Patch]): Patches to encode.
-            flight_id (str): Flight identifier.
-            output_dir (str): Output directory where the temporary LAS file is written before replacement.
-
-        Output:
-            None
-        """
-        filename = os.path.basename(self.input_file)
-        output_laz = os.path.join(output_dir, filename)
-        
-        new_las = self.las
-
-        self.safe_add_or_reset("num_patches", np.uint8, new_las)
-        self.safe_add_or_reset("patch_ids_1", np.uint8, new_las)
-
-        created_fields = {"patch_ids_1"}
-        field_data = {"num_patches": new_las["num_patches"],
-                    "patch_ids_1": new_las["patch_ids_1"]}
-
-        patch_masks = []
-        for patch in patches:
-            selected_indices = self.fast_geometric_mask(patch)
-            if len(selected_indices) > 0:
-                patch_masks.append((patch, selected_indices))
-
-        for patch, selected_indices in patch_masks:
-            levels = new_las.num_patches[selected_indices].copy()
-            new_las.num_patches[selected_indices] += 1
-
-            for level in np.unique(levels):
-                idxs = selected_indices[levels == level]
-                field_name = f"patch_ids_{level + 1}"
-
-                if field_name not in created_fields:
-                    self.safe_add_or_reset(field_name, np.uint8, new_las)
-                    field_data[field_name] = new_las[field_name]
-                    created_fields.add(field_name)
-
-                new_las[field_name][idxs] = patch.id
-
-        new_las.write(output_laz)
-        os.replace(output_laz, self.input_file)  
- 
-    def encode_patches_binary(self, patches: List[Patch], flight_id: str, output_dir: str) -> None:
-        """
-        Saves patch membership in a compact binary matrix.
-
-        Each point is tagged with how many patches it belongs to, and to which ones.
-        The result is saved to a binary file (.patchbin) with dynamic columns.
-
-        Inputs:
-            patches (List[Patch]): Patches to encode.
-            flight_id (str): Flight identifier.
-            output_dir (str): Destination directory.
-
-        Output:
-            None
-        """
-        output_file = f"{output_dir}/flight_{flight_id}.patchbin"
-        num_points = len(self.coords)
-
-        patch_array = np.zeros((num_points, 2), dtype=np.uint8)
-        
-        patch_masks = []
-        for patch in patches:
-            selected_indices = self.fast_geometric_mask(patch)
-            if len(selected_indices) > 0:
-                patch_masks.append((patch, selected_indices))
-
-        for patch, indices in patch_masks:
-            levels = patch_array[indices, 0].copy()  # num_patches column
-            patch_array[indices, 0] += 1
-
-            for level in np.unique(levels):
-                idxs = indices[levels == level]
-                col = int(level) + 1  # patch_ids_1, patch_ids_2, etc.
-
-                # If needed, add new column
-                if col >= patch_array.shape[1]:
-                    new_column = np.zeros((num_points, 1), dtype=np.uint8)
-                    patch_array = np.hstack((patch_array, new_column))
-
-                patch_array[idxs, col] = patch.id
-
-        num_columns = np.uint8(patch_array.shape[1])
-        with open(output_file, "wb") as f:
-            f.write(np.array([num_columns], dtype=np.uint8).tobytes())  # <- Use this
-            f.write(patch_array.tobytes())
-            
-    
-
-    def safe_add_or_reset(self, name, dtype, las) -> None:
-        """
-        Adds a new extra dimension to the LAS file or resets it to zero if it already exists.
-
-        Inputs:
-            name (str): Name of the extra byte field.
-            dtype (type): Data type for the field (e.g., np.uint8).
-            las (laspy.LasData): LAS file object.
-
-        Output:
-            None
-        """
-        if name in las.point_format.extra_dimension_names:
-            las[name][:] = 0
-        else:
-            las.add_extra_dim(ExtraBytesParams(name=name, type=dtype))
-            las[name] = np.zeros(len(las.x), dtype=dtype)
-
-
     def fast_geometric_mask(self, patch: Patch) -> np.ndarray:
         """
         Identifies all point cloud indices that fall within a rotated rectangular patch area.
@@ -418,5 +289,4 @@ class LasExtractor:
         full_indices = np.where(bbox_mask)[0][inside_mask]
  
         return full_indices
-
 
