@@ -1,5 +1,7 @@
-git rm -r --cached data/
-git rm -r --cached output/
+# Ignore everything inside data/ and output/
+ALS/data/*
+ALS/output/*
 
-ALS/data/
-ALS/output/
+# But keep the .gitkeep files so the folders stay in Git
+!ALS/data/.gitkeep
+!ALS/output/.gitkeep
