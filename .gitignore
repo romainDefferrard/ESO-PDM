@@ -1,8 +1,3 @@
-# Ignore everything inside data/ and output/
-ALS/data/*
-ALS/output/*
-ALS/submodules/*
-# But keep the .gitkeep files so the folders stay in Git
-!ALS/data/.gitkeep
-!ALS/output/.gitkeep
-!ALS/submodules/.gitkeep
+# Ignore all local data/output content entirely
+ALS/data/
+ALS/output/
