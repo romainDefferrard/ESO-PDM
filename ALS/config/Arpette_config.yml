@@ -1,8 +1,8 @@
 #------------------- ALS Arpette config -------------------#
 
 # Input files / directories
-OUTPUT_DIR: "/Users/romain/Desktop/EPFL/PDM/Patch_extractor_v2/Output/Arpette/"
-LAS_DIR: "/Users/romain/Desktop/EPFL/PDM/Patch_extractor_v2/Data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
+OUTPUT_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/"
+LAS_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
 
 # Grid (Generic)
 GRID_RES: 10     # Grid resolution [m]

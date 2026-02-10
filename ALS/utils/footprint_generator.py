@@ -13,7 +13,8 @@ Description:
         - self.superpos_flight_pairs: List[Tuple[str, str]] flight ID pairs used in superposition analysis.
 """
 import numpy as np
-from itertools import combinations, pairwise
+from itertools import combinations
+from more_itertools import pairwise
 from typing import Dict, Tuple
 from tqdm import tqdm
 import laspy
