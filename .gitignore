@@ -1,3 +1,5 @@
 git rm -r --cached data/
 git rm -r --cached output/
 
+ALS/data/
+ALS/output/
