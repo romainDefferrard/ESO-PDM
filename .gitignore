@@ -1,0 +1,3 @@
+git rm -r --cached data/
+git rm -r --cached output/
+
