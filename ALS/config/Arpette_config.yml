@@ -1,8 +1,12 @@
 #------------------- ALS Arpette config -------------------#
 
 # Input files / directories
-OUTPUT_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/"
-LAS_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
+OUTPUT_DIR: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/output/Arpette" 
+# PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/" 
+# RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/output"
+LAS_DIR: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
+# PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
+# RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/data/Arpette"
 
 # Grid (Generic)
 GRID_RES: 10     # Grid resolution [m]
