@@ -230,6 +230,7 @@ class ALSPipeline():
         self.timer.stop("ALS total time")
         self.timer.summary()
 
+<<<<<<< HEAD
     def run_limatch(self) -> None:
         """
         Run LiMatch submodule command after extraction.
@@ -245,6 +246,40 @@ class ALSPipeline():
             cmd_list = shlex.split(cmd)
         else:
             cmd_list = list(cmd)
+=======
+
+    def run_limatch(self):
+        
+        from submodules.limatch.main import match_clouds
+
+        for (flight_i, flight_j), patch_group in zip(
+            self.footprint.superpos_flight_pairs, self.patch_list
+        ):
+            pair_dir = f"{self.output_dir}/Flights_{flight_i}_{flight_j}"
+            ext_i = self._output_extension(self.flight_data.flight_files[flight_i])
+            ext_j = self._output_extension(self.flight_data.flight_files[flight_j])
+
+            for patch in patch_group:
+                c1 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_i}.{ext_i}")
+                c2 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_j}.{ext_j}")
+
+                if not (os.path.exists(c1) and os.path.exists(c2)):
+                    continue
+
+                print("Running match_clouds:", c1, c2)
+                match_clouds(c1, c2, self.config["LIMATCH_CFG"])
+
+    @staticmethod
+    def _output_extension(input_file: str) -> str:
+        """
+        Return the output patch extension based on the input file type.
+        """
+        if input_file.lower().endswith((".laz", ".las")):
+            return "laz"
+        if input_file.lower().endswith((".txyzs", ".txt")):
+            return "TXYZS"
+        raise ValueError(f"Unsupported input file format: {input_file}")
+>>>>>>> 28f2ca0 (update linking LiMatch)
 
         env = os.environ.copy()
         env["PATCH_OUTPUT_DIR"] = self.output_dir

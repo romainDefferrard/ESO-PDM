@@ -9,7 +9,11 @@ LAS_DIR: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_H
 # RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/data/Arpette"
 
 # Grid (Generic)
+<<<<<<< HEAD
 GRID_RES: 10     # Grid resolution [m]
+=======
+GRID_RES: 25     # Grid resolution [m]
+>>>>>>> 28f2ca0 (update linking LiMatch)
 GRID_BUFFER: 0   # Buffer around point cloud bounds [m]
 
 # Patch generation  
@@ -23,7 +27,11 @@ POINTCLOUD_DOWNSAMPLING: 100 # Take 1 point every N points to compute the footpr
 EXTRACTION_MODE: "independent" # Options: "independent". Extract all patches independently.
 
 # LiMatch (optional)
+<<<<<<< HEAD
 LIMATCH_CMD: "" # Command to run LiMatch after extraction (e.g., "python -m limatch --input $PATCH_OUTPUT_DIR")
 LIMATCH_CWD: "" # Working directory for LiMatch (e.g., "LiMatch")
 
 #TODO
+=======
+LIMATCH_CFG: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/submodules/limatch/configs/ALS_close_range.yml"
+>>>>>>> 28f2ca0 (update linking LiMatch)
