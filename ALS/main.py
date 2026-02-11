@@ -264,17 +264,6 @@ class PatcherPipeline():
             return "TXYZS"
         raise ValueError(f"Unsupported input file format: {input_file}")
 
-        cwd = self.config.get("LIMATCH_CWD")
-        if isinstance(cmd, str):
-            cmd_list = shlex.split(cmd)
-        else:
-            cmd_list = list(cmd)
-
-        env = os.environ.copy()
-        env["PATCH_OUTPUT_DIR"] = self.output_dir
-        subprocess.run(cmd_list, check=True, cwd=cwd or None, env=env)
-        
-        
             
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
