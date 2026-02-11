@@ -36,7 +36,8 @@ from utils.raster_loader import RasterLoader
 from utils.timer_logger import TimerLogger
 
 
-class ALSPipeline():
+
+class PatcherPipeline():
     def __init__(self, config_path: str):
         """
         Initialize the ALS pipeline using the provided YAML configuration.
@@ -161,6 +162,8 @@ class ALSPipeline():
         the union polygon of the flight's observed footprint (i.e., merged contours from overlapping flight pairs 
         involving this flight ID).
 
+        extractor = LasExtractor(self.config, input_file, relevant_patches)
+        if extractor.read_point_cloud():
         Inputs:
             flight_id (str): Flight identifier.
             flight_patch (List[Patch]): Patches associated with the current flight.
@@ -230,32 +233,13 @@ class ALSPipeline():
         self.timer.stop("ALS total time")
         self.timer.summary()
 
-<<<<<<< HEAD
     def run_limatch(self) -> None:
-        """
-        Run LiMatch submodule command after extraction.
-
-        Requires LIMATCH_CMD in config. Optionally uses LIMATCH_CWD as working directory.
-        """
-        cmd = self.config.get("LIMATCH_CMD")
-        if not cmd:
-            raise ValueError("LIMATCH_CMD is not set in the config. It must be a command to run LiMatch.")
-
-        cwd = self.config.get("LIMATCH_CWD")
-        if isinstance(cmd, str):
-            cmd_list = shlex.split(cmd)
-        else:
-            cmd_list = list(cmd)
-=======
-
-    def run_limatch(self):
-        
         from submodules.limatch.main import match_clouds
 
         for (flight_i, flight_j), patch_group in zip(
             self.footprint.superpos_flight_pairs, self.patch_list
         ):
-            pair_dir = f"{self.output_dir}/Flights_{flight_i}_{flight_j}"
+            pair_dir = os.path.join(self.output_dir, f"Flights_{flight_i}_{flight_j}")            
             ext_i = self._output_extension(self.flight_data.flight_files[flight_i])
             ext_j = self._output_extension(self.flight_data.flight_files[flight_j])
 
@@ -279,13 +263,19 @@ class ALSPipeline():
         if input_file.lower().endswith((".txyzs", ".txt")):
             return "TXYZS"
         raise ValueError(f"Unsupported input file format: {input_file}")
->>>>>>> 28f2ca0 (update linking LiMatch)
+
+        cwd = self.config.get("LIMATCH_CWD")
+        if isinstance(cmd, str):
+            cmd_list = shlex.split(cmd)
+        else:
+            cmd_list = list(cmd)
 
         env = os.environ.copy()
         env["PATCH_OUTPUT_DIR"] = self.output_dir
         subprocess.run(cmd_list, check=True, cwd=cwd or None, env=env)
         
         
+            
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
     
@@ -293,5 +283,5 @@ if __name__ == "__main__":
     parser.add_argument("--yml", "-y", required=True, help="Path to the configuration file")
     args = parser.parse_args()
 
-    pipeline = ALSPipeline(config_path=args.yml)
+    pipeline = PatcherPipeline(config_path=args.yml)
     pipeline.run()

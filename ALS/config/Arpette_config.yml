@@ -1,19 +1,15 @@
 #------------------- ALS Arpette config -------------------#
 
 # Input files / directories
-OUTPUT_DIR: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/output/Arpette" 
+OUTPUT_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/" 
 # PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/" 
 # RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/output"
-LAS_DIR: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
+LAS_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
 # PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
 # RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/data/Arpette"
 
 # Grid (Generic)
-<<<<<<< HEAD
-GRID_RES: 10     # Grid resolution [m]
-=======
 GRID_RES: 25     # Grid resolution [m]
->>>>>>> 28f2ca0 (update linking LiMatch)
 GRID_BUFFER: 0   # Buffer around point cloud bounds [m]
 
 # Patch generation  
@@ -26,12 +22,6 @@ POINTCLOUD_DOWNSAMPLING: 100 # Take 1 point every N points to compute the footpr
 # Extraction (minimal pipeline)
 EXTRACTION_MODE: "independent" # Options: "independent". Extract all patches independently.
 
-# LiMatch (optional)
-<<<<<<< HEAD
-LIMATCH_CMD: "" # Command to run LiMatch after extraction (e.g., "python -m limatch --input $PATCH_OUTPUT_DIR")
-LIMATCH_CWD: "" # Working directory for LiMatch (e.g., "LiMatch")
-
+# LiMatch
+LIMATCH_CFG: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/submodules/limatch/configs/ALS_close_range.yml" 
 #TODO
-=======
-LIMATCH_CFG: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/submodules/limatch/configs/ALS_close_range.yml"
->>>>>>> 28f2ca0 (update linking LiMatch)
