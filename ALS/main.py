@@ -25,6 +25,7 @@ from shapely.ops import unary_union
 from PyQt6.QtWidgets import QApplication
 from tqdm import tqdm
 import logging
+import copy 
 
 from utils.flight_data import FlightData
 from utils.footprint_generator import Footprint
@@ -236,13 +237,20 @@ class PatcherPipeline():
     def run_limatch(self) -> None:
         from submodules.limatch.main import match_clouds
 
+        # Load LiMatch config
+        limatch_cfg_path = self.config["LIMATCH_CFG"]
+        with open(limatch_cfg_path, "r") as f:
+            base_cfg = yaml.safe_load(f)
+
+        base_out = base_cfg["prj_folder"] # original base output folder of LiMatch pipeline
+
         for (flight_i, flight_j), patch_group in zip(
             self.footprint.superpos_flight_pairs, self.patch_list
         ):
             pair_dir = os.path.join(self.output_dir, f"Flights_{flight_i}_{flight_j}")            
             ext_i = self._output_extension(self.flight_data.flight_files[flight_i])
             ext_j = self._output_extension(self.flight_data.flight_files[flight_j])
-
+            
             for patch in patch_group:
                 c1 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_i}.{ext_i}")
                 c2 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_j}.{ext_j}")
@@ -250,8 +258,16 @@ class PatcherPipeline():
                 if not (os.path.exists(c1) and os.path.exists(c2)):
                     continue
 
+                # Overwrite LiMatch output path using specific PROJECT, FLIGHT PAIR and PATCH names
+                pair_name = os.path.basename(pair_dir)
+                out_dir = os.path.join(base_out, self.config["PRJ_NAME"], pair_name, f"patch_{patch.id}/")
+                os.makedirs(out_dir, exist_ok=True)
+
+                cfg = copy.deepcopy(base_cfg)
+                cfg["prj_folder"] = out_dir
+
                 print("Running match_clouds:", c1, c2)
-                match_clouds(c1, c2, self.config["LIMATCH_CFG"])
+                match_clouds(c1, c2, cfg)
 
     @staticmethod
     def _output_extension(input_file: str) -> str:
