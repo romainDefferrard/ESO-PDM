@@ -298,7 +298,7 @@ class GUIMainWindow(QMainWindow):
     def __init__(self, superpositions, patches: Patch, centerlines, patch_params, raster_mesh, raster, contours, extraction_state, flight_pairs, output_dir):
         super().__init__()
 
-        self.setWindowTitle("Patch Plotter UI")
+        self.setWindowTitle("ALS Patch Plotter UI")
         self.setGeometry(100, 100, 900, 500)
 
         self.superpositions = superpositions

@@ -104,6 +104,10 @@ class LasExtractor:
         with laspy.open(self.input_file) as fh:
             self.las = fh.read()
             self.coords = np.vstack((self.las.x, self.las.y)).T
+            if hasattr(self.las, "gps_time"):
+                self.gps_times = np.asarray(self.las.gps_time)
+            else:
+                self.gps_times = None
 
         return True
 
@@ -289,4 +293,128 @@ class LasExtractor:
         full_indices = np.where(bbox_mask)[0][inside_mask]
  
         return full_indices
+    
+    def extract_overlap_mask(
+        self,
+        overlap_mask: np.ndarray,
+        raster_mesh: tuple[np.ndarray, np.ndarray],
+        output_file: str,
+    ) -> bool:
+        """
+        MLS extraction:
+        Extract all points whose (x,y) falls inside the overlap raster mask.
+
+        Inputs:
+            overlap_mask: boolean grid (same shape as raster_map) representing MLS "patch"
+            raster_mesh: (x_mesh, y_mesh) used to map XY -> (row,col)
+            output_file: path to write extracted cloud
+
+        Output:
+            bool: True if something was extracted/written, False otherwise.
+        """
+        if self.coords is None:
+            raise RuntimeError("Point cloud not loaded. Call read_point_cloud() first.")
+
+        x_mesh, y_mesh = raster_mesh
+        x0 = float(x_mesh[0, 0])
+        y0 = float(y_mesh[0, 0])
+        res_x = float(abs(x_mesh[0, 1] - x_mesh[0, 0]))
+        res_y = float(abs(y_mesh[1, 0] - y_mesh[0, 0]))
+
+        cols = np.floor((self.coords[:, 0] - x0) / res_x).astype(int)
+        rows = np.floor((y0 - self.coords[:, 1]) / res_y).astype(int)
+
+        valid = (
+            (rows >= 0) & (rows < overlap_mask.shape[0]) &
+            (cols >= 0) & (cols < overlap_mask.shape[1])
+        )
+
+        in_overlap = np.zeros(len(self.coords), dtype=bool)
+        in_overlap[valid] = overlap_mask[rows[valid], cols[valid]]
+
+        if not np.any(in_overlap):
+            logging.warning(f"[MLS] No points in overlap mask for {os.path.basename(self.input_file)}")
+            return False
+
+        self.coords_mask = in_overlap
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+        if self.file_format == "TXYZS":
+            self.write_ascii(output_file)
+        else:
+            self.write_las(output_file)
+
+        return True
+    
+    def extract_time_window(self, t0: float, t1: float, output_file: str) -> bool:
+        """
+        MLS temporal patch:
+        Keep all points with gps_time in [t0, t1].
+        """
+        if getattr(self, "gps_times", None) is None:
+            raise ValueError("gps_time not available in this file (LAS/LAZ required).")
+
+        mask = (self.gps_times >= t0) & (self.gps_times <= t1)
+        if not np.any(mask):
+            return False
+
+        self.coords_mask = mask
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+        if self.file_format == "TXYZS":
+            self.write_ascii(output_file)
+        else:
+            self.write_las(output_file)
+
+        return True
+    
+    def extract_overlap_with_time_window(
+        self,
+        overlap_mask: np.ndarray,
+        raster_mesh: tuple[np.ndarray, np.ndarray],
+        t0: float,
+        t1: float,
+        output_file: str,
+    ) -> bool:
+        if self.coords is None:
+            raise RuntimeError("Call read_point_cloud() first.")
+        if getattr(self, "gps_times", None) is None:
+            raise ValueError("gps_time not available in this file.")
+
+        # 1) spatial mask (reuse your existing logic)
+        x_mesh, y_mesh = raster_mesh
+        x0 = float(x_mesh[0, 0])
+        y0 = float(y_mesh[0, 0])
+        res_x = float(abs(x_mesh[0, 1] - x_mesh[0, 0]))
+        res_y = float(abs(y_mesh[1, 0] - y_mesh[0, 0]))
+
+        cols = np.floor((self.coords[:, 0] - x0) / res_x).astype(int)
+        rows = np.floor((y0 - self.coords[:, 1]) / res_y).astype(int)
+
+        valid = (
+            (rows >= 0) & (rows < overlap_mask.shape[0]) &
+            (cols >= 0) & (cols < overlap_mask.shape[1])
+        )
+
+        in_overlap = np.zeros(len(self.coords), dtype=bool)
+        in_overlap[valid] = overlap_mask[rows[valid], cols[valid]]
+
+        # 2) time mask
+        in_time = (self.gps_times >= t0) & (self.gps_times <= t1)
+
+        # 3) combined
+        mask = in_overlap & in_time
+        if not mask.any():
+            return False
+
+        self.coords_mask = mask
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        if self.file_format == "TXYZS":
+            self.write_ascii(output_file)
+        else:
+            self.write_las(output_file)
+        return True
+
+
+
 

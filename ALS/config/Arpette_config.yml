@@ -1,19 +1,19 @@
 #------------------- ALS Arpette config -------------------#
 # Scanning mode: ALS or MLS supported 
-SCAN_MODE: "ALS"     # difference in patching method and GUI
+SCAN_MODE: "MLS"     # difference in patching method and GUI
 # Project name
-PRJ_NAME: "Arpette"
+PRJ_NAME: "SAM"
 
 # Input files / directories
-OUTPUT_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/" 
+OUTPUT_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/SAM/" 
 # PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/" 
 # RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/output"
-LAS_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
+LAS_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/SAM/TESTSAM_LV95_RAN95_250220_094545_VUX_{flight_id}.las"
 # PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
 # RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/data/Arpette"
 
 # Grid (Generic)
-GRID_RES: 25     # Grid resolution [m]
+GRID_RES: 1     # Grid resolution [m]
 GRID_BUFFER: 0   # Buffer around point cloud bounds [m]
 
 # Patch generation  
@@ -21,7 +21,7 @@ PAIR_MODE: "successive" # Options: "successive", "all". Successive: only generat
 PATCH_DIMS: [500, 500, 1000] # [length, width, height] [m]
 
 # Footprint
-POINTCLOUD_DOWNSAMPLING: 100 # Take 1 point every N points to compute the footprint
+POINTCLOUD_DOWNSAMPLING: 1 # Take 1 point every N points to compute the footprint
 
 # Extraction (minimal pipeline)
 EXTRACTION_MODE: "independent" # Options: "independent". Extract all patches independently.
