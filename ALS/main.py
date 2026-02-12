@@ -30,6 +30,7 @@ import copy
 from utils.flight_data import FlightData
 from utils.footprint_generator import Footprint
 from utils.gui import GUIMainWindow
+from utils.gui_mls import GUIMainWindowMLS
 from utils.las_extractor import LasExtractor
 from utils.patch_generator import PatchGenerator
 from utils.patch_model import Patch
@@ -105,35 +106,52 @@ class PatcherPipeline():
         Output:
             None
         """
+
+        mode = self.config["SCAN_MODE"]
         app = QApplication(sys.argv)
-        window = GUIMainWindow(
-            superpositions=  self.footprint.superpos_masks,
-            patches=         self.pg.patches_list,
-            centerlines=     self.pg.centerlines_list,
-            patch_params=    self.config["PATCH_DIMS"],
-            raster_mesh=     self.raster_mesh,
-            raster=          self.raster,
-            contours=        self.pg.contours_list,
-            extraction_state=False,
-            flight_pairs=    self.footprint.superpos_flight_pairs,
-            output_dir=      self.config["OUTPUT_DIR"],
-        )
+
+        if mode == "ALS":
+                
+            window = GUIMainWindow(
+                superpositions=  self.footprint.superpos_masks,
+                patches=         self.pg.patches_list,
+                centerlines=     self.pg.centerlines_list,
+                patch_params=    self.config["PATCH_DIMS"],
+                raster_mesh=     self.raster_mesh,
+                raster=          self.raster,
+                contours=        self.pg.contours_list,
+                extraction_state=False,
+                flight_pairs=    self.footprint.superpos_flight_pairs,
+                output_dir=      self.config["OUTPUT_DIR"],
+            )
+        elif mode == "MLS":
+            window = GUIMainWindowMLS(
+                superpositions=  self.footprint.temporal_gui_masks,
+                raster_mesh=     self.raster_mesh,
+                raster=          self.raster,
+                time_windows=    self.footprint.superpos_time_windows,
+                extraction_state=False,
+                flight_pairs=    self.footprint.superpos_flight_pairs,
+                output_dir=      self.config["OUTPUT_DIR"],
+            )   
         window.show()
         app.exec()
         
         self.extraction_state = window.control_panel.extraction_state
-        self.patch_list = window.control_panel.new_patches_instance
         self.output_dir = window.control_panel.output_dir 
         self.execute_limatch = window.control_panel.execute_limatch
-        
-    def extract(self):
+
+        if mode == "ALS":
+            self.patch_list = window.control_panel.new_patches_instance
+
+    def extract_als(self) -> None:
         """
         Extract points for each relevant patch across all flights based on the extraction mode.
 
         Output:
             None
         """
-        self.timer.start("Patch extraction (all flights)")
+        self.timer.start("ALS Patch extraction (all flights)")
 
         if self.config["EXTRACTION_MODE"] != "independent":
             raise ValueError(
@@ -150,10 +168,48 @@ class PatcherPipeline():
                     pair_dir, self.footprint.superpos_flight_pairs, self.pg.contours_list
                 )
 
-        self.timer.stop("Patch extraction (all flights)")
+        self.timer.stop("ALS Patch extraction (all flights)")
 
+    def extract_mls(self) -> None:
+        """
+        MLS extraction (temporal patch):
+        For each spatial overlap, compute time window, then extract ALL points
+        from each cloud within that time window.
+        """
+        self.timer.start("MLS Patch extraction (all pairs)")
 
         
+        for k, (flight_i, flight_j) in enumerate(self.footprint.superpos_flight_pairs):
+            t0, t1 = self.footprint.superpos_time_windows[k]  # must be (t0, t1)
+
+            # skip invalid windows
+            if not np.isfinite(t0) or not np.isfinite(t1) or t0 >= t1:
+                logging.warning(f"[MLS] Invalid time window for pair {flight_i}-{flight_j}: {t0}, {t1}")
+                continue
+
+            pair_dir = os.path.join(self.output_dir, f"Flights_{flight_i}_{flight_j}")
+            os.makedirs(pair_dir, exist_ok=True)
+
+            for flight_id, other_id in ((flight_i, flight_j), (flight_j, flight_i)):
+                input_file = self.flight_data.flight_files[flight_id]
+                ext = self._output_extension(input_file)
+
+                extractor = LasExtractor(self.config, input_file, patches=[])
+                if not extractor.read_point_cloud():
+                    continue
+
+                out_path = os.path.join(
+                    pair_dir,
+                    f"Patch_from_scan_{flight_id}_with_{other_id}.{ext}"
+                )
+
+                ok = extractor.extract_time_window(t0, t1, out_path)
+                if not ok:
+                    logging.warning(
+                        f"[MLS] No points extracted for flight {flight_id} in pair {flight_i}-{flight_j}"
+                    )
+        self.timer.stop("MLS Patch extraction (all pairs)")
+
 
     def process_flight(self, flight_id: str, flight_patch: List[Patch], LAS_DIR: str, OUTPUT_DIR: str,
                         pair_dir: str, superpos_pairs: List[Tuple[str, str]], contours_all: List[np.ndarray]) -> None:
@@ -220,22 +276,39 @@ class PatcherPipeline():
         Output:
             None
         """
-        self.timer.start("ALS total time")
+        mode = self.config["SCAN_MODE"]
+
+        self.timer.start(f"{mode} total time")
         self.load_data()
         self.generate_footprint()
-        self.generate_patches()
-        self.launch_gui()
+
+
+        if mode == "ALS":
+            self.generate_patches()
+            self.launch_gui()
+
+            if self.extraction_state:
+                self.extract_als()
+                if getattr(self, "execute_limatch", False):
+                    self.run_limatch()
+
+        elif mode == "MLS":
+            # no patches, no PCA
+            self.launch_gui()
+
+            if self.extraction_state:
+                self.extract_mls()
+                if getattr(self, "execute_limatch", False):
+                    self.run_limatch()
+  
         
-        if self.extraction_state: # Unlocked in GUI
-            self.extract()
-            if getattr(self, "execute_limatch", False):
-                self.run_limatch()
-        
-        self.timer.stop("ALS total time")
+        self.timer.stop(f"{mode} total time")
         self.timer.summary()
 
     def run_limatch(self) -> None:
         from submodules.limatch.main import match_clouds
+
+        mode = self.config["SCAN_MODE"]
 
         # Load LiMatch config
         limatch_cfg_path = self.config["LIMATCH_CFG"]
@@ -243,31 +316,53 @@ class PatcherPipeline():
             base_cfg = yaml.safe_load(f)
 
         base_out = base_cfg["prj_folder"] # original base output folder of LiMatch pipeline
+        prj_name = self.config.get("PRJ_NAME", "PROJECT")
 
-        for (flight_i, flight_j), patch_group in zip(
-            self.footprint.superpos_flight_pairs, self.patch_list
-        ):
-            pair_dir = os.path.join(self.output_dir, f"Flights_{flight_i}_{flight_j}")            
-            ext_i = self._output_extension(self.flight_data.flight_files[flight_i])
-            ext_j = self._output_extension(self.flight_data.flight_files[flight_j])
-            
-            for patch in patch_group:
-                c1 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_i}.{ext_i}")
-                c2 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_j}.{ext_j}")
+        def single_run(pair_dir: str, tag: str, c1: str, c2: str) -> None:
+            if not (os.path.exists(c1) and os.path.exists(c2)):
+                logging.warning(f"LiMatch skipped (missing files): {c1} / {c2}")
+                return
 
-                if not (os.path.exists(c1) and os.path.exists(c2)):
-                    continue
+            pair_name = os.path.basename(pair_dir)
+            out_dir = os.path.join(base_out, prj_name, pair_name, f"{tag}/")
+            os.makedirs(out_dir, exist_ok=True)
 
-                # Overwrite LiMatch output path using specific PROJECT, FLIGHT PAIR and PATCH names
-                pair_name = os.path.basename(pair_dir)
-                out_dir = os.path.join(base_out, self.config["PRJ_NAME"], pair_name, f"patch_{patch.id}/")
-                os.makedirs(out_dir, exist_ok=True)
+            cfg = copy.deepcopy(base_cfg)
+            cfg["prj_folder"] = out_dir
 
-                cfg = copy.deepcopy(base_cfg)
-                cfg["prj_folder"] = out_dir
+            print("Running match_clouds:", c1, c2)
+            match_clouds(c1, c2, cfg)
 
-                print("Running match_clouds:", c1, c2)
-                match_clouds(c1, c2, cfg)
+        if mode == "ALS":
+            for (flight_i, flight_j), patch_group in zip(
+                self.footprint.superpos_flight_pairs, self.patch_list
+            ):
+                pair_dir = os.path.join(self.output_dir, f"Flights_{flight_i}_{flight_j}")
+                ext_i = self._output_extension(self.flight_data.flight_files[flight_i])
+                ext_j = self._output_extension(self.flight_data.flight_files[flight_j])
+
+                for patch in patch_group:
+                    c1 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_i}.{ext_i}")
+                    c2 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_j}.{ext_j}")
+                    single_run(pair_dir, f"patch_{patch.id}", c1, c2)
+
+        # -------- MLS --------
+        elif mode == "MLS":
+            for (flight_i, flight_j) in self.footprint.superpos_flight_pairs:
+                pair_dir = os.path.join(self.output_dir, f"Flights_{flight_i}_{flight_j}")
+
+                ext_i = self._output_extension(self.flight_data.flight_files[flight_i])
+                ext_j = self._output_extension(self.flight_data.flight_files[flight_j])
+
+                c1 = os.path.join(pair_dir, f"Patch_from_scan_{flight_i}_with_{flight_j}.{ext_i}")
+                c2 = os.path.join(pair_dir, f"Patch_from_scan_{flight_j}_with_{flight_i}.{ext_j}")
+
+                single_run(pair_dir, "mls_overlap", c1, c2)
+
+        else:
+            raise ValueError(f"Unknown SCAN_MODE: {mode}")
+
+    
 
     @staticmethod
     def _output_extension(input_file: str) -> str:
