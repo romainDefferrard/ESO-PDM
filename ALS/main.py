@@ -37,6 +37,8 @@ from utils.patch_model import Patch
 from utils.raster_loader import RasterLoader
 from utils.timer_logger import TimerLogger
 
+import warnings
+warnings.filterwarnings("ignore")
 
 
 class PatcherPipeline():
@@ -109,9 +111,8 @@ class PatcherPipeline():
 
         mode = self.config["SCAN_MODE"]
         app = QApplication(sys.argv)
-
+        
         if mode == "ALS":
-                
             window = GUIMainWindow(
                 superpositions=  self.footprint.superpos_masks,
                 patches=         self.pg.patches_list,
@@ -123,8 +124,10 @@ class PatcherPipeline():
                 extraction_state=False,
                 flight_pairs=    self.footprint.superpos_flight_pairs,
                 output_dir=      self.config["OUTPUT_DIR"],
+
             )
         elif mode == "MLS":
+            crs = self.config.get("CRS", None)
             window = GUIMainWindowMLS(
                 superpositions=  self.footprint.temporal_gui_masks,
                 raster_mesh=     self.raster_mesh,
@@ -133,6 +136,7 @@ class PatcherPipeline():
                 extraction_state=False,
                 flight_pairs=    self.footprint.superpos_flight_pairs,
                 output_dir=      self.config["OUTPUT_DIR"],
+                crs=crs,
             )   
         window.show()
         app.exec()
@@ -279,28 +283,22 @@ class PatcherPipeline():
         mode = self.config["SCAN_MODE"]
 
         self.timer.start(f"{mode} total time")
+
         self.load_data()
         self.generate_footprint()
 
-
         if mode == "ALS":
             self.generate_patches()
-            self.launch_gui()
 
-            if self.extraction_state:
+        self.launch_gui()
+
+        if self.extraction_state:
+            if mode == "ALS":
                 self.extract_als()
-                if getattr(self, "execute_limatch", False):
-                    self.run_limatch()
-
-        elif mode == "MLS":
-            # no patches, no PCA
-            self.launch_gui()
-
-            if self.extraction_state:
+            elif mode == "MLS":
                 self.extract_mls()
-                if getattr(self, "execute_limatch", False):
-                    self.run_limatch()
-  
+            if getattr(self, "execute_limatch", False):
+                self.run_limatch()
         
         self.timer.stop(f"{mode} total time")
         self.timer.summary()

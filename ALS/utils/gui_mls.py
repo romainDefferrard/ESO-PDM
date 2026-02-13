@@ -15,7 +15,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 class PlotWindowMLS(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
-
+        self.crs = self.parent().crs
+        
+        # Inherit attributes from parent
         self.superpositions = self.parent().superpositions
         self.raster_mesh = self.parent().raster_mesh
         self.x_mesh, self.y_mesh = self.raster_mesh
@@ -37,22 +39,57 @@ class PlotWindowMLS(QWidget):
 
     def generate_plot(self, index):
         superpos = self.superpositions[index]
-
         Z = np.ma.masked_where(~superpos, superpos)
 
-        self.ax.pcolormesh(
-            self.x_mesh,
-            self.y_mesh,
-            Z,
-            shading="auto",
-            cmap=None,
-            facecolor=(0.0, 0.0, 1.0, 0.4),
-            edgecolors="none",
-        )
+        if self.crs is not None: # Display OSM
+            from pyproj import Transformer
+            import contextily as ctx
+
+            xmin, xmax = np.nanmin(self.x_mesh), np.nanmax(self.x_mesh)
+            ymin, ymax = np.nanmin(self.y_mesh), np.nanmax(self.y_mesh)
+
+            tr = Transformer.from_crs(self.crs, "EPSG:3857", always_xy=True)
+            xmin_m, ymin_m = tr.transform(xmin, ymin)
+            xmax_m, ymax_m = tr.transform(xmax, ymax)
+
+            self.ax.set_xlim(xmin_m, xmax_m)
+            self.ax.set_ylim(ymin_m, ymax_m)
+
+            try:
+                ctx.add_basemap(
+                    self.ax,
+                    source=ctx.providers.OpenStreetMap.Mapnik,
+                    crs="EPSG:3857",
+                    attribution=False,
+                )
+            except Exception as e:
+                logging.warning(f"Basemap unavailable: {e}")
+
+            xm, ym = tr.transform(self.x_mesh, self.y_mesh)
+
+            self.ax.pcolormesh(
+                xm, ym, Z,
+                shading="auto",
+                cmap=None,
+                facecolor=(0.2, 0.6, 1.0, 0.35),
+                edgecolors="none",
+            )
+
+        
+        else:   # No CRS
+            self.ax.pcolormesh(
+                self.x_mesh,
+                self.y_mesh,
+                Z,
+                shading="auto",
+                cmap=None,
+                facecolor=(0.2, 0.6, 1.0, 0.35),
+                edgecolors="none",
+            )
 
         self.ax.set_aspect("equal")
-        self.ax.set_xlabel("E [m]")
-        self.ax.set_ylabel("N [m]")
+        self.ax.set_xlabel("X [m]")
+        self.ax.set_ylabel("Y [m]")
         self.ax.tick_params(axis="x", labelrotation=90)
 
     def update_plot(self):
@@ -198,8 +235,9 @@ class ControlPanelMLS(QWidget):
 
 
 class GUIMainWindowMLS(QMainWindow):
-    def __init__(self, superpositions, raster_mesh, raster, time_windows, extraction_state, flight_pairs, output_dir):
+    def __init__(self, superpositions, raster_mesh, raster, time_windows, extraction_state, flight_pairs, output_dir, crs):
         super().__init__()
+        self.crs = crs
 
         self.setWindowTitle("MLS Overlap UI")
         self.setGeometry(100, 100, 950, 500)
@@ -218,7 +256,7 @@ class GUIMainWindowMLS(QMainWindow):
         self.plot_window = PlotWindowMLS(self)
         self.control_panel = ControlPanelMLS(self, self.plot_window)
 
-        title_bar = make_title_bar("MLS Overlap Extraction")
+        title_bar = make_title_bar("MLS Patcher")
 
         panels_layout = QHBoxLayout()
         panels_layout.addWidget(self.control_panel)
