@@ -31,4 +31,4 @@ EXTRACTION_MODE: "independent" # Options: "independent". Extract all patches ind
 LIMATCH_CFG: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/submodules/limatch/configs/MLS.yml" 
 
 # GUI
-CRS: "EPSG:2056"     # (Optionnal) Spatial reference system
+CRS: #"EPSG:2056"     # (Optionnal) Spatial reference system

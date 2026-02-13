@@ -184,11 +184,15 @@ class PatcherPipeline():
 
         
         for k, (flight_i, flight_j) in enumerate(self.footprint.superpos_flight_pairs):
-            t0, t1 = self.footprint.superpos_time_windows[k]  # must be (t0, t1)
+            (tmin_i, tmax_i), (tmin_j, tmax_j) = self.footprint.superpos_time_windows[k]  # must be (t0, t1)
 
             # skip invalid windows
-            if not np.isfinite(t0) or not np.isfinite(t1) or t0 >= t1:
-                logging.warning(f"[MLS] Invalid time window for pair {flight_i}-{flight_j}: {t0}, {t1}")
+            if (not np.isfinite(tmin_i)) or (not np.isfinite(tmax_i)) or tmin_i >= tmax_i:
+                logging.warning(f"[MLS] Invalid time window for flight {flight_i}")
+                continue
+
+            if (not np.isfinite(tmin_j)) or (not np.isfinite(tmax_j)) or tmin_j >= tmax_j:
+                logging.warning(f"[MLS] Invalid time window for flight {flight_j}")
                 continue
 
             pair_dir = os.path.join(self.output_dir, f"Flights_{flight_i}_{flight_j}")

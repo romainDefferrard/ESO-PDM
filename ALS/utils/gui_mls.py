@@ -16,7 +16,7 @@ class PlotWindowMLS(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.crs = self.parent().crs
-        
+
         # Inherit attributes from parent
         self.superpositions = self.parent().superpositions
         self.raster_mesh = self.parent().raster_mesh
@@ -73,6 +73,7 @@ class PlotWindowMLS(QWidget):
                 cmap=None,
                 facecolor=(0.2, 0.6, 1.0, 0.35),
                 edgecolors="none",
+                alpha=0.4, 
             )
 
         
@@ -194,28 +195,22 @@ class ControlPanelMLS(QWidget):
         idx = self.plot_window.plot_index
         self.flight_label.setText(f"Flight pairs: {self.flight_pairs[idx]}")
 
-        tw = self.time_windows[idx]
+        (tmin_i, tmax_i), (tmin_j, tmax_j) = self.time_windows[idx]
 
-        if isinstance(tw, (tuple, list)) and len(tw) == 2 and np.isscalar(tw[0]) and np.isscalar(tw[1]):
-            t0, t1 = float(tw[0]), float(tw[1])
-        else:
-            (tmin_i, tmax_i), (tmin_j, tmax_j) = tw
-            t0 = max(tmin_i, tmin_j)
-            t1 = min(tmax_i, tmax_j)
-
-        if not np.isfinite(t0) or not np.isfinite(t1) or t0 >= t1:
-            self.gps_label.setText(
-                "GPS time intersection:\n"
-                "tmin: NaN\n"
-                "tmax: NaN"
-            )
+        if not np.isfinite(tmin_i) or not np.isfinite(tmin_j):
+            self.gps_label.setText("GPS Times:\n(no spatial overlap)")
             return
 
-        self.gps_label.setText(
-            "GPS time intersection:\n"
-            f"tmin: {t0:.3f}\n"
-            f"tmax: {t1:.3f}"
+        txt = (
+            "GPS Times:\n"
+            "PC1:\n"
+            f"  min: {tmin_i:.3f}\n"
+            f"  max: {tmax_i:.3f}\n\n"
+            "PC2:\n"
+            f"  min: {tmin_j:.3f}\n"
+            f"  max: {tmax_j:.3f}"
         )
+        self.gps_label.setText(txt)
 
     def proceed_extraction(self):
         self.execute_limatch = self.limatch_checkbox.isChecked()
