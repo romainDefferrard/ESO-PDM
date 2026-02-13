@@ -128,28 +128,29 @@ class Footprint:
             idx_2 = flight_id_to_index[flight_id_2]
 
             combined_mask = self.observed_masks[idx_1] & self.observed_masks[idx_2]
+            if not np.any(combined_mask):
+                continue
             self.superpos_masks.append(combined_mask)
             self.superpos_flight_pairs.append((flight_id_1, flight_id_2))
 
             
             if self.scan_mode == "MLS":
-                if not np.any(combined_mask):
-                    self.superpos_time_windows.append((np.nan, np.nan))
-                else:
-                    tmin_i = np.nanmin(self.tmin_grids[idx_1][combined_mask])
-                    tmax_i = np.nanmax(self.tmax_grids[idx_1][combined_mask])
+                tmin_i = np.nanmin(self.tmin_grids[idx_1][combined_mask])
+                tmax_i = np.nanmax(self.tmax_grids[idx_1][combined_mask])
 
-                    tmin_j = np.nanmin(self.tmin_grids[idx_2][combined_mask])
-                    tmax_j = np.nanmax(self.tmax_grids[idx_2][combined_mask])
+                tmin_j = np.nanmin(self.tmin_grids[idx_2][combined_mask])
+                tmax_j = np.nanmax(self.tmax_grids[idx_2][combined_mask])
 
-                    # one single window (intersection)
-                    t0 = min(tmin_i, tmin_j)
-                    t1 = max(tmax_i, tmax_j)
-                    # if empty intersection -> NaNs
-                    if not np.isfinite(t0) or not np.isfinite(t1) or t0 >= t1:
-                        self.superpos_time_windows.append((np.nan, np.nan))
-                    else:
-                        self.superpos_time_windows.append((t0, t1))
+                # one single window (intersection)
+            #    t0 = min(tmin_i, tmin_j)
+            #    t1 = max(tmax_i, tmax_j)
+                # if empty intersection -> NaNs
+                if not all(np.isfinite([tmin_i, tmax_i, tmin_j, tmax_j])) or (tmin_i >= tmax_i) or (tmin_j >= tmax_j):
+                    self.superpos_masks.pop()
+                    self.superpos_flight_pairs.pop()
+                    continue
+                self.superpos_time_windows.append(((tmin_i, tmax_i), (tmin_j, tmax_j)))
+
 
         if self.scan_mode == "MLS":
             self.build_temporal_footprint()   
@@ -166,30 +167,40 @@ class Footprint:
         self.temporal_point_masks_meta = []   # optional: store how to rebuild / where saved
 
         for pair_idx, (fi, fj) in enumerate(self.superpos_flight_pairs):
-            t0, t1 = self.superpos_time_windows[pair_idx]
+            (tmin_i, tmax_i), (tmin_j, tmax_j) = self.superpos_time_windows[pair_idx]
 
-            if not np.isfinite(t0) or not np.isfinite(t1):
+            if (not np.isfinite(tmin_i)) or (not np.isfinite(tmax_i)) or (tmin_i >= tmax_i):
                 self.temporal_gui_masks.append(np.zeros_like(self.raster_map, dtype=bool))
-                self.temporal_point_windows.append((np.nan, np.nan))
+                self.temporal_point_masks_meta.append(None)
+                continue
+
+            if (not np.isfinite(tmin_j)) or (not np.isfinite(tmax_j)) or (tmin_j >= tmax_j):
+                self.temporal_gui_masks.append(np.zeros_like(self.raster_map, dtype=bool))
                 self.temporal_point_masks_meta.append(None)
                 continue
 
             file_i = self.flight_files[fi]
             file_j = self.flight_files[fj]
 
-            # Raster masks for GUI based on time-filtered points
+            # IMPORTANT: each cloud uses its OWN time window
             mask_i = Footprint.rasterize_time_window(
-                file_i, self.raster_map, self.x_mesh, self.y_mesh, self.pc_downsample, t0, t1
+                file_i, self.raster_map, self.x_mesh, self.y_mesh,
+                self.pc_downsample, tmin_i, tmax_i
             )
             mask_j = Footprint.rasterize_time_window(
-                file_j, self.raster_map, self.x_mesh, self.y_mesh, self.pc_downsample, t0, t1
+                file_j, self.raster_map, self.x_mesh, self.y_mesh,
+                self.pc_downsample, tmin_j, tmax_j
             )
 
+            # GUI display = union of both filtered coverages
             self.temporal_gui_masks.append(mask_i | mask_j)
-            self.temporal_point_windows.append((t0, t1))
 
-            # Optional: you can store only the window; point mask computed later in LasExtractor
-            self.temporal_point_masks_meta.append({"fi": fi, "fj": fj, "t0": float(t0), "t1": float(t1)})
+            # store both windows for extraction later
+            self.temporal_point_masks_meta.append({
+                "fi": fi, "fj": fj,
+                "tmin_i": float(tmin_i), "tmax_i": float(tmax_i),
+                "tmin_j": float(tmin_j), "tmax_j": float(tmax_j),
+            })
 
 
     @staticmethod
