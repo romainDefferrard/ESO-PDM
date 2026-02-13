@@ -143,9 +143,8 @@ class Footprint:
                     tmax_j = np.nanmax(self.tmax_grids[idx_2][combined_mask])
 
                     # one single window (intersection)
-                    t0 = max(tmin_i, tmin_j)
-                    t1 = min(tmax_i, tmax_j)
-
+                    t0 = min(tmin_i, tmin_j)
+                    t1 = max(tmax_i, tmax_j)
                     # if empty intersection -> NaNs
                     if not np.isfinite(t0) or not np.isfinite(t1) or t0 >= t1:
                         self.superpos_time_windows.append((np.nan, np.nan))

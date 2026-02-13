@@ -78,7 +78,6 @@ class FlightData:
                 bounds[1] = max(bounds[1], max_x)
                 bounds[2] = min(bounds[2], min_y)
                 bounds[3] = max(bounds[3], max_y)
-        
         if bounds is not None:
             self.bounds = bounds
 
