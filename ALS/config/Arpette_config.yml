@@ -5,12 +5,10 @@ SCAN_MODE: "ALS"     # difference in patching method and GUI
 PRJ_NAME: "Arpette"
 
 # Input files / directories
-OUTPUT_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/" 
-# PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/" 
-# RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/output"
-LAS_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
-# PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
-# RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/data/Arpette"
+OUTPUT_DIR: "./output/Arpette/" 
+PC_DIR: "./data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}"
+
+OUTPUT_PC_FMT: "txt" # Point cloud extraction format | "laz" | "las" | "txt" | "txyzs" |
 
 # Grid (Generic)
 GRID_RES: 25     # Grid resolution [m]
