@@ -15,8 +15,6 @@ Description:
 import argparse
 import os
 import sys
-import subprocess
-import shlex
 from typing import List, Tuple
 import numpy as np
 import yaml
@@ -53,7 +51,7 @@ class PatcherPipeline():
             None
         """
         self.config = yaml.safe_load(open(config_path, "r"))
-        self.las_dir = self.config["LAS_DIR"]
+        self.pc_dir = self.config["PC_DIR"]
         self.timer = TimerLogger()
     
     def load_data(self) -> None:
@@ -167,8 +165,9 @@ class PatcherPipeline():
             for flight_id in [flight_i, flight_j]:
                 pair_dir = f"{self.output_dir}/Flights_{flight_i}_{flight_j}"
                 os.makedirs(pair_dir, exist_ok=True)
+                
                 self.process_flight(
-                    flight_id, patch_group, self.config["LAS_DIR"], self.output_dir,
+                    flight_id, patch_group, self.output_dir,
                     pair_dir, self.footprint.superpos_flight_pairs, self.pg.contours_list
                 )
 
@@ -200,18 +199,22 @@ class PatcherPipeline():
 
             for flight_id, other_id in ((flight_i, flight_j), (flight_j, flight_i)):
                 input_file = self.flight_data.flight_files[flight_id]
-                ext = self._output_extension(input_file)
+                ext = self._out_ext()
 
                 extractor = LasExtractor(self.config, input_file, patches=[])
                 if not extractor.read_point_cloud():
                     continue
-
+                    
                 out_path = os.path.join(
                     pair_dir,
                     f"Patch_from_scan_{flight_id}_with_{other_id}.{ext}"
                 )
-
-                ok = extractor.extract_time_window(t0, t1, out_path)
+                if flight_id == flight_i:
+                    tmin, tmax = tmin_i, tmax_i
+                else:
+                    tmin, tmax = tmin_j, tmax_j
+                
+                ok = extractor.extract_time_window(tmin, tmax, out_path)
                 if not ok:
                     logging.warning(
                         f"[MLS] No points extracted for flight {flight_id} in pair {flight_i}-{flight_j}"
@@ -219,8 +222,9 @@ class PatcherPipeline():
         self.timer.stop("MLS Patch extraction (all pairs)")
 
 
-    def process_flight(self, flight_id: str, flight_patch: List[Patch], LAS_DIR: str, OUTPUT_DIR: str,
-                        pair_dir: str, superpos_pairs: List[Tuple[str, str]], contours_all: List[np.ndarray]) -> None:
+    def process_flight(self, flight_id: str, flight_patch: List[Patch],
+                        pair_dir: str, superpos_pairs: List[Tuple[str, str]],
+                        contours_all: List[np.ndarray]) -> None:
         """
         Processes a single flight by filtering relevant patches, loading the point cloud,
         and applying the configured extraction method. Relevant patches are defined as those whose polygon intersects
@@ -242,7 +246,6 @@ class PatcherPipeline():
             None
         """
         
-        _ = LAS_DIR
         input_file = self.flight_data.flight_files[flight_id]
         flight_polygon = self.get_flight_union_contour(flight_id, superpos_pairs, contours_all)
 
@@ -250,7 +253,7 @@ class PatcherPipeline():
 
         extractor = LasExtractor(self.config, input_file, relevant_patches)
         if extractor.read_point_cloud():
-            extractor.process_all_patches(relevant_patches, OUTPUT_DIR, flight_id, pair_dir)
+            extractor.process_all_patches(relevant_patches, self.output_dir, flight_id, pair_dir)
             
 
     def get_flight_union_contour(self, flight_id: str, superpos_pairs: List[Tuple[str, str]], contours_list: List[np.ndarray]) -> Polygon:
@@ -277,7 +280,7 @@ class PatcherPipeline():
                     polygons.append(contour)
         return unary_union(polygons) if polygons else Polygon()
 
-    def run(self):
+    def run_patcher(self):
         """
         Execute the full ALS pipeline from loading data to extraction.
 
@@ -320,7 +323,7 @@ class PatcherPipeline():
         base_out = base_cfg["prj_folder"] # original base output folder of LiMatch pipeline
         prj_name = self.config.get("PRJ_NAME", "PROJECT")
 
-        def single_run(pair_dir: str, tag: str, c1: str, c2: str) -> None:
+        def single_limatch_run(pair_dir: str, tag: str, c1: str, c2: str) -> None:
             if not (os.path.exists(c1) and os.path.exists(c2)):
                 logging.warning(f"LiMatch skipped (missing files): {c1} / {c2}")
                 return
@@ -340,42 +343,33 @@ class PatcherPipeline():
                 self.footprint.superpos_flight_pairs, self.patch_list
             ):
                 pair_dir = os.path.join(self.output_dir, f"Flights_{flight_i}_{flight_j}")
-                ext_i = self._output_extension(self.flight_data.flight_files[flight_i])
-                ext_j = self._output_extension(self.flight_data.flight_files[flight_j])
+                ext = self._out_ext()
 
                 for patch in patch_group:
-                    c1 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_i}.{ext_i}")
-                    c2 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_j}.{ext_j}")
-                    single_run(pair_dir, f"patch_{patch.id}", c1, c2)
+                    c1 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_i}.{ext}")
+                    c2 = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_j}.{ext}")
+                    single_limatch_run(pair_dir, f"patch_{patch.id}", c1, c2)
 
         # -------- MLS --------
         elif mode == "MLS":
             for (flight_i, flight_j) in self.footprint.superpos_flight_pairs:
                 pair_dir = os.path.join(self.output_dir, f"Flights_{flight_i}_{flight_j}")
 
-                ext_i = self._output_extension(self.flight_data.flight_files[flight_i])
-                ext_j = self._output_extension(self.flight_data.flight_files[flight_j])
+                ext = self._out_ext()
 
-                c1 = os.path.join(pair_dir, f"Patch_from_scan_{flight_i}_with_{flight_j}.{ext_i}")
-                c2 = os.path.join(pair_dir, f"Patch_from_scan_{flight_j}_with_{flight_i}.{ext_j}")
+                c1 = os.path.join(pair_dir, f"Patch_from_scan_{flight_i}_with_{flight_j}.{ext}")
+                c2 = os.path.join(pair_dir, f"Patch_from_scan_{flight_j}_with_{flight_i}.{ext}")
 
-                single_run(pair_dir, "mls_overlap", c1, c2)
+                single_limatch_run(pair_dir, "mls_overlap", c1, c2)
 
         else:
             raise ValueError(f"Unknown SCAN_MODE: {mode}")
 
-    
-
-    @staticmethod
-    def _output_extension(input_file: str) -> str:
-        """
-        Return the output patch extension based on the input file type.
-        """
-        if input_file.lower().endswith((".laz", ".las")):
-            return "laz"
-        if input_file.lower().endswith((".txyzs", ".txt")):
-            return "TXYZS"
-        raise ValueError(f"Unsupported input file format: {input_file}")
+    def _out_ext(self) -> str:
+        fmt = self.config["OUTPUT_PC_FMT"].lower()
+        if fmt in ("las", "laz", "txt", "txyzs"):
+            return fmt
+        raise ValueError(f"Unsupported OUTPUT_PC_FMT: {fmt}")
 
             
 if __name__ == "__main__":
@@ -386,4 +380,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     pipeline = PatcherPipeline(config_path=args.yml)
-    pipeline.run()
+    pipeline.run_patcher()

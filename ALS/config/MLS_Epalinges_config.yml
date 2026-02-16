@@ -2,16 +2,15 @@
 
 # Scanning mode: ALS or MLS supported 
 SCAN_MODE: "MLS"     # difference in patching method and GUI
+
 # Project name
 PRJ_NAME: "SAM_Epalinges"
 
 # Input files / directories
-OUTPUT_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/SAM_Epalinges/" 
-# PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/output/Arpette/" 
-# RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/output"
-LAS_DIR: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/SAM/Epalinges_{flight_id}_merged.las"
-# PC: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/data/Arpette/ARPETTE_LV95_HELL_1560II_CH1_211020_{flight_id}.laz"
-# RD: "/Users/romain/Desktop/EPFL/PDM/ESO-PDM/ALS/data/Arpette"
+OUTPUT_DIR: "./output/SAM_Epalinges_test/" 
+PC_DIR: "./data/SAM_Epalinges/Epalinges_{flight_id}_merged" # point cloud directory with files template name
+
+OUTPUT_PC_FMT: "txyzs" # Point cloud extraction format | "laz" | "las" | "txt" | "txyzs" |
 
 # Grid (Generic)
 GRID_RES: 1     # Grid resolution [m]
@@ -19,7 +18,6 @@ GRID_BUFFER: 0   # Buffer around point cloud bounds [m]
 
 # Patch generation  
 PAIR_MODE: "all" # Options: "successive", "all". Successive: only generate patches from successive lines. All: generate patches from all lines.
-#PATCH_DIMS: [500, 500, 1000] # [length, width, height] [m]
 
 # Footprint
 POINTCLOUD_DOWNSAMPLING: 1 # Take 1 point every N points to compute the footprint

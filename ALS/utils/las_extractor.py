@@ -44,6 +44,7 @@ class LasExtractor:
         """
         self.extraction_mode = config["EXTRACTION_MODE"]
         self.input_file = input_file
+
         self.patches = patches  # list of patches instances
         
         # Loaded point cloud content
@@ -53,7 +54,7 @@ class LasExtractor:
         # For ASCII format
         self.z = None
         self.gps_times = None  # GPS time
-        self.intensities = None  # Intensity or Classification
+        self.intensity = None  # Intensity or Classification
 
         self.coords_mask = None
         
@@ -62,22 +63,33 @@ class LasExtractor:
 
 
         self.file_format = self.detect_file_format()
-        
 
-    def detect_file_format(self) -> str:
-        """
-        Detects the input file format.
+        self.output_pc_fmt = config["OUTPUT_PC_FMT"].lower()
 
-        Output:
-            str: 'laz' or 'TXYZS'
-        """
-        if self.input_file.endswith(".laz") or self.input_file.endswith(".las"):
-            return "laz"
-        elif self.input_file.endswith(".TXYZS") or self.input_file.endswith(".txt"):
-            return "TXYZS"
+    def _write_selected(self, output_file: str, mask: np.ndarray) -> None:
+
+        self.coords_mask = mask
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+        fmt = self.output_pc_fmt
+        if fmt in ("las", "laz"):
+            self.write_las(output_file)
+        elif fmt in ("txt", "txyzs"):
+            self.write_ascii(output_file)
         else:
-            raise ValueError(f"Unsupported file format: {self.input_file}. Supported: .laz, .las, .TXYZS")
+            raise ValueError(f"Unsupported OUTPUT_PC_FMT: {fmt}")
 
+
+    def detect_file_format(self) -> str: 
+        """ 
+        Detects the input file format. Output: str: 'laz' or 'TXYZS' 
+        """ 
+        if self.input_file.endswith(".laz") or self.input_file.endswith(".las"): 
+            return "laz" 
+        elif self.input_file.endswith(".TXYZS") or self.input_file.endswith(".txt"): 
+            return "TXYZS" 
+        else: raise ValueError(f"Unsupported file format: {self.input_file}. Supported: .laz, .las, .TXYZS")
+   
     def read_point_cloud(self) -> bool:
         """
         Reads the input point cloud file based on its format.
@@ -85,9 +97,9 @@ class LasExtractor:
         Output:
             bool: True if successful, False if file not found.
         """
-        if self.file_format == "laz":
+        if self.file_format in ("laz", "las"):
             return self.las_read()
-        elif self.file_format == "TXYZS":
+        elif self.file_format in ("txt", "txyzs"):
             return self.ascii_read()
 
     def las_read(self) -> bool:
@@ -108,7 +120,10 @@ class LasExtractor:
                 self.gps_times = np.asarray(self.las.gps_time)
             else:
                 self.gps_times = None
-
+        self.z = self.las.z
+        
+        self.intensity = self.las.intensity
+        
         return True
 
 
@@ -119,6 +134,7 @@ class LasExtractor:
         Output:
             bool: True if successful, False if file not found or invalid.
         """
+        print("reading")
         if not os.path.exists(self.input_file):
             logging.error(f"File not found: {self.input_file}")
             return False
@@ -131,8 +147,7 @@ class LasExtractor:
         self.gps_times = df.iloc[:, 0].values  # Time
         self.coords = df.iloc[:, 1:3].values  # X, Y
         self.z = df.iloc[:, 3].values  # Z
-        self.intensities = df.iloc[:, 4:7].values  # Intensity values (3 columns)
-
+        self.intensity = df.iloc[:, 4].values  # Intensity value
         return True
 
 
@@ -170,9 +185,7 @@ class LasExtractor:
                 self.coords[self.coords_mask, 0],
                 self.coords[self.coords_mask, 1],
                 self.z[self.coords_mask],
-                self.intensities[self.coords_mask, 0],
-                self.intensities[self.coords_mask, 1],
-                self.intensities[self.coords_mask, 2],
+                self.intensity[self.coords_mask]
             )
         )
 
@@ -233,10 +246,7 @@ class LasExtractor:
             self.coords_mask = np.zeros(len(self.coords), dtype=bool)
             self.coords_mask[selected_indices] = True
 
-            if self.file_format == "TXYZS":
-                self.write_ascii(output_file)
-            else:
-                self.write_las(output_file)    
+            self._write_selected(output_file, self.coords_mask)   
     
     def fast_geometric_mask(self, patch: Patch) -> np.ndarray:
         """
@@ -294,57 +304,6 @@ class LasExtractor:
  
         return full_indices
     
-    def extract_overlap_mask(
-        self,
-        overlap_mask: np.ndarray,
-        raster_mesh: tuple[np.ndarray, np.ndarray],
-        output_file: str,
-    ) -> bool:
-        """
-        MLS extraction:
-        Extract all points whose (x,y) falls inside the overlap raster mask.
-
-        Inputs:
-            overlap_mask: boolean grid (same shape as raster_map) representing MLS "patch"
-            raster_mesh: (x_mesh, y_mesh) used to map XY -> (row,col)
-            output_file: path to write extracted cloud
-
-        Output:
-            bool: True if something was extracted/written, False otherwise.
-        """
-        if self.coords is None:
-            raise RuntimeError("Point cloud not loaded. Call read_point_cloud() first.")
-
-        x_mesh, y_mesh = raster_mesh
-        x0 = float(x_mesh[0, 0])
-        y0 = float(y_mesh[0, 0])
-        res_x = float(abs(x_mesh[0, 1] - x_mesh[0, 0]))
-        res_y = float(abs(y_mesh[1, 0] - y_mesh[0, 0]))
-
-        cols = np.floor((self.coords[:, 0] - x0) / res_x).astype(int)
-        rows = np.floor((y0 - self.coords[:, 1]) / res_y).astype(int)
-
-        valid = (
-            (rows >= 0) & (rows < overlap_mask.shape[0]) &
-            (cols >= 0) & (cols < overlap_mask.shape[1])
-        )
-
-        in_overlap = np.zeros(len(self.coords), dtype=bool)
-        in_overlap[valid] = overlap_mask[rows[valid], cols[valid]]
-
-        if not np.any(in_overlap):
-            logging.warning(f"[MLS] No points in overlap mask for {os.path.basename(self.input_file)}")
-            return False
-
-        self.coords_mask = in_overlap
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-
-        if self.file_format == "TXYZS":
-            self.write_ascii(output_file)
-        else:
-            self.write_las(output_file)
-
-        return True
     
     def extract_time_window(self, t0: float, t1: float, output_file: str) -> bool:
         """
@@ -358,13 +317,7 @@ class LasExtractor:
         if not np.any(mask):
             return False
 
-        self.coords_mask = mask
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-
-        if self.file_format == "TXYZS":
-            self.write_ascii(output_file)
-        else:
-            self.write_las(output_file)
+        self._write_selected(output_file, mask)
 
         return True
     
@@ -407,12 +360,7 @@ class LasExtractor:
         if not mask.any():
             return False
 
-        self.coords_mask = mask
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        if self.file_format == "TXYZS":
-            self.write_ascii(output_file)
-        else:
-            self.write_las(output_file)
+        self._write_selected(output_file, mask)
         return True
 
 

@@ -183,11 +183,11 @@ class Footprint:
             file_j = self.flight_files[fj]
 
             # IMPORTANT: each cloud uses its OWN time window
-            mask_i = Footprint.rasterize_time_window(
+            mask_i = Footprint._rasterize_time_window(
                 file_i, self.raster_map, self.x_mesh, self.y_mesh,
                 self.pc_downsample, tmin_i, tmax_i
             )
-            mask_j = Footprint.rasterize_time_window(
+            mask_j = Footprint._rasterize_time_window(
                 file_j, self.raster_map, self.x_mesh, self.y_mesh,
                 self.pc_downsample, tmin_j, tmax_j
             )
@@ -263,7 +263,7 @@ class Footprint:
         return flight_key, (mask, tmin_grid, tmax_grid)
 
     @staticmethod
-    def rasterize_time_window(input_file, raster_map, x_mesh, y_mesh, pc_downsample, t0, t1):
+    def _rasterize_time_window(input_file, raster_map, x_mesh, y_mesh, pc_downsample, t0, t1):
         xy, times = Footprint._read_xy_and_time(input_file, "MLS")
         xy, times = Footprint._clean_and_downsample(xy, times, pc_downsample)
         m = (times >= t0) & (times <= t1)
