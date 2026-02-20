@@ -4,13 +4,13 @@
 SCAN_MODE: "MLS"     # difference in patching method and GUI
 
 # Project name
-PRJ_NAME: "SAM_Epalinges"
+PRJ_NAME: "SAM_Epalinges_case2"
 
 # Input files / directories
-OUTPUT_DIR: "./output/SAM_Epalinges_test/" 
-PC_DIR: "./data/SAM_Epalinges/Epalinges_{flight_id}_merged" # point cloud directory with files template name
+OUTPUT_DIR: "/media/b085164/Elements/test_limatch/case2/data/output/" 
+PC_DIR: "/media/b085164/Elements/test_limatch/case2/data/Epalinges_{flight_id}_merged" # point cloud directory with files template name
 
-OUTPUT_PC_FMT: "txyzs" # Point cloud extraction format | "laz" | "las" | "txt" | "txyzs" |
+OUTPUT_PC_FMT: "las" # Point cloud extraction format | "laz" | "las" | "txt" | "txyzs" |
 
 # Grid (Generic)
 GRID_RES: 1     # Grid resolution [m]
@@ -29,4 +29,4 @@ EXTRACTION_MODE: "independent" # Options: "independent". Extract all patches ind
 LIMATCH_CFG: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/submodules/limatch/configs/MLS.yml" 
 
 # GUI
-CRS: #"EPSG:2056"     # (Optionnal) Spatial reference system
+CRS: "EPSG:2056"     # (Optionnal) Spatial reference system
