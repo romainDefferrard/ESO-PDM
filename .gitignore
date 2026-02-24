@@ -1,8 +1,7 @@
-# Ignore all local data/output content entirely
-ALS/data/
-ALS/output/
+# big stuff
+Patcher/data/
+Patcher/output/
+Patcher/submodules/
 
+# OS
 .DS_Store
-**/.DS_Store
-__pycache__/
-*.pyc
