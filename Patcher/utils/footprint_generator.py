@@ -140,6 +140,7 @@ class Footprint:
 
                 tmin_j = np.nanmin(self.tmin_grids[idx_2][combined_mask])
                 tmax_j = np.nanmax(self.tmax_grids[idx_2][combined_mask])
+            #    print(tmin_i, tmax_i, tmin_j, tmax_j)
 
                 # one single window (intersection)
             #    t0 = min(tmin_i, tmin_j)
@@ -302,7 +303,7 @@ class Footprint:
                         f"[MLS] No time column found in {input_file}. "
                         f"Need >= 5 columns or adapt the parser to your format."
                     )
-                times = df.iloc[:, -1].astype(float).values
+                times = df.iloc[:, 0].astype(float).values
 
         else:
             raise ValueError(f"Unsupported file format for footprint: {input_file}")

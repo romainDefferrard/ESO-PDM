@@ -32,6 +32,6 @@ output:
   type: 'ASCII' 
   lasvec: True
   lasvec_to_body: True
-  path: '/media/b085164/Elements/PCD_SAM/test_distance/LR'
+  path: '/media/b085164/Elements/PCD_SAM/subset/LR'
 
 limatch_output: 
