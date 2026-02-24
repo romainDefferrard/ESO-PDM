@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import QApplication
 from tqdm import tqdm
 import logging
 import copy 
+from pathlib import Path
 
 from utils.flight_data import FlightData
 from utils.footprint_generator import Footprint
@@ -61,6 +62,7 @@ class PatcherPipeline():
         Output:
             None
         """
+        print("\n[Patcher]: Loading data")
         self.timer.start("Flight & grid loading")
         fd = FlightData(self.config)
         rl = RasterLoader(self.config, flight_bounds=fd.bounds)
@@ -180,11 +182,10 @@ class PatcherPipeline():
         from each cloud within that time window.
         """
         self.timer.start("MLS Patch extraction (all pairs)")
-
+        print("[MLS] pairs:", len(self.footprint.superpos_flight_pairs))
         
         for k, (flight_i, flight_j) in enumerate(self.footprint.superpos_flight_pairs):
             (tmin_i, tmax_i), (tmin_j, tmax_j) = self.footprint.superpos_time_windows[k]  # must be (t0, t1)
-
             # skip invalid windows
             if (not np.isfinite(tmin_i)) or (not np.isfinite(tmax_i)) or tmin_i >= tmax_i:
                 logging.warning(f"[MLS] Invalid time window for flight {flight_i}")
@@ -200,8 +201,8 @@ class PatcherPipeline():
             for flight_id, other_id in ((flight_i, flight_j), (flight_j, flight_i)):
                 input_file = self.flight_data.flight_files[flight_id]
                 ext = self._out_ext()
-
                 extractor = LasExtractor(self.config, input_file, patches=[])
+                
                 if not extractor.read_point_cloud():
                     continue
                     
@@ -213,7 +214,7 @@ class PatcherPipeline():
                     tmin, tmax = tmin_i, tmax_i
                 else:
                     tmin, tmax = tmin_j, tmax_j
-                
+
                 ok = extractor.extract_time_window(tmin, tmax, out_path)
                 if not ok:
                     logging.warning(
@@ -288,7 +289,6 @@ class PatcherPipeline():
             None
         """
         mode = self.config["SCAN_MODE"]
-
         self.timer.start(f"{mode} total time")
 
         self.load_data()
@@ -316,7 +316,8 @@ class PatcherPipeline():
         mode = self.config["SCAN_MODE"]
 
         # Load LiMatch config
-        limatch_cfg_path = self.config["LIMATCH_CFG"]
+        limatch_cfg_path = Path(self.config["LIMATCH_CFG"])
+
         with open(limatch_cfg_path, "r") as f:
             base_cfg = yaml.safe_load(f)
 

@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from lib.loaders import loadSBET, loadASCII, loadDN
-from lib.rotations import *
+from .loaders import loadSBET, loadASCII, loadDN
+from .rotations import *
 from cycler import cycler
 from scipy.spatial.transform import Rotation as R, Slerp
 import multiprocessing

@@ -1,7 +1,7 @@
 # lib/georef.py
 
 import numpy as np
-from lib.rotations import quat2dcm, R_l2e, T, R1, R2, R3
+from .rotations import quat2dcm, R_l2e, T, R1, R2, R3
 from pyproj import Transformer
 import multiprocessing
 from multiprocessing import Pool

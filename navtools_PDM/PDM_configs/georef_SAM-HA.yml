@@ -33,7 +33,7 @@ output:
   type: 'ASCII' 
   lasvec: True
   lasvec_to_body: True # or lasvec expressed in sensor frame if set to False
-  path: '/media/b085164/Elements/PCD_SAM/test_distance/HA'
+  path: '/media/b085164/Elements/PCD_SAM/subset/HA'
 
 limatch_output: 
 
