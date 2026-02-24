@@ -1,0 +1,26 @@
+mode: "patcher_then_limatch"   # ou "chunk_then_limatch"
+
+georef:
+  ha_cfg: "PDM_configs/georef_SAM-HA.yml"
+  lr_cfg: "PDM_configs/georef_SAM-LR.yml"
+
+merge:
+  enabled: true
+  out_dir: "/media/b085164/Elements/PCD_SAM/test/merged"
+  out_suffix: "_HA_LR"
+
+# Option chunking (si mode == chunk_then_limatch)
+chunking:
+  enabled: true
+  chunk_sec: 5
+  overlap_sec: 2
+  out_dir: "/media/b085164/Elements/PCD_SAM/test/chunks"
+
+# Option patcher (si mode == patcher_then_limatch)
+patcher:
+  yml: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/config/MLS_Epalinges_config.yml"
+
+limatch:
+  enabled: true
+  # si tu as une fonction run_limatch_from_patcher_config:
+  run_from_patcher_cfg: true
