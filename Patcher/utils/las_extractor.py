@@ -87,7 +87,7 @@ class LasExtractor:
         if self.input_file.endswith(".laz") or self.input_file.endswith(".las"): 
             return "laz" 
         elif self.input_file.endswith(".TXYZS") or self.input_file.endswith(".txt"): 
-            return "TXYZS" 
+            return "txt" 
         else: raise ValueError(f"Unsupported file format: {self.input_file}. Supported: .laz, .las, .TXYZS")
    
     def read_point_cloud(self) -> bool:
@@ -134,20 +134,30 @@ class LasExtractor:
         Output:
             bool: True if successful, False if file not found or invalid.
         """
-        print("reading")
         if not os.path.exists(self.input_file):
             logging.error(f"File not found: {self.input_file}")
             return False
 
-        df = pd.read_csv(self.input_file, delimiter="\t", header=None, dtype=float)
+        try:
+            df = pd.read_csv(self.input_file, delimiter=",", header=None, dtype=float)
+            if df.shape[1] < 4:
+                raise ValueError
+        except Exception:
+            df = pd.read_csv(self.input_file, delimiter="\t", header=None, dtype=float)
 
-        if df.shape[1] < 7:
-            raise ValueError("File does not contain enough columns.")
+        if df.shape[1] < 4:
+            raise ValueError("TXT must contain at least: t, x, y, z (4 columns).")
 
-        self.gps_times = df.iloc[:, 0].values  # Time
-        self.coords = df.iloc[:, 1:3].values  # X, Y
-        self.z = df.iloc[:, 3].values  # Z
-        self.intensity = df.iloc[:, 4].values  # Intensity value
+        self.gps_times = df.iloc[:, 0].values
+        self.coords = df.iloc[:, 1:3].values
+        self.z = df.iloc[:, 3].values
+
+        # Optional: laser vectors in body frame
+        if df.shape[1] >= 7:
+            self.lasvec = df.iloc[:, 4:7].values
+        else:
+            self.lasvec = None
+
         return True
 
 
@@ -179,17 +189,20 @@ class LasExtractor:
         Output:
             None
         """
-        extracted_points = np.column_stack(
-            (
-                self.gps_times[self.coords_mask],
-                self.coords[self.coords_mask, 0],
-                self.coords[self.coords_mask, 1],
-                self.z[self.coords_mask],
-                self.intensity[self.coords_mask]
-            )
-        )
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-        np.savetxt(output_file, extracted_points, delimiter="\t")
+        t = self.gps_times[self.coords_mask]
+        x = self.coords[self.coords_mask, 0]
+        y = self.coords[self.coords_mask, 1]
+        z = self.z[self.coords_mask]
+
+        if getattr(self, "lasvec", None) is not None:
+            lv = self.lasvec[self.coords_mask]
+            out = np.column_stack((t, x, y, z, lv))
+        else:
+            out = np.column_stack((t, x, y, z))
+
+        np.savetxt(output_file, out, delimiter=",", fmt="%.10f")
 
     def copy_header(self) -> None:
         """
@@ -236,7 +249,7 @@ class LasExtractor:
         os.makedirs(pair_dir, exist_ok=True)
 
         for patch in patches:
-            output_file = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_id}.{self.file_format}")
+            output_file = os.path.join(pair_dir, f"patch_{patch.id}_flight_{flight_id}.{self.output_pc_fmt}")
             
             selected_indices = self.fast_geometric_mask(patch)
             if len(selected_indices) == 0:

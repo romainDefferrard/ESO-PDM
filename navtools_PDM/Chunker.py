@@ -1,9 +1,17 @@
 import numpy as np
 from pathlib import Path
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, Optional
+import re 
 
-from pointCloudGeoref import load_config, load_and_prepare_trajectory, trajectory_positions_mapping
+from .pointCloudGeoref import load_config, load_and_prepare_trajectory, trajectory_positions_mapping
 
+MERGED_SCAN_RE = re.compile(r"merged_(\d+)")  # merged_0100...
+
+def extract_scan_id(p: Path) -> int:
+    m = MERGED_SCAN_RE.search(p.name)
+    if not m:
+        raise ValueError(f"Cannot read scan id from merged filename: {p.name}")
+    return int(m.group(1))
 
 def cumulative_distance_xy(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     dx = np.diff(x)
@@ -45,6 +53,10 @@ def chunk_txt_by_distance(
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    base_scan = extract_scan_id(txt_path)
+    if base_scan is None:
+        raise ValueError(f"Cannot extract scan id from filename: {txt_path.name}")
+
     pts = np.loadtxt(txt_path, delimiter=delimiter, skiprows=skiprows)
     if pts.ndim == 1:
         pts = pts.reshape(1, -1)
@@ -71,7 +83,7 @@ def chunk_txt_by_distance(
     starts = np.arange(s_start, s_end, L, dtype=np.float64)
 
     written = 0
-    for cid, s0 in enumerate(starts):
+    for _, s0 in enumerate(starts):
         s1 = s0 + L
         if s0 >= s_end:
             break
@@ -81,8 +93,11 @@ def chunk_txt_by_distance(
         mask = (t_pts >= t0) & (t_pts < t1)
         if int(mask.sum()) < min_points:
             continue
+    
+        # chunk numbering: 0100, 0101, 0102 ...
+        chunk_id = base_scan + written
+        out_path = out_dir / f"chunk_{chunk_id:04d}.txt"
 
-        out_path = out_dir / f"{out_prefix}{cid:05d}.txt"
         np.savetxt(out_path, pts[mask], delimiter=delimiter, fmt="%.10f")
         written += 1
 

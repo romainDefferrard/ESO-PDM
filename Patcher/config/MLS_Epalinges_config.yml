@@ -4,29 +4,30 @@
 SCAN_MODE: "MLS"     # difference in patching method and GUI
 
 # Project name
-PRJ_NAME: "SAM_Epalinges_case2"
+PRJ_NAME: "SAM_Epalinges_test"
 
 # Input files / directories
-OUTPUT_DIR: "/media/b085164/Elements/test_limatch/case2/data/output/" 
-PC_DIR: "/media/b085164/Elements/test_limatch/case2/data/Epalinges_{flight_id}_merged" # point cloud directory with files template name
+OUTPUT_DIR: "/media/b085164/Elements/PCD_SAM/subset/output_Patcher/" 
+PC_DIR: "/media/b085164/Elements/PCD_SAM/subset/merged/merged_250220_{flight_id}_HA_LR" # point cloud directory with files template name
 
-OUTPUT_PC_FMT: "las" # Point cloud extraction format | "laz" | "las" | "txt" | "txyzs" |
+OUTPUT_PC_FMT: "txt" # Point cloud extraction format | "laz" | "las" | "txt" | "txyzs" |
 
 # Grid (Generic)
-GRID_RES: 1     # Grid resolution [m]
+GRID_RES: 5     # Grid resolution [m]
 GRID_BUFFER: 0   # Buffer around point cloud bounds [m]
 
 # Patch generation  
 PAIR_MODE: "all" # Options: "successive", "all". Successive: only generate patches from successive lines. All: generate patches from all lines.
 
 # Footprint
-POINTCLOUD_DOWNSAMPLING: 1 # Take 1 point every N points to compute the footprint
+POINTCLOUD_DOWNSAMPLING: 100 # Take 1 point every N points to compute the footprint
 
 # Extraction (minimal pipeline)
 EXTRACTION_MODE: "independent" # Options: "independent". Extract all patches independently.
 
 # LiMatch
-LIMATCH_CFG: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/submodules/limatch/configs/MLS.yml" 
+LIMATCH_CFG: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/configs/MLS.yml" 
+              
 
 # GUI
 CRS: "EPSG:2056"     # (Optionnal) Spatial reference system

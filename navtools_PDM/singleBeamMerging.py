@@ -3,32 +3,35 @@ from typing import Optional
 import re
 import numpy as np
 
-KEY_RE = re.compile(r"(\d{6}_\d{6})")  # ex: 250220_094545
+SCAN_RE = re.compile(r"_(\d{3,6})(?=_)")  # capture un bloc de digits entouré par underscores: _0100_
 
-
-def extract_key(p: Path) -> Optional[str]:
-    m = KEY_RE.search(p.name)
-    return m.group(1) if m else None
-
+def extract_scan_id(p: Path) -> Optional[int]:
+    """
+    Retourne un int (0100, 000100 -> 100) à partir du filename.
+    On prend le PREMIER groupe '_<digits>_' trouvé.
+    """
+    m = SCAN_RE.search(p.name)
+    if not m:
+        return None
+    return int(m.group(1))
 
 def list_txt(dir_path: Path) -> list[Path]:
     it = dir_path.glob("*.txt")
     return sorted([p for p in it if p.is_file()])
 
 
-def index_by_key(files: list[Path]) -> tuple[dict[str, Path], list[tuple[str, str]]]:
-    idx: dict[str, Path] = {}
-    skipped: list[tuple[str, str]] = []
+def index_by_scan(files: list[Path]) -> tuple[dict[str, Path], list[tuple[str, str]]]:
+    idx = {}
+    skipped = []
     for p in files:
-        key = extract_key(p)
-        if key is None:
-            skipped.append((p.name, "no key match"))
+        sid = extract_scan_id(p)
+        if sid is None:
+            skipped.append((p.name, "no scan id"))
             continue
-        if key in idx:
-            skipped.append((p.name, f"duplicate key={key} (already {idx[key].name})"))
+        if sid in idx:
+            skipped.append((p.name, f"duplicate scan={sid} (already {idx[sid].name})"))
             continue
-        idx[key] = p
-
+        idx[sid] = p
     return idx, skipped
 
 
@@ -83,21 +86,21 @@ def merge_txt_pairs(
     files_a = list_txt(dir_a)
     files_b = list_txt(dir_b)
 
-    idx_a, skipped_a = index_by_key(files_a)
-    idx_b, skipped_b = index_by_key(files_b)
+    idx_a, skipped_a = index_by_scan(files_a)
+    idx_b, skipped_b = index_by_scan(files_b)
 
-    keys = sorted(set(idx_a) & set(idx_b))
-    if not keys:
-        print("No matching keys found. Check filenames / KEY_RE.")
+    scans = sorted(set(idx_a) & set(idx_b))
+    if not scans:
+        print("No matching scans found. Check filenames / SCAN_RE.")
         if skipped_a: print("Skipped A:", skipped_a[:10])
         if skipped_b: print("Skipped B:", skipped_b[:10])
         return
 
     ok = 0
-    for key in keys:
-        a = idx_a[key]
-        b = idx_b[key]
-        out = out_dir / f"{out_prefix}{key}{out_suffix}.txt"
+    for scan in scans:
+        a = idx_a[scan]
+        b = idx_b[scan]
+        out = out_dir / f"{out_prefix}{scan}{out_suffix}.txt"
         merge_two_txt(
             a, b, out,
             delimiter=delimiter,
@@ -110,7 +113,7 @@ def merge_txt_pairs(
     missing_a = sorted(set(idx_b) - set(idx_a))
 
     print("\n--- Summary ---")
-    print(f"[Merging] Pairs found: {len(keys)} | Merged: {ok}")
+    print(f"[Merging] Pairs found: {len(scans)} | Merged: {ok}")
     print(f"[Merging] Output dir: {out_dir}")
     if missing_b:
         print(f"Missing in B (first 20): {missing_b[:20]}" + (" ..." if len(missing_b) > 20 else ""))

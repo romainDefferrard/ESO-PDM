@@ -6,18 +6,16 @@ Date: 04-06-2025
 Description:
 
 """
-from __future__ import annotations
-
 import argparse
 import logging
 from pathlib import Path
 import yaml
+from typing import Union
 
 from utils.Patcher import PatcherPipeline
 
 
-
-def run_patcher_from_config(config_path: str | Path) -> None:
+def run_patcher_from_config(config_path: Union[str,Path]) -> None:
     """
     Importable entrypoint: call this from other scripts.
     """

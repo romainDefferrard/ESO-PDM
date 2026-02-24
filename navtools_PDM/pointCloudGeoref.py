@@ -6,10 +6,10 @@ from typing import Any, Dict, Union, Optional
 
 import numpy as np
 import yaml
-from lib.trajectory import *
-from lib.rotations import *
-from lib.loaders import *
-from lib.lidar import *
+from .lib.trajectory import *
+from .lib.rotations import *
+from .lib.loaders import *
+from .lib.lidar import *
 
 
 # ============================================================
