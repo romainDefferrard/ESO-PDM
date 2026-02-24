@@ -1,0 +1,37 @@
+trj:
+  type: 'SBET'
+  path: '/media/b085164/Elements/test_SAMVUX_20250829/05_ODyN/test_sbet.OUT'
+  cfg:
+    type: 'SBET'
+
+lasvec:
+  type: 'SDC' # ASCII or SDC
+  cols: [0,3,4,5] # identifier for time, x, y, z columns of data [0,3,4,5] for SDC
+  path: '/media/b085164/Elements/RD_SAM_SDC/subset_LR'
+
+leapsec: 18
+
+distance_filtering: 
+  enable: True
+  max_distance_m: 20
+  map_epsg: "EPSG:2056"
+
+mount:
+  R_mount:
+  - [0.383797548988406, 0.743144825433119, -0.548119703917375]
+  - [0.426250360987124, -0.669130606408031, -0.608748602730526]
+  - [-0.819152043975255, 1.91558269479465E-11, -0.573576436799109] 
+
+  boresight:
+    roll:  0.00417329463823432
+    pitch: 0.00446934293659946
+    yaw:   0.0023397883952236
+
+  lever_arm: [-0.352232739417906, -0.359090504106855, -0.247]
+output:
+  type: 'ASCII' 
+  lasvec: True
+  lasvec_to_body: True
+  path: '/media/b085164/Elements/PCD_SAM/test_distance/LR'
+
+limatch_output: 

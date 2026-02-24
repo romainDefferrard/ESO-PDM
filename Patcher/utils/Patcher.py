@@ -1,5 +1,5 @@
 """
-Filename: main.py
+Filename: Patcher.py
 Author: Romain Defferrard
 Date: 04-06-2025
 
@@ -12,7 +12,6 @@ Description:
 
 """
 
-import argparse
 import os
 import sys
 from typing import List, Tuple
@@ -40,7 +39,7 @@ warnings.filterwarnings("ignore")
 
 
 class PatcherPipeline():
-    def __init__(self, config_path: str):
+    def __init__(self, config: str):
         """
         Initialize the ALS pipeline using the provided YAML configuration.
 
@@ -50,9 +49,10 @@ class PatcherPipeline():
         Output:
             None
         """
-        self.config = yaml.safe_load(open(config_path, "r"))
+        self.config = config
         self.pc_dir = self.config["PC_DIR"]
         self.timer = TimerLogger()
+
     
     def load_data(self) -> None:
         """
@@ -370,14 +370,3 @@ class PatcherPipeline():
         if fmt in ("las", "laz", "txt", "txyzs"):
             return fmt
         raise ValueError(f"Unsupported OUTPUT_PC_FMT: {fmt}")
-
-            
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
-    
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--yml", "-y", required=True, help="Path to the configuration file")
-    args = parser.parse_args()
-
-    pipeline = PatcherPipeline(config_path=args.yml)
-    pipeline.run_patcher()
