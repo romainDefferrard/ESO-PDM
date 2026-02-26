@@ -15,10 +15,11 @@ Description:
 import numpy as np
 from itertools import combinations
 from more_itertools import pairwise
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 from tqdm import tqdm
 import laspy
 import pandas as pd
+import os
 
 def get_footprint_wrapper(args):
     return Footprint.get_footprint(*args)
@@ -52,9 +53,10 @@ class Footprint:
                 - POINTCLOUD_DOWNSAMPLING (Generic)
         """
         self.raster_map = raster
+        self.x_mesh, self.y_mesh = raster_mesh
+
         self.flights = flights
         self.flight_files = flight_files
-        self.x_mesh, self.y_mesh = raster_mesh
 
         # Modes 
         self.pair_mode = config["PAIR_MODE"]
@@ -72,6 +74,11 @@ class Footprint:
         self.tmin_grids = []
         self.tmax_grids = []
         self.superpos_time_windows = []
+
+        # bounds
+        self.flight_bounds: Dict[str, Tuple[float, float, float, float]] = {}
+        self.bounds: Optional[list[float]] = None  # global bounds
+
 
         self.get_superpos_zones()
 
@@ -124,6 +131,7 @@ class Footprint:
             raise ValueError(f"Invalid mode: {self.pair_mode}. Choose 'successive' or 'all'.")
 
         for flight_id_1, flight_id_2 in flight_pairs:
+            print(f"\n[Footprint] Processing scans {flight_id_1} and {flight_id_2}")
             idx_1 = flight_id_to_index[flight_id_1]
             idx_2 = flight_id_to_index[flight_id_2]
 
@@ -140,12 +148,7 @@ class Footprint:
 
                 tmin_j = np.nanmin(self.tmin_grids[idx_2][combined_mask])
                 tmax_j = np.nanmax(self.tmax_grids[idx_2][combined_mask])
-            #    print(tmin_i, tmax_i, tmin_j, tmax_j)
 
-                # one single window (intersection)
-            #    t0 = min(tmin_i, tmin_j)
-            #    t1 = max(tmax_i, tmax_j)
-                # if empty intersection -> NaNs
                 if not all(np.isfinite([tmin_i, tmax_i, tmin_j, tmax_j])) or (tmin_i >= tmax_i) or (tmin_j >= tmax_j):
                     self.superpos_masks.pop()
                     self.superpos_flight_pairs.pop()
@@ -158,45 +161,20 @@ class Footprint:
 
     def build_temporal_footprint(self):
         """
-        For MLS only:
-        - Re-open point clouds for each pair
-        - Build point masks based on (t0,t1)
-        - Build GUI raster coverage mask as union of both flights (time-filtered)
+        MLS only:
+        Do NOT re-open point clouds here.
+        Keep only overlap mask (for GUI) + time windows (for extraction).
         """
-        self.temporal_gui_masks = []          # list[bool raster] per pair
-        self.temporal_point_windows = []      # list[(t0,t1)] per pair (same as superpos_time_windows)
-        self.temporal_point_masks_meta = []   # optional: store how to rebuild / where saved
+        self.temporal_gui_masks = []
+        self.temporal_point_masks_meta = []
 
-        for pair_idx, (fi, fj) in enumerate(self.superpos_flight_pairs):
-            (tmin_i, tmax_i), (tmin_j, tmax_j) = self.superpos_time_windows[pair_idx]
+        for k, (fi, fj) in enumerate(self.superpos_flight_pairs):
+            (tmin_i, tmax_i), (tmin_j, tmax_j) = self.superpos_time_windows[k]
 
-            if (not np.isfinite(tmin_i)) or (not np.isfinite(tmax_i)) or (tmin_i >= tmax_i):
-                self.temporal_gui_masks.append(np.zeros_like(self.raster_map, dtype=bool))
-                self.temporal_point_masks_meta.append(None)
-                continue
+            # GUI: keep spatial overlap mask (cheap, already computed)
+            self.temporal_gui_masks.append(self.superpos_masks[k])
 
-            if (not np.isfinite(tmin_j)) or (not np.isfinite(tmax_j)) or (tmin_j >= tmax_j):
-                self.temporal_gui_masks.append(np.zeros_like(self.raster_map, dtype=bool))
-                self.temporal_point_masks_meta.append(None)
-                continue
-
-            file_i = self.flight_files[fi]
-            file_j = self.flight_files[fj]
-
-            # IMPORTANT: each cloud uses its OWN time window
-            mask_i = Footprint._rasterize_time_window(
-                file_i, self.raster_map, self.x_mesh, self.y_mesh,
-                self.pc_downsample, tmin_i, tmax_i
-            )
-            mask_j = Footprint._rasterize_time_window(
-                file_j, self.raster_map, self.x_mesh, self.y_mesh,
-                self.pc_downsample, tmin_j, tmax_j
-            )
-
-            # GUI display = union of both filtered coverages
-            self.temporal_gui_masks.append(mask_i | mask_j)
-
-            # store both windows for extraction later
+            # keep meta for debugging / UI display
             self.temporal_point_masks_meta.append({
                 "fi": fi, "fj": fj,
                 "tmin_i": float(tmin_i), "tmax_i": float(tmax_i),
@@ -221,6 +199,20 @@ class Footprint:
         # Generic: rasterize point cloud occupancy
         flight_id = flight_key.split("_")[-1]
         input_file = flight_files[flight_id]
+        f =input_file.lower()
+         # Streaming path for huge TXT
+        if f.endswith((".txt", ".txyzs")):
+            res = Footprint._rasterize_streaming_txt(
+                input_file=input_file,
+                raster_shape=raster_map.shape,
+                x_mesh=x_mesh,
+                y_mesh=y_mesh,
+                pc_downsample=pc_downsample,
+                scan_mode=scan_mode,
+                chunksize=2_000_000,
+            )
+            return flight_key, res if scan_mode == "ALS" else (res[0], res[1], res[2])
+
 
         xy, times = Footprint._read_xy_and_time(input_file, scan_mode)
         xy, times = Footprint._clean_and_downsample(xy, times, pc_downsample)
@@ -264,12 +256,60 @@ class Footprint:
         return flight_key, (mask, tmin_grid, tmax_grid)
 
     @staticmethod
-    def _rasterize_time_window(input_file, raster_map, x_mesh, y_mesh, pc_downsample, t0, t1):
+    def _rasterize_time_window(
+        input_file: str,
+        raster_map: np.ndarray,
+        x_mesh: np.ndarray,
+        y_mesh: np.ndarray,
+        pc_downsample: int,
+        t0: float,
+        t1: float,
+        chunksize: int = 2_000_000,
+    ) -> np.ndarray:
+        """
+        MLS: raster mask of points within [t0, t1] (streaming for TXT).
+        """
+        f = input_file.lower()
+
+        x0 = float(x_mesh[0, 0])
+        y0 = float(y_mesh[0, 0])
+        res_x = float(abs(x_mesh[0, 1] - x_mesh[0, 0]))
+        res_y = float(abs(y_mesh[1, 0] - y_mesh[0, 0]))
+
+        mask = np.zeros(raster_map.shape, dtype=bool)
+
+        if f.endswith((".txt", ".txyzs")):
+            for t, x, y in Footprint._iter_txt_chunks(
+                input_file, use_time=True, chunksize=chunksize, downsample=pc_downsample
+            ):
+                valid = np.isfinite(t) & np.isfinite(x) & np.isfinite(y)
+                if not np.any(valid):
+                    continue
+                tv = t[valid]
+                sel = (tv >= t0) & (tv <= t1)
+                if not np.any(sel):
+                    continue
+
+                xv = x[valid][sel]
+                yv = y[valid][sel]
+
+                cols = np.floor((xv - x0) / res_x).astype(np.int64)
+                rows = np.floor((y0 - yv) / res_y).astype(np.int64)
+
+                inside = (
+                    (rows >= 0) & (rows < raster_map.shape[0]) &
+                    (cols >= 0) & (cols < raster_map.shape[1])
+                )
+                if np.any(inside):
+                    mask[rows[inside], cols[inside]] = True
+
+            return mask
+
+        # LAS/LAZ: keep existing behaviour (read + filter)
         xy, times = Footprint._read_xy_and_time(input_file, "MLS")
         xy, times = Footprint._clean_and_downsample(xy, times, pc_downsample)
-        m = (times >= t0) & (times <= t1)
-        return Footprint._rasterize_xy(xy[m], raster_map.shape, x_mesh, y_mesh)
-
+        sel = (times >= t0) & (times <= t1)
+        return Footprint._rasterize_xy(xy[sel], raster_map.shape, x_mesh, y_mesh)
 
     @staticmethod
     def _read_xy_and_time(input_file: str, scan_mode: str):
@@ -351,3 +391,107 @@ class Footprint:
         mask = np.zeros(raster_shape, dtype=bool)
         mask[rows[valid], cols[valid]] = True
         return mask
+    
+        
+    @staticmethod
+    def _iter_txt_chunks(input_file: str, use_time: bool, chunksize: int, downsample: int, delimiter: str = ","):
+        """
+        Yield chunks of (t, x, y) as numpy arrays with a TRUE byte-based tqdm.
+        Expected columns: t, x, y, z, ...
+        """
+        usecols = [0, 1, 2] if use_time else [1, 2]
+        file_size = os.path.getsize(input_file)
+
+        with open(input_file, "rb") as fb:
+            with tqdm(
+                total=file_size,
+                unit="B",
+                unit_scale=True,
+                desc=f"Reading {os.path.basename(input_file)}",
+            ) as pbar:
+                for chunk in pd.read_csv(
+                    fb,
+                    header=None,
+                    delimiter=delimiter,
+                    usecols=usecols,
+                    dtype=np.float64,
+                    chunksize=chunksize,
+                ):
+                    # ✅ exact bytes consumed
+                    pbar.update(fb.tell() - pbar.n)
+
+                    if downsample and downsample > 1:
+                        chunk = chunk.iloc[::downsample]
+
+                    arr = chunk.to_numpy()
+                    if use_time:
+                        yield arr[:, 0], arr[:, 1], arr[:, 2]
+                    else:
+                        yield None, arr[:, 0], arr[:, 1]
+
+    @staticmethod
+    def _rasterize_streaming_txt(
+        input_file: str,
+        raster_shape,
+        x_mesh: np.ndarray,
+        y_mesh: np.ndarray,
+        pc_downsample: int,
+        scan_mode: str,
+        chunksize: int = 2_000_000,
+    ):
+        """
+        Streaming rasterization for huge .txt:
+        - returns mask
+        - if MLS: returns (mask, tmin_grid, tmax_grid)
+        """
+        x0 = float(x_mesh[0, 0])
+        y0 = float(y_mesh[0, 0])
+        res_x = float(abs(x_mesh[0, 1] - x_mesh[0, 0]))
+        res_y = float(abs(y_mesh[1, 0] - y_mesh[0, 0]))
+
+        mask = np.zeros(raster_shape, dtype=bool)
+
+        if scan_mode == "MLS":
+            tmin_grid = np.full(raster_shape, np.inf, dtype=np.float64)
+            tmax_grid = np.full(raster_shape, -np.inf, dtype=np.float64)
+            use_time = True
+        else:
+            tmin_grid = None
+            tmax_grid = None
+            use_time = False
+
+        for t, x, y in Footprint._iter_txt_chunks(
+            input_file, use_time=use_time, chunksize=chunksize, downsample=pc_downsample
+        ):
+            # filter NaNs
+            valid = np.isfinite(x) & np.isfinite(y)
+            if use_time:
+                valid = valid & np.isfinite(t)
+            if not np.any(valid):
+                continue
+
+            xv = x[valid]
+            yv = y[valid]
+
+            cols = np.floor((xv - x0) / res_x).astype(np.int64)
+            rows = np.floor((y0 - yv) / res_y).astype(np.int64)
+
+            inside = (
+                (rows >= 0) & (rows < raster_shape[0]) &
+                (cols >= 0) & (cols < raster_shape[1])
+            )
+            if not np.any(inside):
+                continue
+
+            r = rows[inside]
+            c = cols[inside]
+            mask[r, c] = True
+
+            if use_time:
+                tv = t[valid][inside]
+                np.minimum.at(tmin_grid, (r, c), tv)
+                np.maximum.at(tmax_grid, (r, c), tv)
+
+        if scan_mode == "ALS":
+            return mask
+        return mask, tmin_grid, tmax_grid

@@ -38,6 +38,23 @@ from utils.timer_logger import TimerLogger
 import warnings
 warnings.filterwarnings("ignore")
 
+from collections import defaultdict
+
+def build_windows_by_flight(superpos_flight_pairs, superpos_time_windows):
+    """
+    flight_id -> list of (other_id, t0, t1)
+    """
+    jobs = defaultdict(list)
+    for k, (fi, fj) in enumerate(superpos_flight_pairs):
+        (tmin_i, tmax_i), (tmin_j, tmax_j) = superpos_time_windows[k]
+        jobs[fi].append((fj, float(tmin_i), float(tmax_i)))
+        jobs[fj].append((fi, float(tmin_j), float(tmax_j)))
+    return jobs
+
+
+def normalize_pair_dir(fi, fj):
+    a, b = (fi, fj) if fi <= fj else (fj, fi)
+    return f"Flights_{a}_{b}"
 
 class PatcherPipeline():
     def __init__(self, config: str):
@@ -62,7 +79,7 @@ class PatcherPipeline():
         Output:
             None
         """
-        print("\n[Patcher]: Loading data")
+        print("\n[Patcher] Loading data")
         self.timer.start("Flight & grid loading")
         fd = FlightData(self.config)
         rl = RasterLoader(self.config, flight_bounds=fd.bounds)
@@ -80,6 +97,7 @@ class PatcherPipeline():
             None
         """
         self.timer.start("Footprint generation")
+        print("\n[Patcher] Generating footprint")
         self.footprint = Footprint(
             raster=self.raster,
             raster_mesh=self.raster_mesh,
@@ -175,7 +193,61 @@ class PatcherPipeline():
 
         self.timer.stop("ALS Patch extraction (all flights)")
 
+
     def extract_mls(self) -> None:
+        """
+        MLS extraction (fast):
+        - compute time windows per pair (already done in footprint)
+        - group windows by flight_id
+        - read each flight ONCE and write all requested windows
+        """
+        self.timer.start("MLS Patch extraction (grouped)")
+
+        pairs = self.footprint.superpos_flight_pairs
+        windows = self.footprint.superpos_time_windows
+        print("[MLS] pairs:", len(pairs))
+
+        if len(pairs) == 0:
+            logging.warning("[MLS] No overlap pairs found.")
+            self.timer.stop("MLS Patch extraction (grouped)")
+            return
+
+        windows_by_flight = build_windows_by_flight(pairs, windows)
+
+        # small debug (optional)
+        total_jobs = sum(len(v) for v in windows_by_flight.values())
+        print(f"[MLS] flights_with_jobs={len(windows_by_flight)} total_windows={total_jobs}")
+
+        ext = self._out_ext()
+
+        for flight_id in tqdm(sorted(windows_by_flight.keys()), desc="[MLS] Extract flights (grouped)", unit="flight"):
+            input_file = self.flight_data.flight_files[flight_id]
+            jobs = windows_by_flight[flight_id]
+
+            extractor = LasExtractor(self.config, input_file, patches=[])
+            if not extractor.read_point_cloud():
+                logging.warning(f"[MLS] Could not read flight {flight_id}: {input_file}")
+                continue
+
+            # window loop (no re-read)
+            for other_id, tmin, tmax in tqdm(jobs, desc=f"[MLS] {flight_id} windows", leave=False, unit="win"):
+                if (not np.isfinite(tmin)) or (not np.isfinite(tmax)) or tmin >= tmax:
+                    logging.warning(f"[MLS] Invalid window flight={flight_id} with={other_id}: {tmin}, {tmax}")
+                    continue
+
+                pair_dir = os.path.join(self.output_dir, normalize_pair_dir(flight_id, other_id))
+                os.makedirs(pair_dir, exist_ok=True)
+
+                out_path = os.path.join(pair_dir, f"Patch_from_scan_{flight_id}_with_{other_id}.{ext}")
+
+                ok = extractor.extract_time_window(tmin, tmax, out_path)
+                if not ok:
+                    # can happen if no points exactly in window
+                    logging.warning(f"[MLS] No points extracted for flight {flight_id} in window with {other_id}")
+
+        self.timer.stop("MLS Patch extraction (grouped)")
+
+    def extract_mls_base(self) -> None:
         """
         MLS extraction (temporal patch):
         For each spatial overlap, compute time window, then extract ALL points
@@ -203,9 +275,10 @@ class PatcherPipeline():
                 ext = self._out_ext()
                 extractor = LasExtractor(self.config, input_file, patches=[])
                 
-                if not extractor.read_point_cloud():
-                    continue
-                    
+                if not input_file.lower().endswith((".txt", ".txyzs")):
+                    if not extractor.read_point_cloud():
+                        continue
+                                    
                 out_path = os.path.join(
                     pair_dir,
                     f"Patch_from_scan_{flight_id}_with_{other_id}.{ext}"

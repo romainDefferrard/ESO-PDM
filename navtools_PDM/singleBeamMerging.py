@@ -101,6 +101,7 @@ def merge_txt_pairs(
         a = idx_a[scan]
         b = idx_b[scan]
         out = out_dir / f"{out_prefix}{scan}{out_suffix}.txt"
+        print(f"\n [Merging] files {a} and {b}")
         merge_two_txt(
             a, b, out,
             delimiter=delimiter,

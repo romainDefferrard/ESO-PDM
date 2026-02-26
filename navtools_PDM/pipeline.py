@@ -45,6 +45,7 @@ def georef_and_merge(cfg_ha_path: str, cfg_lr_path: str, merged_out: str):
     out_dir = Path(merged_out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    
     merge_txt_pairs(
         dir_ha,
         dir_lr,
@@ -265,7 +266,7 @@ def run_pipeline(mode: str, cfg_ha: str, cfg_lr: str, merged_out: str, patcher_c
             min_points=2000,
             epsg_out="EPSG:2056",
             delimiter=",",
-            skiprows=0,
+            skiprows=0, 
             )
         
         # 2. LiMatch on chunks 
@@ -291,9 +292,9 @@ if __name__ == "__main__":
 
     cfg_ha = "navtools_PDM/PDM_configs/georef_SAM-HA.yml"
     cfg_lr = "navtools_PDM/PDM_configs/georef_SAM-LR.yml"
-    merged_out = "/media/b085164/Elements/PCD_SAM/subset/merged"
+    merged_out = "/media/b085164/Elements/PCD_SAM/village/merged"
     patcher_cfg = "Patcher/config/MLS_Epalinges_config.yml"  # à modifier le dossier ou sont les nuages géoref dans la cfg Patcher
 
-    mode = "Chunk" # "Chunk" or "Patcher" 
+    mode = "Patcher" # "Chunk" or "Patcher" 
 
-    run_pipeline(mode, cfg_ha, cfg_lr, merged_out, patcher_cfg=patcher_cfg, do_georef_merge=False)
+    run_pipeline(mode, cfg_ha, cfg_lr, merged_out, patcher_cfg=patcher_cfg, do_georef_merge=False) # set go_georef_merge to False is set of .sdc have already be georeferenced 

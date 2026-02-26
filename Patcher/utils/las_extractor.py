@@ -20,6 +20,7 @@ Description:
 import laspy
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 import os
 import logging
 from typing import List
@@ -322,16 +323,67 @@ class LasExtractor:
         """
         MLS temporal patch:
         Keep all points with gps_time in [t0, t1].
+
+        - LAS/LAZ: uses loaded arrays (requires read_point_cloud()).
+        - TXT/TXYZS: streaming read/write (does NOT require read_point_cloud()).
         """
+
+        fmt = self.file_format.lower()
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+        # ---------- TXT STREAMING ----------
+        if fmt in ("txt", "txyzs"):
+            file_size = os.path.getsize(self.input_file)
+            chunksize = 2_000_000  # tune if needed
+
+            wrote_any = False
+            first_write = True
+
+            # We need at least t,x,y,z (+ optional lasvec 3 cols)
+            with tqdm(
+                total=file_size,
+                unit="B",
+                unit_scale=True,
+                desc=f"Extract {os.path.basename(self.input_file)}",
+            ) as pbar:
+                for chunk in pd.read_csv(
+                    self.input_file,
+                    delimiter=",",
+                    header=None,
+                    dtype=np.float64,
+                    chunksize=chunksize,
+                ):
+                    # progress by bytes (approx)
+                    pbar.update(chunk.memory_usage(deep=True).sum())
+
+                    if chunk.shape[1] < 4:
+                        continue
+
+                    t = chunk.iloc[:, 0].to_numpy()
+                    sel = np.isfinite(t) & (t >= t0) & (t <= t1)
+                    if not np.any(sel):
+                        continue
+
+                    out = chunk.loc[sel].to_numpy()
+
+                    mode = "w" if first_write else "a"
+                    with open(output_file, mode) as f_out:
+                        np.savetxt(f_out, out, delimiter=",", fmt="%.10f")
+
+                    first_write = False
+                    wrote_any = True
+
+            return wrote_any
+
+        # ---------- LAS/LAZ (existing behaviour) ----------
         if getattr(self, "gps_times", None) is None:
-            raise ValueError("gps_time not available in this file (LAS/LAZ required).")
+            raise RuntimeError("For LAS/LAZ, call read_point_cloud() first (gps_times not loaded).")
 
         mask = (self.gps_times >= t0) & (self.gps_times <= t1)
         if not np.any(mask):
             return False
 
         self._write_selected(output_file, mask)
-
         return True
     
     def extract_overlap_with_time_window(
