@@ -1,13 +1,13 @@
 trj:
   type: 'SBET'
-  path: '/media/b085164/Elements/test_SAMVUX_20250829/05_ODyN/test_sbet.OUT'
+  path: '/media/b085164/Elements/Gobet_ODyN_v1/v1_base_AB/out/reference.out' # traj reference AB
   cfg:
     type: 'SBET'
 
 lasvec:
   type: 'SDC' # ASCII or SDC
   cols: [0,3,4,5] # identifier for time, x, y, z columns of data [0,3,4,5] for SDC
-  path: '/media/b085164/Elements/RD_SAM_SDC/HA/'
+  path: '/media/b085164/Elements/RD_SAM_SDC/subset_HA/'
 
 leapsec: 18
 
@@ -33,7 +33,7 @@ output:
   type: 'ASCII' 
   lasvec: True
   lasvec_to_body: True # or lasvec expressed in sensor frame if set to False
-  path: '/media/b085164/Elements/PCD_SAM/All_pcd/HA'
+  path: '/media/b085164/Elements/PCD_SAM/subset_outage/HA'
 
 limatch_output: 
 

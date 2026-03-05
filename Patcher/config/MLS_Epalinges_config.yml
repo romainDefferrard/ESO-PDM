@@ -4,11 +4,11 @@
 SCAN_MODE: "MLS"     # difference in patching method and GUI
 
 # Project name
-PRJ_NAME: "SAM_Epalinges_test"
+PRJ_NAME: "SAM_longue_ligne"
 
 # Input files / directories
-OUTPUT_DIR: "/media/b085164/Elements/PCD_SAM/village/output_Patcher/" 
-PC_DIR: "/media/b085164/Elements/PCD_SAM/village/merged/merged_{flight_id}_HA_LR" # point cloud directory with files template name
+OUTPUT_DIR: "/media/b085164/Elements/PCD_SAM/longue_ligne/output_Patcher/" 
+PC_DIR: "/media/b085164/Elements/PCD_SAM/longue_ligne/merged/merged_{flight_id}_HA_LR" # point cloud directory with files template name
 
 OUTPUT_PC_FMT: "txt" # Point cloud extraction format | "laz" | "las" | "txt" | "txyzs" |
 
