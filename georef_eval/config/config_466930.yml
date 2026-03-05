@@ -1,0 +1,25 @@
+data:
+  ref: '/media/b085164/Elements/PCD_SAM/subset/merged/merged_94117_HA_LR.txt'
+  est: '/media/b085164/Elements/PCD_SAM/subset_outage/merged/merged_94117_HA_LR.txt'
+  outfile: '/media/b085164/Elements/Gobet_ODyN_v1/v6/georef_errors/rmse_p2p_ref_w_outage.txt'
+
+
+
+outage:
+  t0: 466930
+  duration: 5
+  padding: 5
+
+matching:
+  time_tol: 0.001
+
+visualization:
+  field: e_3d
+  vmin: 0.0
+  vmax: 0.5
+  o3d_only: True
+
+io:
+  delim: ","
+  no_header: true
+  schema: "txyzlxyz"

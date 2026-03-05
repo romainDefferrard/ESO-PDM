@@ -1,0 +1,27 @@
+
+reference:
+  path: '/media/b085164/Elements/PCD_SAM/subset/merged/merged_94117_HA_LR.txt'
+
+targets:
+  - path: '/media/b085164/Elements/PCD_SAM/subset_outage/merged/merged_94117_HA_LR.txt'
+    outfile: '/media/b085164/Elements/Gobet_ODyN_v1/v6/georef_errors/rmse_p2p_ref_w_outage.txt'
+
+  - path: '..'
+    outfile: '..'
+
+time:
+  outage_start: 466930.0
+  outage_duration: 5.0
+  buffer: 30.0
+
+io:
+  delim: ","
+  no_header: true   # assumes columns: gps_time,x,y,z,...
+
+matching:
+  # only used to validate times if you want allclose instead of exact equal
+  exact_time: true
+  time_atol: 0.0    # ignored if exact_time=true
+
+las:
+  scale: 0.001      # 1 mm precision
