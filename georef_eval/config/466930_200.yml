@@ -9,8 +9,6 @@ targets:
   - path: '..'
     outfile: '..'
 
-
-
 time:
   outage_start: 466930.0
   outage_duration: 5.0
