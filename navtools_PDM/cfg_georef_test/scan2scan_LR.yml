@@ -1,6 +1,6 @@
 trj:
   type: 'SBET'
-  path:  '/media/b085164/Elements/Gobet_ODyN_v1/v6/limatch_chunk/out/ODyN_p2p_chunk2chunk.out'
+  path: '/media/b085164/Elements/Gobet_ODyN_v1/v6/out_limatch/ODyN_p2p_scan2scan.out'
   cfg:
     type: 'SBET'
 
@@ -11,11 +11,16 @@ lasvec:
 
 leapsec: 18
 
-distance_filtering: 
+distance_filtering:
   enable: True
   max_distance_m: 20
   map_epsg: "EPSG:2056"
-
+  filter_trj:
+    type: 'SBET'
+    path: '/media/b085164/Elements/Gobet_ODyN_v1/v1_base_AB/out/reference.out'
+    cfg:
+      type: 'SBET'
+      
 mount:
   R_mount:
   - [0.383797548988406, 0.743144825433119, -0.548119703917375]
@@ -29,9 +34,9 @@ mount:
 
   lever_arm: [-0.352232739417906, -0.359090504106855, -0.247]
 output:
-  type: 'ASCII' 
+  type: 'ASCII'
   lasvec: True
   lasvec_to_body: True
-  path: '/media/b085164/Elements/PCD_SAM/Georef_v6/limatch_chunk2chunk/LR'
+  path: '/media/b085164/Elements/PCD_SAM/Georef_test/limatch_scan2scan/LR'
 
 limatch_output: 

@@ -9,11 +9,13 @@ Script de pipeline orchestrant:
 """
 
 from pathlib import Path
+from .gnss_scenarios import write_gps_cycle_slips
 import yaml
 from typing import List, Tuple, Union, Optional
 import subprocess
 import sys
 import os
+import re
 
 from .pointCloudGeoref import run_from_yaml
 from .singleBeamMerging import merge_txt_pairs
@@ -24,9 +26,10 @@ from .Chunker import (
     merge_intervals,
     file_time_bounds_fast, 
 )
+from .gnss_scenarios import write_gps_cycle_slips
 
 # ============================================================================
-# 0) Utils paths
+# 0) Utils
 # ============================================================================
 
 def get_repo_root() -> Path:
@@ -35,11 +38,49 @@ def get_repo_root() -> Path:
     """
     return Path(__file__).resolve().parents[1]
 
+
+def _pick_pair_files(pair_dir: Path) -> tuple[Path, Path]:
+    # Exemple attendu:
+    # Patch_from_scan_3000_with_4000.txt
+    # Patch_from_scan_4000_with_3000.txt
+    files = list(pair_dir.glob("Patch_from_scan_*_with_*.txt"))
+    if len(files) < 2:
+        raise FileNotFoundError(f"Need 2 patch files in {pair_dir}, found {len(files)}")
+
+    # parse ids
+    pat = re.compile(r"Patch_from_scan_(\d+)_with_(\d+)\.txt$")
+    parsed = []
+    for f in files:
+        m = pat.match(f.name)
+        if m:
+            a, b = int(m.group(1)), int(m.group(2))
+            parsed.append((a, b, f))
+
+    if len(parsed) < 2:
+        # fallback
+        files = sorted(files)
+        return files[0], files[1]
+
+    # On cherche une paire (a,b) et (b,a)
+    for a, b, f_ab in parsed:
+        for c, d, f_ba in parsed:
+            if a == d and b == c:   # (a,b) et (b,a)
+                # ordre stable: plus petit id en c1
+                if a < b:
+                    return f_ab, f_ba
+                else:
+                    return f_ba, f_ab
+
+    # fallback: deux premiers
+    parsed.sort(key=lambda x: (x[0], x[1], x[2].name))
+    return parsed[0][2], parsed[1][2]
+
 # ============================================================================
 # 1) Georef + merge
 # ============================================================================
 
 def georef_and_merge(cfg_ha_path: str, cfg_lr_path: str, merged_out: str):
+    import shutil
     # 1. Run georef both for HA and LR scanner
     run_from_yaml(cfg_ha_path)
     run_from_yaml(cfg_lr_path)
@@ -53,16 +94,42 @@ def georef_and_merge(cfg_ha_path: str, cfg_lr_path: str, merged_out: str):
     out_dir = Path(merged_out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    
-    merge_txt_pairs(
-        dir_ha,
-        dir_lr,
-        out_dir,
-        delimiter=",",
-        out_prefix="merged_",
-        out_suffix="_HA_LR",
-    )
+    print("\n======================================")
+    print("[merge] Starting HA + LR merging")
+    print(f"[merge] HA dir: {dir_ha}")
+    print(f"[merge] LR dir: {dir_lr}")
+    print(f"[merge] OUT dir: {out_dir}")
+    print("======================================\n")
+    try:
+        merge_txt_pairs(
+            dir_ha,
+            dir_lr,
+            out_dir,
+            delimiter=",",
+            out_prefix="merged_",
+            out_suffix="_HA_LR",
+        )
 
+        print("\n======================================")
+        print("[merge] Merge completed successfully")
+        print("[merge] Removing HA and LR folders")
+        print("======================================\n")
+
+        # delete HA and LR folders
+        if dir_ha.exists():
+            shutil.rmtree(dir_ha)
+            print(f"[merge] Deleted {dir_ha}")
+
+        if dir_lr.exists():
+            shutil.rmtree(dir_lr)
+            print(f"[merge] Deleted {dir_lr}")
+
+    except Exception as e:
+        print("\n======================================")
+        print("[merge] ERROR during merging")
+        print("[merge] HA/LR folders kept for debugging")
+        print("======================================\n")
+        raise
 # ============================================================================
 # 2) Chunking
 # ============================================================================
@@ -105,7 +172,7 @@ def chunk_txt(
         out_sub.mkdir(parents=True, exist_ok=True)
 
         print(f"\n[chunk] Chunking: {f.name}")
-        chunk_txt_by_distance_streaming(
+        chunk_txt_by_distance_streaming_intervals(
             txt_path=str(f),
             cfg_georef_path=str(cfg_georef_path),  # reuse HA config for trajectory
             out_dir=str(out_sub),
@@ -256,16 +323,7 @@ def combined_multi_outage_scenario(
 
         out_sub = chunks_root / f.stem
 
-        # reuse existing chunks
-        if (
-            reuse_chunks
-            and not force
-            and out_sub.exists()
-            and any(out_sub.glob("chunk_*.txt"))
-        ):
-            print(f"[combined] REUSE chunks → {out_sub}")
-            processed += 1
-            continue
+        
 
         out_sub.mkdir(parents=True, exist_ok=True)
 
@@ -432,6 +490,84 @@ def run_limatch_on_chunks_per_scan(
             except Exception as e:
                 print(f"[limatch] FAIL {scan_dir.name}/{pair_name}: {type(e).__name__}: {e}")
                 continue
+
+
+def run_limatch_on_patcher_outputs(
+    patcher_out_root: Union[str, Path],
+    limatch_cfg: Union[str, Path],
+    out_root: Optional[Union[str, Path]] = None,
+    pattern_dir: str = r"^Flights_\d+_\d+$",
+    file_glob: str = "*.txt",
+) -> None:
+    """
+    patcher_out_root:
+      .../output_Patcher/
+        Flights_3000_4000/
+          <one or multiple .txt>
+        Flights_3000_5000/
+          ...
+
+    out_root (default):
+      sibling folder next to output_Patcher: .../output_limatch/
+        Flights_3000_4000/
+          (LiMatch outputs)
+    """
+    repo_root = get_repo_root()
+
+    patcher_out_root = Path(patcher_out_root)
+    if out_root is None:
+        out_root = patcher_out_root.parent / "output_limatch"
+    out_root = Path(out_root)
+    out_root.mkdir(parents=True, exist_ok=True)
+
+    dir_re = re.compile(pattern_dir)
+
+    pair_dirs = sorted([p for p in patcher_out_root.iterdir() if p.is_dir() and dir_re.match(p.name)])
+    if not pair_dirs:
+        raise FileNotFoundError(f"No Flights_*_* dirs found in {patcher_out_root}")
+
+    print("\n======================================")
+    print("[limatch] Running LiMatch on Patcher outputs")
+    print(f"[limatch] patcher_out_root: {patcher_out_root}")
+    print(f"[limatch] out_root:         {out_root}")
+    print(f"[limatch] total pairs:      {len(pair_dirs)}")
+    print("======================================\n")
+
+    for pair_dir in pair_dirs:
+        clouds = sorted(pair_dir.glob(file_glob))
+
+        # IMPORTANT:
+        # LiMatch attend 2 nuages en entrée.
+        # Si ton Patcher ne produit qu'UN seul .txt par paire,
+        # on ne peut pas lancer LiMatch sans une stratégie de split (à définir).
+        if len(clouds) < 2:
+            print(f"[limatch] SKIP {pair_dir.name}: found {len(clouds)} file(s) (need 2).")
+            continue
+
+        # Si tu as exactement 2 fichiers -> parfait.
+        # Si tu en as plus, on prend les 2 premiers (tu peux changer la logique ici).
+        try:
+            cloud1, cloud2 = _pick_pair_files(pair_dir)
+        except Exception as e:
+            print(f"[limatch] SKIP {pair_dir.name}: {e}")
+            continue
+
+        pair_out = out_root / pair_dir.name
+        pair_out.mkdir(parents=True, exist_ok=True)
+
+        print(f"[limatch] pair={pair_dir.name} | cloud1={cloud1.name} | cloud2={cloud2.name}")
+
+        try:
+            run_limatch_api(
+                repo_root=repo_root,
+                limatch_cfg_path=limatch_cfg,
+                cloud1=cloud1,
+                cloud2=cloud2,
+                out_dir=pair_out,
+            )
+        except Exception as e:
+            print(f"[limatch] FAIL {pair_dir.name}: {type(e).__name__}: {e}")
+            continue
 # ============================================================================
 # 4) Patcher as CLI 
 # ============================================================================
@@ -473,6 +609,8 @@ def run_pipeline(
 
     if do_georef_merge:
         georef_and_merge(cfg_ha, cfg_lr, merged_out)
+        if mode == "GeorefOnly":
+            exit()
 
     if mode == "Chunk":
         # standard chunking 
@@ -502,8 +640,7 @@ def run_pipeline(
         # --- parameters to tune ---
         gps_in = "/media/b085164/Elements/Gobet_ODyN_v1/v1_base_AB/in/GPS.txt" 
         outages = [                 # Define GNSS outages as the GPS start time and the duration [s]
-            (466590.0, 60.0),
-            (466750.0, 90.0),
+            (466930.0, 200.0),
         ]
         
         pre = 30.0
@@ -521,10 +658,9 @@ def run_pipeline(
             post=post,
             out_root=scenario_root,
             delimiter=",",
-            min_points_window=2000,
             min_points_chunk=2000,
             epsg_out="EPSG:2056",
-            do_chunks=True,            # Set to True if you want to create chunk (normal case)
+            do_chunks=False,            # Set to True if you want to create chunk (normal case)
         )
 
         # run limatch on ALL consecutive chunks (same as simple chunk scenario)
@@ -544,21 +680,182 @@ def run_pipeline(
             raise ValueError("patcher_cfg is required when mode='Patcher'")
         run_patcher_cli(patcher_cfg)
 
+    elif mode == "PatcherLiMatch":
+        if patcher_cfg is None:
+            raise ValueError("patcher_cfg is required when mode='PatcherLiMatch'")
+
+        # Run limatch on patches already done from Patcher tool
+        patcher_out_root = Path("/media/b085164/Elements/PCD_SAM/longue_ligne/output_Patcher")
+
+        # 1) OPTIONAL: generate GPS_outage.txt
+        do_gps_outage = True  # <-- set False if you don't want it here
+        if do_gps_outage:
+            gps_in = Path("/media/b085164/Elements/Gobet_ODyN_v1/v1_base_AB/in/GPS.txt")
+
+            # (start_time, duration_seconds) - you can add multiple
+            outages = [
+                (466930.0, 200.0),
+            ]
+
+            scenario_dir = patcher_out_root.parent / "scenario_gps_outage"
+            scenario_dir.mkdir(parents=True, exist_ok=True)
+            gps_out = scenario_dir / "GPS.txt"
+
+            kept, removed = write_gps_multi_outage(
+                gps_in,
+                gps_out,
+                outages,
+                delimiter=",",
+            )
+
+            print(f"[PatcherLiMatch] GPS outage generated: {gps_out}")
+            print(f"[PatcherLiMatch] outages={outages} | kept={kept} removed={removed}")
+
+
+        # 2) run limatch on patcher outputs
+        run_limatch_on_patcher_outputs(
+            patcher_out_root=patcher_out_root,
+            limatch_cfg=limatch_cfg,
+            out_root=patcher_out_root.parent / "output_limatch",
+        )
+
+    elif mode == "CycleSlip":
+
+        
+
+        # ------------------------------------------------------------
+        # Input GNSS trajectory (LLA: lat/lon deg, h meters)
+        # ------------------------------------------------------------
+        gps_in = Path("/media/b085164/Elements/Gobet_ODyN_v1/v1_base_AB/in/GPS.txt")
+
+        # ------------------------------------------------------------
+        # Output directory
+        # ------------------------------------------------------------
+        out_root = Path("/media/b085164/Elements/Gobet_ODyN_v1/v6")
+        out_root.mkdir(parents=True, exist_ok=True)
+
+        # ------------------------------------------------------------
+        # Cycle slip anchor + fixed duration
+        # ------------------------------------------------------------
+        t_anchor = 466930.0
+        D = 60.0  # seconds (fixed for all scenarios)
+
+        # Amplitudes to test (meters)
+        A_list = [0.5, 1.0, 2.5, 5.0]
+
+        def _norm2(x, y):
+            import math
+            n = math.sqrt(x*x + y*y)
+            return (x / n, y / n) if n > 0 else (0.0, 0.0)
+
+        # Directions in ENU (dx=East, dy=North, dz=Up)
+        # Each direction vector is normalized (for XY ones) then scaled by amplitude A
+        directions = [
+            ("E",      (1.0, 0.0, 0.0)),
+            ("N",      (0.0, 1.0, 0.0)),
+            ("NE",     (1.0, 1.0, 0.0)),   # will be normalized
+            ("Up",     (0.0, 0.0, 1.0)),
+            ("3Ddiag", (0.6, -0.6, 0.2)),  # already a mix; treated as-is then scaled to roughly match A in XY
+        ]
+
+        scenarios = []
+
+        for A in A_list:
+            for name_dir, v in directions:
+                dx, dy, dz = v
+
+                # Normalize pure XY directions so that magnitude in XY == 1 before scaling by A
+                if name_dir in ("NE",):
+                    nx, ny = _norm2(dx, dy)
+                    dx, dy = nx, ny  # dz stays 0
+
+                # For 3Ddiag: we scale components to hit ~A in horizontal magnitude (keep relative proportions)
+                if name_dir == "3Ddiag":
+                    # scale so that sqrt(dx^2+dy^2) == 1 then multiply by A
+                    import math
+                    h = math.sqrt(dx*dx + dy*dy)
+                    if h > 0:
+                        dx, dy, dz = dx/h, dy/h, dz/h
+
+                scenarios.append(
+                    {
+                        "name": f"slip_step_A{str(A).replace('.','p')}m_D60s_{name_dir}",
+                        "slips": [{
+                            "t0": t_anchor,
+                            "duration": D,
+                            "dx": A * dx,
+                            "dy": A * dy,
+                            "dz": A * dz,
+                            "shape": "step",
+                        }],
+                    }
+                )
+
+        # ------------------------------------------------------------
+        # Print global summary
+        # ------------------------------------------------------------
+        print("\n======================================")
+        print("[CycleSlip] GNSS cycle-slip scenario generator")
+        print(f"[CycleSlip] gps_in:          {gps_in}")
+        print(f"[CycleSlip] out_root:        {out_root}")
+        print(f"[CycleSlip] duration:        {D}s (fixed)")
+        print(f"[CycleSlip] total scenarios: {len(scenarios)}")
+        print("[CycleSlip] convention: dx=East [m], dy=North [m], dz=Up [m]")
+        print("======================================\n")
+
+        print("Defined scenarios:\n")
+        for sc in scenarios:
+            slip = sc["slips"][0]
+            print("--------------------------------------")
+            print(f"Scenario: {sc['name']}")
+            print(f"  start time : {slip['t0']}")
+            print(f"  duration   : {slip['duration']}s")
+            print(f"  offset ENU : (E={slip['dx']:+.3f}, N={slip['dy']:+.3f}, U={slip['dz']:+.3f}) m")
+            print(f"  shape      : {slip.get('shape', 'step')}")
+
+        print("\n======================================\n")
+
+        # ------------------------------------------------------------
+        # Generate scenarios
+        # ------------------------------------------------------------
+        for sc in scenarios:
+            sc_dir = out_root / sc["name"]
+            sc_dir.mkdir(parents=True, exist_ok=True)
+            gps_out = sc_dir / "GPS.txt"
+
+            print("--------------------------------------")
+            print(f"[CycleSlip] Generating scenario: {sc['name']}")
+            print(f"[CycleSlip] output folder: {sc_dir}")
+
+            write_gps_cycle_slips(
+                gps_in=gps_in,
+                gps_out=gps_out,
+                slips=sc["slips"],
+                delimiter=",",
+            )
+
+            print(f"[CycleSlip] wrote GPS file: {gps_out}")
+
+        print("\n======================================")
+        print("[CycleSlip] All GNSS scenarios generated")
+        print(f"[CycleSlip] location: {out_root}")
+        print("======================================\n")
     elif mode is None:
         pass
 
     else:
-        raise ValueError("mode must be 'Chunk' or 'OutageChunk' or 'Patcher'")
+        raise ValueError("mode must be 'Chunk' or 'OutageChunk' or 'Patcher' or 'PatcherLiMatch'")
 
 
 if __name__ == "__main__":
 
     cfg_ha = "navtools_PDM/PDM_configs/georef_SAM-HA.yml"
     cfg_lr = "navtools_PDM/PDM_configs/georef_SAM-LR.yml"
-    merged_out = "/media/b085164/Elements/PCD_SAM/All_pcd/merged"
-    patcher_cfg = "Patcher/config/MLS_Epalinges_config.yml"  # modify if needed
+    merged_out = "/media/b085164/Elements/PCD_SAM/Georef_v6/limatch_chunk2chunk/merged"  # A MODIFIER SELON SCENARIO
+    patcher_cfg = "Patcher/config/MLS_Epalinges_config.yml"       # A MODIFIER SELON SCENARIO
 
-    mode = "OutageChunk"  # None / "Chunk" / "OutageChunk" / "Patcher"
+
+    mode = "GeorefOnly"  # None / "Chunk" / "OutageChunk" / "Patcher" / "PatcherLiMatch" / "GeorefOnly" / "CycleSlip"
 
     run_pipeline(
         mode,
@@ -566,5 +863,5 @@ if __name__ == "__main__":
         cfg_lr,
         merged_out,
         patcher_cfg=patcher_cfg,
-        do_georef_merge=False   # To set to False if files already Georeferenced 
+        do_georef_merge=True   # To set to False if files already Georeferenced 
     )

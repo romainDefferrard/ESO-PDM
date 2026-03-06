@@ -124,6 +124,7 @@ def georefLidar(lasvec, trj, cfg):
 
     t_interp, ecef_interp, q_interp = trj.interp(lasvec[:, 0], updateSelf=False)
 
+
     las_chunks  = np.array_split(lasvec, cpu_count)
     t_chunks    = np.array_split(t_interp, cpu_count)
     ecef_chunks = np.array_split(ecef_interp, cpu_count)
