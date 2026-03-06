@@ -1,35 +1,3 @@
-#!/usr/bin/env python3
-# rmse_multi_targets_ref_to_las.py
-#
-# One reference TXT, multiple target TXTs.
-# For each target:
-#   - read only outage time window (with buffer) from ref and target
-#   - assume exact same gps_time array (or allclose if configured)
-#   - compute per-point 3D error e3d = ||xyz_tgt - xyz_ref||
-#   - compute metrics (RMSE, mean, median, p95, p99, max, threshold rates, etc.)
-#   - write LAS of REFERENCE points with ExtraBytes scalar field "e3d" (float32)
-# At end: print a clean summary table.
-#
-# Config format:
-# reference:
-#   path: /path/ref.txt
-# targets:
-#   - path: /path/target1.txt
-#     outfile: /path/out1.las
-#   - path: /path/target2.txt
-#     outfile: /path/out2.las
-# time:
-#   outage_start: 466930.0
-#   outage_duration: 5.0
-#   buffer: 30.0
-# io:
-#   delim: ","
-# matching:
-#   exact_time: true
-#   time_atol: 0.0
-# las:
-#   scale: 0.001
-
 import argparse
 import logging
 import os
@@ -51,21 +19,21 @@ def setup_logger():
 
 
 def read_window_txt(path: Path, delim: str, tmin: float, tmax: float) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Streaming read with early break. Assumes file sorted by gps_time.
-    Expected per line (no header):
-      gps_time, x, y, z, ...
-    Returns (t, xyz) in [tmin, tmax].
-    """
     rows_t = []
     rows_xyz = []
 
     file_size = os.path.getsize(path)
+    acc = 0
+
     with path.open("r", encoding="utf-8") as f, tqdm(
         total=file_size, unit="B", unit_scale=True, desc=f"Reading {path.name}"
     ) as pbar:
         for ln in f:
-            pbar.update(len(ln.encode("utf-8")))
+            acc += len(ln)
+            if acc >= 1_000_000:
+                pbar.update(acc)
+                acc = 0
+
             ln = ln.strip()
             if not ln or ln.startswith("#"):
                 continue
@@ -80,46 +48,106 @@ def read_window_txt(path: Path, delim: str, tmin: float, tmax: float) -> Tuple[n
             if t > tmax:
                 break
 
-            x = float(parts[1])
-            y = float(parts[2])
-            z = float(parts[3])
-
             rows_t.append(t)
-            rows_xyz.append((x, y, z))
+            rows_xyz.append((float(parts[1]), float(parts[2]), float(parts[3])))
+
+        if acc > 0:
+            pbar.update(acc)
 
     if not rows_t:
         raise RuntimeError(f"{path}: no points found in window [{tmin}, {tmax}]")
 
     return np.asarray(rows_t, dtype=np.float64), np.asarray(rows_xyz, dtype=np.float64)
 
+# -------------------------------------------------------------
+# REMOVE DUPLICATED TIMES AND KEEP ONLY MUTUAL UNIQUE TIMES
+# -------------------------------------------------------------
+def keep_only_mutual_unique_times(
+    t_ref,
+    xyz_ref,
+    t_tgt,
+    xyz_tgt,
+):
 
-def validate_times(t_ref: np.ndarray, t_tgt: np.ndarray, exact: bool, atol: float):
-    if len(t_ref) != len(t_tgt):
-        raise RuntimeError(f"Different number of points in window: ref={len(t_ref)} tgt={len(t_tgt)}")
+    u_ref, c_ref = np.unique(t_ref, return_counts=True)
+    u_tgt, c_tgt = np.unique(t_tgt, return_counts=True)
 
-    if exact:
-        if not np.array_equal(t_ref, t_tgt):
-            raise RuntimeError("gps_time arrays are not exactly identical in the selected window")
-    else:
-        if not np.allclose(t_ref, t_tgt, atol=atol, rtol=0.0):
-            raise RuntimeError(f"gps_time arrays differ more than atol={atol}")
+    unique_ref = set(u_ref[c_ref == 1])
+    unique_tgt = set(u_tgt[c_tgt == 1])
+
+    keep_times = unique_ref & unique_tgt
+
+    mask_ref = np.isin(t_ref, list(keep_times))
+    mask_tgt = np.isin(t_tgt, list(keep_times))
+
+    stats = {
+        "ref_raw": len(t_ref),
+        "tgt_raw": len(t_tgt),
+        "ref_removed": int((~mask_ref).sum()),
+        "tgt_removed": int((~mask_tgt).sum()),
+        "kept_times": len(keep_times),
+    }
+
+    return (
+        t_ref[mask_ref],
+        xyz_ref[mask_ref],
+        t_tgt[mask_tgt],
+        xyz_tgt[mask_tgt],
+        stats,
+    )
 
 
-def compute_metrics(e3d: np.ndarray, dxyz: np.ndarray) -> Dict[str, float]:
-    # dxyz = xyz_tgt - xyz_ref (N,3)
-    rmse = float(np.sqrt(np.mean(e3d * e3d)))
+def match_by_time(t_ref, xyz_ref, t_tgt, xyz_tgt):
+
+    i = 0
+    j = 0
+
+    idx_ref = []
+    idx_tgt = []
+
+    n_ref = len(t_ref)
+    n_tgt = len(t_tgt)
+
+    while i < n_ref and j < n_tgt:
+
+        tr = t_ref[i]
+        tt = t_tgt[j]
+
+        if tr == tt:
+
+            idx_ref.append(i)
+            idx_tgt.append(j)
+
+            i += 1
+            j += 1
+
+        elif tr < tt:
+            i += 1
+
+        else:
+            j += 1
+
+    idx_ref = np.asarray(idx_ref)
+    idx_tgt = np.asarray(idx_tgt)
+
+    return t_ref[idx_ref], xyz_ref[idx_ref], xyz_tgt[idx_tgt]
+
+
+def compute_metrics(dxyz: np.ndarray) -> Dict[str, float]:
+
+    e3d = np.linalg.norm(dxyz, axis=1)
+
+    rmse = float(np.sqrt(np.mean(e3d**2)))
     mean = float(np.mean(e3d))
     med = float(np.median(e3d))
     p95 = float(np.percentile(e3d, 95))
     p99 = float(np.percentile(e3d, 99))
     mx = float(np.max(e3d))
 
-    # threshold rates (easy to report)
     thr_01 = float(np.mean(e3d > 0.1)) * 100.0
     thr_05 = float(np.mean(e3d > 0.5)) * 100.0
     thr_10 = float(np.mean(e3d > 1.0)) * 100.0
 
-    # bias / drift direction indicators (not written in LAS, but great for analysis)
     dx_mean, dy_mean, dz_mean = map(float, np.mean(dxyz, axis=0))
     dx_std, dy_std, dz_std = map(float, np.std(dxyz, axis=0))
 
@@ -140,74 +168,45 @@ def compute_metrics(e3d: np.ndarray, dxyz: np.ndarray) -> Dict[str, float]:
         "dx_std": dx_std,
         "dy_std": dy_std,
         "dz_std": dz_std,
-    }
+    }, e3d
 
 
-def write_ref_las_with_e3d(out_las: Path, t: np.ndarray, xyz_ref: np.ndarray, e3d: np.ndarray, scale: float):
+def write_ref_las_with_e3d(out_las: Path, t, xyz_ref, e3d, scale):
+
     hdr = laspy.LasHeader(point_format=6, version="1.4")
-    hdr.scales = np.array([scale, scale, scale], dtype=np.float64)
+
+    hdr.scales = np.array([scale, scale, scale])
     hdr.offsets = np.array(
-        [float(xyz_ref[:, 0].min()), float(xyz_ref[:, 1].min()), float(xyz_ref[:, 2].min())],
-        dtype=np.float64,
+        [
+            float(xyz_ref[:, 0].min()),
+            float(xyz_ref[:, 1].min()),
+            float(xyz_ref[:, 2].min()),
+        ]
     )
 
     las = laspy.LasData(hdr)
+
     las.x = xyz_ref[:, 0]
     las.y = xyz_ref[:, 1]
     las.z = xyz_ref[:, 2]
+
     las.gps_time = t
 
     las.add_extra_dim(laspy.ExtraBytesParams(name="e3d", type=np.float32))
     las["e3d"] = e3d.astype(np.float32)
 
     out_las.parent.mkdir(parents=True, exist_ok=True)
+
     las.write(str(out_las))
 
 
-def format_summary(rows: List[Dict[str, object]]) -> str:
-    # simple pretty columns without pandas/tabulate
-    cols = [
-        ("target", 34),
-        ("N", 10),
-        ("RMSE", 10),
-        ("p95", 10),
-        ("p99", 10),
-        ("max", 10),
-        ("%>0.5m", 10),
-        ("%>1.0m", 10),
-        ("dx_mean", 10),
-        ("dy_mean", 10),
-        ("dz_mean", 10),
-    ]
-
-    def fnum(x, w):
-        if x is None:
-            return " " * w
-        if isinstance(x, (int, float)):
-            # integers for N, else 4 decimals
-            if abs(x - int(x)) < 1e-9 and w >= 6:
-                s = f"{int(x)}"
-            else:
-                s = f"{x:.4f}"
-        else:
-            s = str(x)
-        return s[:w].ljust(w)
-
-    lines = []
-    header = " ".join([c[0].ljust(c[1]) for c in cols])
-    sep = "-" * len(header)
-    lines.append(header)
-    lines.append(sep)
-    for r in rows:
-        line = " ".join([fnum(r.get(name), w) for name, w in cols])
-        lines.append(line)
-    return "\n".join(lines)
-
-
 def main():
+
     setup_logger()
+
     ap = argparse.ArgumentParser()
-    ap.add_argument("--config", required=True, help="YAML config file")
+    ap.add_argument("--config", required=True)
+
     args = ap.parse_args()
 
     cfg = yaml.safe_load(Path(args.config).read_text())
@@ -218,66 +217,74 @@ def main():
     t0 = float(cfg["time"]["outage_start"])
     dur = float(cfg["time"]["outage_duration"])
     buf = float(cfg["time"]["buffer"])
+
     tmin = t0 - buf
     tmax = t0 + dur + buf
 
     delim = cfg.get("io", {}).get("delim", ",")
+
     scale = float(cfg.get("las", {}).get("scale", 0.001))
 
-    exact_time = bool(cfg.get("matching", {}).get("exact_time", True))
-    time_atol = float(cfg.get("matching", {}).get("time_atol", 0.0))
-
     logging.info("Reference: %s", ref_txt)
-    logging.info("Window: [%.3f , %.3f] (start=%.3f dur=%.1f buffer=%.1f)", tmin, tmax, t0, dur, buf)
-    logging.info("LAS scale: %.6f m (%.1f mm)", scale, scale * 1000.0)
+    logging.info("Window: [%.3f , %.3f]", tmin, tmax)
 
-    # Read reference once
     tR, xyzR = read_window_txt(ref_txt, delim, tmin, tmax)
+
     logging.info("Reference points in window: %d", len(tR))
 
-    summary_rows: List[Dict[str, object]] = []
-
     for i, tgt in enumerate(targets, start=1):
+
         tgt_path = Path(tgt["path"])
-        out_las = Path(tgt["outfile"])
+        out_las = Path(tgt["outfile"]).with_suffix(".las")
 
         logging.info("")
         logging.info("Target %d/%d: %s", i, len(targets), tgt_path)
-        logging.info("Output LAS: %s", out_las)
 
         tT, xyzT = read_window_txt(tgt_path, delim, tmin, tmax)
+
         logging.info("Target points in window: %d", len(tT))
 
-        validate_times(tR, tT, exact=exact_time, atol=time_atol)
+        # -----------------------------------------
+        # REMOVE DUPLICATE TIMES
+        # -----------------------------------------
 
-        dxyz = xyzT - xyzR
-        e3d = np.sqrt(np.sum(dxyz * dxyz, axis=1))
+        tR_f, xyzR_f, tT_f, xyzT_f, stats = keep_only_mutual_unique_times(
+            tR, xyzR, tT, xyzT
+        )
 
-        metrics = compute_metrics(e3d, dxyz)
-        write_ref_las_with_e3d(out_las, tR, xyzR, e3d, scale)
+        logging.info(
+            "Removed ambiguous timestamps: ref_removed=%d tgt_removed=%d",
+            stats["ref_removed"],
+            stats["tgt_removed"],
+        )
 
-        logging.info("RMSE_3D: %.4f m | p95: %.4f m | max: %.4f m", metrics["RMSE"], metrics["p95"], metrics["max"])
-        logging.info("Wrote: %s", out_las)
+        # -----------------------------------------
+        # MATCH
+        # -----------------------------------------
 
-        summary_rows.append({
-            "target": str(tgt_path),
-            "outfile": str(out_las),
-            **metrics,
-        })
+        tM, xyzR_m, xyzT_m = match_by_time(
+            tR_f,
+            xyzR_f,
+            tT_f,
+            xyzT_f,
+        )
 
-    logging.info("")
-    logging.info("========== RMSE SUMMARY ==========")
-    print(format_summary(summary_rows))
-    logging.info("==================================")
+        logging.info("Matched points: %d", len(tM))
 
-    # (Optional) write a CSV summary next to the config, uncomment if you want
-    out_csv = Path(args.config).with_suffix(".summary.csv")
-    with out_csv.open("w", encoding="utf-8") as f:
-        keys = list(summary_rows[0].keys())
-        f.write(",".join(keys) + "\n")
-        for r in summary_rows:
-            f.write(",".join(str(r.get(k, "")) for k in keys) + "\n")
-    logging.info("Wrote summary CSV: %s", out_csv)
+        dxyz = xyzT_m - xyzR_m
+
+        metrics, e3d = compute_metrics(dxyz)
+
+        write_ref_las_with_e3d(out_las, tM, xyzR_m, e3d, scale)
+
+        logging.info(
+            "RMSE=%.4f  p95=%.4f  max=%.4f",
+            metrics["RMSE"],
+            metrics["p95"],
+            metrics["max"],
+        )
+
+        logging.info("Wrote LAS: %s", out_las)
 
 
 if __name__ == "__main__":

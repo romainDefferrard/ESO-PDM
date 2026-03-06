@@ -1,18 +1,20 @@
 
 reference:
-  path: '/media/b085164/Elements/PCD_SAM/subset/merged/merged_94117_HA_LR.txt'
+  path: '/media/b085164/Elements/PCD_SAM/Georef_v6/ref/merged/merged_94117_HA_LR.txt'
 
 targets:
-  - path: '/media/b085164/Elements/PCD_SAM/subset_outage/merged/merged_94117_HA_LR.txt'
-    outfile: '/media/b085164/Elements/Gobet_ODyN_v1/v6/georef_errors/rmse_p2p_ref_w_outage.txt'
+  - path: '/media/b085164/Elements/PCD_SAM/Georef_v6/outage_only/merged/merged_94117_HA_LR.txt'
+    outfile: '/media/b085164/Elements/PCD_SAM/Georef_v6/georef_errors/rmse_ref_w_outage_only.las'
 
-  - path: '..'
-    outfile: '..'
+  - path: '/media/b085164/Elements/PCD_SAM/Georef_v6/limatch_scan2scan/merged/merged_94117_HA_LR.txt'
+    outfile: '/media/b085164/Elements/PCD_SAM/Georef_v6/georef_errors/rmse_ref_w_p2p_scan2scan.las'
 
+  - path: '/media/b085164/Elements/PCD_SAM/Georef_v6/limatch_chunk2chunk/merged/merged_94117_HA_LR.txt'
+    outfile: '/media/b085164/Elements/PCD_SAM/Georef_v6/georef_errors/rmse_ref_w_p2p_chunk2chunk.las'
 time:
   outage_start: 466930.0
-  outage_duration: 5.0
-  buffer: 30.0
+  outage_duration: 200.0
+  buffer: 0.0
 
 io:
   delim: ","

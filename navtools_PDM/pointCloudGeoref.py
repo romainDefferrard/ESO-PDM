@@ -52,6 +52,7 @@ def apply_leapsec(t: np.ndarray, leapsec: Optional[float]) -> np.ndarray:
 
 
 def load_and_prepare_trajectory(cfg: Dict[str, Any]):
+
     trj = load_trajectory(cfg["trj"])
 
     trj_cfg = cfg["trj"]
