@@ -1,26 +1,180 @@
-mode: "patcher_then_limatch"   # ou "chunk_then_limatch"
+# ==============================================================
+# PIPELINE CONFIGURATION
+# ==============================================================
+# This configuration file controls the full LiDAR processing pipeline:
+#
+# Possible workflows:
+#   - chunk      : chunking + LiMatch
+#   - patcher    : run Patcher + LiMatch
+#   - cycleslip  : generate GNSS cycle slip scenarios
+#   - georef_only: only run georeferencing
+#
+# The execution is controlled by:
+#   mode  -> selects the workflow
+#   steps -> enables or disables individual processing stages
+# ==============================================================
 
-georef:
-  ha_cfg: "PDM_configs/georef_SAM-HA.yml"
-  lr_cfg: "PDM_configs/georef_SAM-LR.yml"
 
+# ==============================================================
+# WORKFLOW MODE
+# ==============================================================
+mode: "georef_only"
+
+# Possible values:
+#   chunk
+#   patcher
+#   cycleslip
+#   georef_only
+
+
+# ==============================================================
+# SCENARIO NAME
+# ==============================================================
+# Used to name output folders and generated config files
+scenario_name: "test_georef_2_las_txt"
+
+# ==============================================================
+# SCANNER CONFIGURATIONS
+# ==============================================================
+# Paths to scanner-specific configuration files
+# These define mounting matrices, lever arms etc.
+scanners:
+  ha_cfg: "navtools_PDM/PDM_configs/scanner_HA.yml"
+  lr_cfg: "navtools_PDM/PDM_configs/scanner_LR.yml"
+
+
+# ==============================================================
+# TRAJECTORY USED FOR GEOREFERENCING
+# ==============================================================
+trajectory:
+
+  type: "SBET"
+  path: "/media/b085164/Elements/Gobet_ODyN_v1/v1_base_AB/out/reference.out"
+  cfg:
+    type: "SBET"
+
+# ==============================================================
+# OPTIONAL DISTANCE FILTERING
+# ==============================================================
+# Remove points that are too far from the trajectory
+
+distance_filtering:
+  enable: true
+  max_distance_m: 20
+  map_epsg: "EPSG:2056"
+  filter_trj: null
+
+# ==============================================================
+# INPUT / OUTPUT PATHS
+# ==============================================================
+paths:
+
+  # Root directory for all outputs produced by the pipeline
+  root_out_dir: "/media/b085164/Elements/PCD_SAM/"
+  # Path to Patcher configuration file
+  patcher_cfg: "Patcher/config/MLS_Epalinges_config.yml"
+  # LiMatch configuration
+  limatch_cfg: "Patcher/submodules/limatch/configs/MLS.yml"
+  # Input GNSS trajectory file (used in outage scenarios)
+  gps_input: "/media/b085164/Elements/Gobet_ODyN_v1/v1_base_AB/in/GPS.txt"
+
+
+
+# ==============================================================
+# PIPELINE STEPS
+# ==============================================================
+# Enable or disable individual processing steps
+
+steps:
+  georef: true
+  merge: false
+  chunk: false
+  limatch: false
+  gps_outage_file: false
+
+
+
+# ==============================================================
+# MERGING PARAMETERS
+# ==============================================================
 merge:
-  enabled: true
-  out_dir: "/media/b085164/Elements/PCD_SAM/test/merged"
+  out_prefix: "merged_"
   out_suffix: "_HA_LR"
 
-# Option chunking (si mode == chunk_then_limatch)
-chunking:
+merge_correspondences:
   enabled: true
-  chunk_sec: 5
-  overlap_sec: 2
-  out_dir: "/media/b085164/Elements/PCD_SAM/test/chunks"
 
-# Option patcher (si mode == patcher_then_limatch)
-patcher:
-  yml: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/ALS/config/MLS_Epalinges_config.yml"
+  # Optional custom output file.
+  # If null, defaults are:
+  #   chunk   -> root_out_dir / scenario_name / "limatch" / "LiDAR_p2p.txt"
+  #   patcher -> root_out_dir / scenario_name / "output_limatch" / "LiDAR_p2p.txt"
+  output_file: null
 
+# ==============================================================
+# CHUNKING PARAMETERS
+# ==============================================================
+
+chunk:
+  source: "existing"   # "generate" or "existing"
+  existing_root: "/media/b085164/Elements/PCD_SAM/longue_ligne/scenario_combined/chunks_15m"
+  output_root: null
+  length_m: 15.0
+  min_points: 2000
+  epsg_out: "EPSG:2056"
+  delimiter: ","
+  skiprows: 0
+
+
+# ==============================================================
+# CHUNK SCENARIO VARIANTS
+# ==============================================================
+# Used only if mode = "chunk"
+
+chunk_variant:
+  type: "standard"   # "standard" or "outage_window"
+
+  outage_window:
+    enabled: false
+    output_root: "/media/b085164/Elements/PCD_SAM/longue_ligne/scenario_combined"
+    outages:
+      - [466930.0, 200.0]
+    pre_s: 30.0
+    post_s: 30.0
+
+
+
+# ==============================================================
+# LIMATCH PARAMETERS
+# ==============================================================
 limatch:
-  enabled: true
-  # si tu as une fonction run_limatch_from_patcher_config:
-  run_from_patcher_cfg: true
+  run: true
+
+  # Optional custom output directory for LiMatch results
+  # If null, default = root_out_dir / scenario_name / "limatch"
+  output_root: null
+
+  neighbor_k: 2
+  do_cross_scan: true
+
+
+
+# ==============================================================
+# PATCHER WORKFLOW
+# ==============================================================
+# Used only if mode = "patcher"
+
+patcher:
+  run: false
+  # Choose source
+  #   run      -> execute Patcher
+  #   existing -> reuse Patcher outputs
+  source: "existing"
+  output_root: "/media/b085164/Elements/PCD_SAM/longue_ligne/output_Patcher"
+
+  gps_outage_file:
+    enabled: false
+    output_root: "/media/b085164/Elements/PCD_SAM/longue_ligne/scenario_gps_outage"
+    outages:
+      - [466930.0, 200.0]
+
+

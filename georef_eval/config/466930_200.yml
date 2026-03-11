@@ -3,14 +3,13 @@ reference:
   path: '/media/b085164/Elements/PCD_SAM/Georef_v6/ref/merged/merged_94117_HA_LR.txt'
 
 targets:
-  - path: '/media/b085164/Elements/PCD_SAM/Georef_v6/outage_only/merged/merged_94117_HA_LR.txt'
-    outfile: '/media/b085164/Elements/PCD_SAM/Georef_v6/georef_errors/rmse_ref_w_outage_only.las'
+  - path: '/media/b085164/Elements/PCD_SAM/Georef_v6_full/scan2scan/merged/merged_94117_HA_LR.txt'
+    outfile: '/media/b085164/Elements/PCD_SAM/Georef_v6_full/georef_errors/rmse_ref_w_scan2scan.las'
 
-  - path: '/media/b085164/Elements/PCD_SAM/Georef_v6/limatch_scan2scan/merged/merged_94117_HA_LR.txt'
-    outfile: '/media/b085164/Elements/PCD_SAM/Georef_v6/georef_errors/rmse_ref_w_p2p_scan2scan.las'
+  - path: '/media/b085164/Elements/PCD_SAM/Georef_v6_full/chunk2chunk/merged/merged_94117_HA_LR.txt'
+    outfile: '/media/b085164/Elements/PCD_SAM/Georef_v6_full/georef_errors/rmse_ref_w_chunk2chunk.las'
 
-  - path: '/media/b085164/Elements/PCD_SAM/Georef_v6/limatch_chunk2chunk/merged/merged_94117_HA_LR.txt'
-    outfile: '/media/b085164/Elements/PCD_SAM/Georef_v6/georef_errors/rmse_ref_w_p2p_chunk2chunk.las'
+
 time:
   outage_start: 466930.0
   outage_duration: 200.0
@@ -18,11 +17,10 @@ time:
 
 io:
   delim: ","
-  no_header: true   # assumes columns: gps_time,x,y,z,...
+  no_header: true  
 
 matching:
-  # only used to validate times if you want allclose instead of exact equal
-  exact_time: true
+  exact_time: true # match on exact GPS times
   time_atol: 0.0    # ignored if exact_time=true
 
 las:
