@@ -106,7 +106,6 @@ def get_R_sensor2body(cfg):
         yaw = mount_cfg['boresight']['yaw']
 
         R_boresight = (R1(roll)@R2(pitch)@R3(yaw)).T
-        
         R_sensor2body = R_boresight @ R_mount # Method LIEO
 
         return R_sensor2body

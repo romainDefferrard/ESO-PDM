@@ -3,6 +3,8 @@ import glob
 import os
 from pathlib import Path
 from typing import Any, Dict, Union, Optional
+import laspy
+from laspy import ExtraBytesParams
 
 import numpy as np
 import yaml
@@ -157,8 +159,7 @@ def filter_pcd_by_vehicle_distance(
 # PROCESSING
 # ============================================================
 
-def georef_one_file(cfg: Dict[str, Any], trj, path: str):
-
+def georef_one_file(cfg, trj, path):
     print(f"\n[Georef] Processing file: {path}")
 
     # Load lasvec
@@ -176,39 +177,86 @@ def georef_one_file(cfg: Dict[str, Any], trj, path: str):
 
     # Distance filtering
     dist_cfg = cfg["distance_filtering"]
-
     if dist_cfg["enable"]:
-        pcd = filter_pcd_by_vehicle_distance(
-        pcd,
-        trj,
-        max_dist_m=float(dist_cfg["max_distance_m"]),
-        epsg_out=dist_cfg["map_epsg"]
+        filtered = filter_pcd_by_vehicle_distance(
+            pcd,
+            trj,
+            max_dist_m=float(dist_cfg["max_distance_m"]),
+            epsg_out=dist_cfg["map_epsg"],
+        )
 
-    )
+        # Si ta fonction retourne seulement pcd filtré, garde cette ligne :
+        pcd = filtered
 
+        # Si plus tard tu modifies la fonction pour renvoyer aussi un masque,
+        # il faudra filtrer lasvec avec le même masque.
 
-    # Export ASCII
+    # --------------------------------------------------
+    # Build output array once
+    # --------------------------------------------------
+    base_name = os.path.splitext(os.path.basename(path))[0]
+    output_dir = cfg["output"]["path"]
+    os.makedirs(output_dir, exist_ok=True)
+
+    arr = pcd
+    if cfg["output"]["lasvec"] and not cfg["output"]["lasvec_to_body"]:
+        arr = np.column_stack((pcd, lasvec[:, 1:4]))
+
+    # --------------------------------------------------
+    # Write according to selected output type
+    # --------------------------------------------------
     if cfg["output"]["type"] == "ASCII":
-        base_name = os.path.splitext(os.path.basename(path))[0]
-        output_dir = cfg["output"]["path"]
-        os.makedirs(output_dir, exist_ok=True)
         out_path = os.path.join(output_dir, base_name + "_pcd.txt")
 
-        if cfg["output"]["lasvec"] and not cfg["output"]["lasvec_to_body"]:
-            arr = np.column_stack((pcd, lasvec[:, 1:4]))
-            np.savetxt(out_path, arr,
-                       fmt="%.9f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f",
-                       delimiter=",")
-        elif cfg["output"]["lasvec"] and cfg["output"]["lasvec_to_body"]:
-            np.savetxt(out_path, pcd,
-                       fmt="%.9f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f",
-                       delimiter=",")
+        if arr.shape[1] == 7:
+            np.savetxt(
+                out_path,
+                arr,
+                fmt="%.9f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f",
+                delimiter=",",
+            )
+        elif arr.shape[1] == 4:
+            np.savetxt(
+                out_path,
+                arr,
+                fmt="%.9f, %.3f, %.3f, %.3f",
+                delimiter=",",
+            )
         else:
-            np.savetxt(out_path, pcd,
-                       fmt="%.9f, %.3f, %.3f, %.3f",
-                       delimiter=",")
+            raise ValueError(f"Unexpected ASCII output shape: {arr.shape}")
 
         print(f"Saved {out_path}")
+
+    elif cfg["output"]["type"] == "LAS":
+        out_path = os.path.join(output_dir, base_name + "_pcd.las")
+
+        header = laspy.LasHeader(point_format=1, version="1.4")
+        header.scales = np.array([0.001, 0.001, 0.001])
+        header.offsets = np.array([arr[:,1].min(), arr[:,2].min(), arr[:,3].min()])
+
+        if arr.shape[1] == 7:
+            header.add_extra_dim(ExtraBytesParams(name="lasvec_x", type=np.float32))
+            header.add_extra_dim(ExtraBytesParams(name="lasvec_y", type=np.float32))
+            header.add_extra_dim(ExtraBytesParams(name="lasvec_z", type=np.float32))
+        elif arr.shape[1] != 4:
+            raise ValueError(f"Unexpected LAS output shape: {arr.shape}")
+
+        las = laspy.LasData(header)
+        las.gps_time = arr[:, 0].astype(np.float64)
+        las.x = arr[:, 1]
+        las.y = arr[:, 2]
+        las.z = arr[:, 3]
+
+        if arr.shape[1] == 7:
+            las["lasvec_x"] = arr[:, 4].astype(np.float32)
+            las["lasvec_y"] = arr[:, 5].astype(np.float32)
+            las["lasvec_z"] = arr[:, 6].astype(np.float32)
+
+        las.write(out_path)
+        print(f"Saved {out_path}")
+
+    else:
+        raise ValueError(f"Unsupported output type: {cfg['output']['type']}")
 
     return pcd
 
