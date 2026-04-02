@@ -1,0 +1,366 @@
+13:02:36 | INFO | 
+13:02:36 | INFO | ============================================================
+13:02:36 | INFO |                  PIPELINE CONFIGURATION
+13:02:36 | INFO | ============================================================
+13:02:36 | INFO | Mode: patcher
+13:02:36 | INFO | Scenario name: georef_ALL_traj_outage_1
+13:02:36 | INFO | 
+13:02:36 | INFO | Trajectory:
+13:02:36 | INFO |    Path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+13:02:36 | INFO |    Type: SBET
+13:02:36 | INFO | 
+13:02:36 | INFO | Distance filtering:
+13:02:36 | INFO |    enable: True
+13:02:36 | INFO |    max_distance_m: 30
+13:02:36 | INFO |    map_epsg: EPSG:2056
+13:02:36 | INFO |    filter_trj: None
+13:02:36 | INFO | 
+13:02:36 | INFO | Scanners:
+13:02:36 | INFO |    ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml  (scanner_name=HA)
+13:02:36 | INFO |    lr_cfg: navtools_PDM/PDM_configs/scanner_LR.yml  (scanner_name=LR)
+13:02:36 | INFO |    puck_cfg: navtools_PDM/PDM_configs/scanner_PUCK.yml  (scanner_name=PUCK)
+13:02:36 | INFO | 
+13:02:36 | INFO | Paths:
+13:02:36 | INFO |    root_out_dir: /media/b085164/Elements/CALIB_26_02_25
+13:02:36 | INFO |    patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+13:02:36 | INFO |    limatch_cfg: Patcher/submodules/limatch/configs/MLS.yml
+13:02:36 | INFO |    gps_input: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt
+13:02:36 | INFO | 
+13:02:36 | INFO | Steps:
+13:02:36 | INFO |    georef: False
+13:02:36 | INFO |    merge: False
+13:02:36 | INFO |    chunk: False
+13:02:36 | INFO |    limatch: True
+13:02:36 | INFO |    gps_outage_file: False
+13:02:36 | INFO | 
+13:02:36 | INFO | Merge:
+13:02:36 | INFO |    out_prefix: merged_
+13:02:36 | INFO |    out_suffix: _HA_LR
+13:02:36 | INFO | 
+13:02:36 | INFO | VUX+PUCK merge:
+13:02:36 | INFO |    enabled: False
+13:02:36 | INFO |    name: ALL
+13:02:36 | INFO |    vux_group: HA_LR
+13:02:36 | INFO |    puck_scanner: puck_cfg
+13:02:36 | INFO |    output_dir: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged
+13:02:36 | INFO |    manifest_path: None
+13:02:36 | INFO |    output_suffix: _VUX_PUCK
+13:02:36 | INFO |    scanner_src_vux: 2
+13:02:36 | INFO |    scanner_src_puck: 1
+13:02:36 | INFO |    chunk_size: 10000000
+13:02:36 | INFO | 
+13:02:36 | INFO | Chunk:
+13:02:36 | INFO |    source: generate
+13:02:36 | INFO |    merged_input_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged
+13:02:36 | INFO |    reference_scanner: HA
+13:02:36 | INFO |    output_root: None
+13:02:36 | INFO |    length_m: 15.0
+13:02:36 | INFO |    min_last_chunk_m: 10.0
+13:02:36 | INFO |    min_points: 2000
+13:02:36 | INFO |    epsg_out: EPSG:2056
+13:02:36 | INFO |    delimiter: ,
+13:02:36 | INFO |    skiprows: 0
+13:02:36 | INFO |    cloud_fmt: las
+13:02:36 | INFO |    time_field: gps_time
+13:02:36 | INFO |    manifest_name: merged_manifest.csv
+13:02:36 | INFO |    use_manifest: True
+13:02:36 | INFO | 
+13:02:36 | INFO | Chunk variant:
+13:02:36 | INFO |    type: outage_window
+13:02:36 | INFO |    outage_window.enabled: True
+13:02:36 | INFO |    outage_window.output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/chunks_v2
+13:02:36 | INFO |    outage_window.outages: [[305120.0, 580.0]]
+13:02:36 | INFO |    outage_window.pre_s: 10.0
+13:02:36 | INFO |    outage_window.post_s: 10.0
+13:02:36 | INFO | 
+13:02:36 | INFO | LiMatch:
+13:02:36 | INFO |    run: True
+13:02:36 | INFO |    output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch
+13:02:36 | INFO |    neighbor_k: 1
+13:02:36 | INFO |    do_cross_scan: False
+13:02:36 | INFO |    do_spatial_crossings: False
+13:02:36 | INFO |    crossings_output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/limatch_crossings_10
+13:02:36 | INFO |    crossing_min_separation: 50
+13:02:36 | INFO |    crossing_overlap_margin_m: 3.0
+13:02:36 | INFO | 
+13:02:36 | INFO | Merge correspondences:
+13:02:36 | INFO |    enabled: True
+13:02:36 | INFO |    output_file: None
+13:02:36 | INFO | 
+13:02:36 | INFO | Patcher:
+13:02:36 | INFO |    run: True
+13:02:36 | INFO |    source: existing
+13:02:36 | INFO |    output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/patcher_pairs_2
+13:02:36 | INFO |    gps_outage_file:
+13:02:36 | INFO |       enabled: False
+13:02:36 | INFO |       output_root: /media/b085164/Elements/CALIB_26_02_25/georef_VUX_traj_ODyN/Patcher_long_outage/GPS_outage
+13:02:36 | INFO |       outages: [[305120.0, 580.0]]
+13:02:36 | INFO | ============================================================
+13:02:36 | INFO | 
+13:02:36 | INFO | [pipeline] Generating temporary georef configs...
+13:02:36 | INFO |    scanner=HA | source=navtools_PDM/PDM_configs/scanner_HA.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+13:02:36 | INFO |    scanner=LR | source=navtools_PDM/PDM_configs/scanner_LR.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_LR.generated.yml
+13:02:36 | INFO |    scanner=PUCK | source=navtools_PDM/PDM_configs/scanner_PUCK.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_PUCK.generated.yml
+13:02:36 | INFO | [pipeline] Temporary config generation done.
+13:02:39 | INFO | Loading faiss with AVX2 support.
+13:02:39 | INFO | Successfully loaded faiss with AVX2 support.
+[13:02:39] INFO | Starting LiMatch pipeline...
+13:02:39 | INFO | Starting LiMatch pipeline...
+[13:02:39] INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch/Flights_5_6/
+13:02:39 | INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch/Flights_5_6/
+[13:02:39] INFO | Visualization set to False
+13:02:39 | INFO | Visualization set to False
+[13:02:39] INFO | [0/7] Model setup
+13:02:39 | INFO | [0/7] Model setup
+[13:02:39] INFO |   └─ Using CUDA for descriptor inference.
+13:02:39 | INFO |   └─ Using CUDA for descriptor inference.
+[13:02:39] INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+13:02:39 | INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+[13:02:39] INFO |   └─ Loaded nested checkpoint with key 'model'.
+13:02:39 | INFO |   └─ Loaded nested checkpoint with key 'model'.
+[13:02:39] INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+13:02:39 | INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+[13:02:39] INFO | [1/7] Preprocessing
+13:02:39 | INFO | [1/7] Preprocessing
+[13:02:39] INFO |   └─ Loading point clouds...
+13:02:39 | INFO |   └─ Loading point clouds...
+[13:03:27] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/patcher_pairs_2/Flights_5_6/Patch_from_scan_5_with_6.las
+13:03:27 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/patcher_pairs_2/Flights_5_6/Patch_from_scan_5_with_6.las
+[13:04:58] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/patcher_pairs_2/Flights_5_6/Patch_from_scan_6_with_5.las
+13:04:58 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/patcher_pairs_2/Flights_5_6/Patch_from_scan_6_with_5.las
+[13:05:33] INFO |   └─ Tiling with size 100x100...
+13:05:33 | INFO |   └─ Tiling with size 100x100...
+[13:07:41] INFO |   └─ Shifting point clouds toward origin...
+13:07:41 | INFO |   └─ Shifting point clouds toward origin...
+[13:07:41] INFO |       └─ [2545675.31 1158461.93     896.54] m...
+13:07:41 | INFO |       └─ [2545675.31 1158461.93     896.54] m...
+[13:07:41] INFO |       └─ (Coordinates shifted back at export)
+13:07:41 | INFO |       └─ (Coordinates shifted back at export)
+[13:08:43] INFO |   └─ Generated 17 valid tiles.
+13:08:43 | INFO |   └─ Generated 17 valid tiles.
+[13:08:43] INFO |   └─ Applying voxelization with size 0.025 m...
+13:08:43 | INFO |   └─ Applying voxelization with size 0.025 m...
+[13:09:42] INFO |       └─ voxelized from 95273492 to 49809067 pts (52.28%)
+13:09:42 | INFO |       └─ voxelized from 95273492 to 49809067 pts (52.28%)
+[13:11:09] INFO |       └─ voxelized from 112972781 to 57310094 pts (50.73%)
+13:11:09 | INFO |       └─ voxelized from 112972781 to 57310094 pts (50.73%)
+[13:11:29] INFO | [2/7] Keypoint detection
+13:11:29 | INFO | [2/7] Keypoint detection
+[13:13:36] INFO |   └─ Downsampling keypoints to max 25000 points...
+13:13:36 | INFO |   └─ Downsampling keypoints to max 25000 points...
+[13:13:36] INFO |   └─ Pre-downsample keypoints number: 706591
+13:13:36 | INFO |   └─ Pre-downsample keypoints number: 706591
+[13:13:36] INFO |   └─ Filtering keypoints to 25000 per tile...
+13:13:36 | INFO |   └─ Filtering keypoints to 25000 per tile...
+[13:13:37] INFO |   └─ Pre-downsample keypoints number: 701615
+13:13:37 | INFO |   └─ Pre-downsample keypoints number: 701615
+[13:13:37] INFO |   └─ Filtering keypoints to 25000 per tile...
+13:13:37 | INFO |   └─ Filtering keypoints to 25000 per tile...
+[13:13:37] INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+13:13:37 | INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+[13:13:37] INFO |       └─ 336598 keypoints kept (91.89%) 
+13:13:37 | INFO |       └─ 336598 keypoints kept (91.89%) 
+[13:13:37] INFO |       └─ 349287 keypoints kept (96.40%) 
+13:13:37 | INFO |       └─ 349287 keypoints kept (96.40%) 
+[13:13:37] INFO | [3/7] Description
+13:13:37 | INFO | [3/7] Description
+[13:13:37] INFO |   └─ Computing descriptors for Tile A...
+13:13:37 | INFO |   └─ Computing descriptors for Tile A...
+[13:13:37] INFO |       └─ batch 1/7...
+13:13:37 | INFO |       └─ batch 1/7...
+[13:13:53] INFO |       └─ batch 2/7...
+13:13:53 | INFO |       └─ batch 2/7...
+[13:14:06] INFO |       └─ batch 3/7...
+13:14:06 | INFO |       └─ batch 3/7...
+[13:14:20] INFO |       └─ batch 4/7...
+13:14:20 | INFO |       └─ batch 4/7...
+[13:14:34] INFO |       └─ batch 5/7...
+13:14:34 | INFO |       └─ batch 5/7...
+[13:14:48] INFO |       └─ batch 6/7...
+13:14:48 | INFO |       └─ batch 6/7...
+[13:15:00] INFO |       └─ batch 7/7...
+13:15:00 | INFO |       └─ batch 7/7...
+[13:15:09] INFO |   └─ Computing descriptors for Tile B...
+13:15:09 | INFO |   └─ Computing descriptors for Tile B...
+[13:15:10] INFO |       └─ batch 1/7...
+13:15:10 | INFO |       └─ batch 1/7...
+[13:15:27] INFO |       └─ batch 2/7...
+13:15:27 | INFO |       └─ batch 2/7...
+[13:15:43] INFO |       └─ batch 3/7...
+13:15:43 | INFO |       └─ batch 3/7...
+[13:15:58] INFO |       └─ batch 4/7...
+13:15:58 | INFO |       └─ batch 4/7...
+[13:16:14] INFO |       └─ batch 5/7...
+13:16:14 | INFO |       └─ batch 5/7...
+[13:16:28] INFO |       └─ batch 6/7...
+13:16:28 | INFO |       └─ batch 6/7...
+[13:16:41] INFO |       └─ batch 7/7...
+13:16:41 | INFO |       └─ batch 7/7...
+[13:16:57] INFO | [4/7] Matching
+13:16:57 | INFO | [4/7] Matching
+[13:17:30] INFO |   └─ Applying reciprocity test...
+13:17:30 | INFO |   └─ Applying reciprocity test...
+[13:17:30] INFO |   └─ Keeping 30.11% reciprocal matches
+13:17:30 | INFO |   └─ Keeping 30.11% reciprocal matches
+[13:17:30] INFO | [5/7] RANSAC filtering
+13:17:30 | INFO | [5/7] RANSAC filtering
+[13:17:30] INFO |   └─ Tile 1: keeping 50.41%
+13:17:30 | INFO |   └─ Tile 1: keeping 50.41%
+[13:17:30] INFO |   └─ Tile 2: keeping 54.97%
+13:17:30 | INFO |   └─ Tile 2: keeping 54.97%
+[13:17:30] INFO |   └─ Tile 3: keeping 49.16%
+13:17:30 | INFO |   └─ Tile 3: keeping 49.16%
+[13:17:30] INFO |   └─ Tile 4: keeping 60.69%
+13:17:30 | INFO |   └─ Tile 4: keeping 60.69%
+[13:17:30] INFO |   └─ Tile 5: keeping 62.01%
+13:17:30 | INFO |   └─ Tile 5: keeping 62.01%
+[13:17:30] INFO |   └─ Tile 6: keeping 58.37%
+13:17:30 | INFO |   └─ Tile 6: keeping 58.37%
+[13:17:30] INFO |   └─ Tile 7: keeping 67.94%
+13:17:30 | INFO |   └─ Tile 7: keeping 67.94%
+[13:17:30] INFO |   └─ Tile 8: keeping 66.75%
+13:17:30 | INFO |   └─ Tile 8: keeping 66.75%
+[13:17:31] INFO |   └─ Tile 9: keeping 57.56%
+13:17:31 | INFO |   └─ Tile 9: keeping 57.56%
+[13:17:31] INFO |   └─ Tile 10: keeping 67.87%
+13:17:31 | INFO |   └─ Tile 10: keeping 67.87%
+[13:17:31] INFO |   └─ Tile 11: keeping 72.49%
+13:17:31 | INFO |   └─ Tile 11: keeping 72.49%
+[13:17:31] INFO |   └─ Tile 12: keeping 73.53%
+13:17:31 | INFO |   └─ Tile 12: keeping 73.53%
+[13:17:31] INFO |   └─ Tile 13: keeping 58.37%
+13:17:31 | INFO |   └─ Tile 13: keeping 58.37%
+[13:17:31] INFO |   └─ Tile 14: keeping 43.04%
+13:17:31 | INFO |   └─ Tile 14: keeping 43.04%
+[13:17:31] INFO |   └─ Tile 15: keeping 41.83%
+13:17:31 | INFO |   └─ Tile 15: keeping 41.83%
+[13:17:31] INFO |   └─ WARNING Tile 16: only 5 inliers < 50, deleting...
+13:17:31 | INFO |   └─ WARNING Tile 16: only 5 inliers < 50, deleting...
+[13:17:31] INFO |   └─ Tile 17: keeping 34.97%
+13:17:31 | INFO |   └─ Tile 17: keeping 34.97%
+[13:17:31] INFO | [6/7] ICP refinement
+13:17:31 | INFO | [6/7] ICP refinement
+[13:17:31] INFO |   └─ ICP refining tile 1 with 4189 correspondences...
+13:17:31 | INFO |   └─ ICP refining tile 1 with 4189 correspondences...
+[13:23:20] INFO |   └─ ICP refining tile 2 with 4528 correspondences...
+13:23:20 | INFO |   └─ ICP refining tile 2 with 4528 correspondences...
+[13:29:51] INFO |   └─ ICP refining tile 3 with 2641 correspondences...
+13:29:51 | INFO |   └─ ICP refining tile 3 with 2641 correspondences...
+[13:33:06] INFO |   └─ ICP refining tile 4 with 4834 correspondences...
+13:33:06 | INFO |   └─ ICP refining tile 4 with 4834 correspondences...
+[13:39:40] INFO |   └─ ICP refining tile 5 with 5473 correspondences...
+13:39:40 | INFO |   └─ ICP refining tile 5 with 5473 correspondences...
+[13:45:18] INFO |   └─ ICP refining tile 6 with 4591 correspondences...
+13:45:18 | INFO |   └─ ICP refining tile 6 with 4591 correspondences...
+[13:50:43] INFO |   └─ ICP refining tile 7 with 5386 correspondences...
+13:50:43 | INFO |   └─ ICP refining tile 7 with 5386 correspondences...
+[13:57:30] INFO |   └─ ICP refining tile 8 with 5566 correspondences...
+13:57:30 | INFO |   └─ ICP refining tile 8 with 5566 correspondences...
+[14:03:58] INFO |   └─ ICP refining tile 9 with 4046 correspondences...
+14:03:58 | INFO |   └─ ICP refining tile 9 with 4046 correspondences...
+[14:08:19] INFO |   └─ ICP refining tile 10 with 4984 correspondences...
+14:08:19 | INFO |   └─ ICP refining tile 10 with 4984 correspondences...
+[14:13:03] INFO |   └─ ICP refining tile 11 with 751 correspondences...
+14:13:03 | INFO |   └─ ICP refining tile 11 with 751 correspondences...
+[14:13:32] INFO |   └─ ICP refining tile 12 with 6566 correspondences...
+14:13:32 | INFO |   └─ ICP refining tile 12 with 6566 correspondences...
+[14:22:10] INFO |   └─ ICP refining tile 13 with 3210 correspondences...
+14:22:10 | INFO |   └─ ICP refining tile 13 with 3210 correspondences...
+[14:24:18] INFO |   └─ ICP refining tile 14 with 2287 correspondences...
+14:24:18 | INFO |   └─ ICP refining tile 14 with 2287 correspondences...
+[14:26:27] INFO |   └─ ICP refining tile 15 with 110 correspondences...
+14:26:27 | INFO |   └─ ICP refining tile 15 with 110 correspondences...
+[14:26:31] INFO |   └─ ICP refining tile 16 with 0 correspondences...
+14:26:31 | INFO |   └─ ICP refining tile 16 with 0 correspondences...
+[14:26:31] INFO |   └─ ICP refining tile 17 with 1040 correspondences...
+14:26:31 | INFO |   └─ ICP refining tile 17 with 1040 correspondences...
+[14:27:24] INFO | [7/7] Building output
+14:27:24 | INFO | [7/7] Building output
+[14:27:24] INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+14:27:24 | INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+[14:27:25] INFO |       └─ Loaded 39900 trajectory points.
+14:27:25 | INFO |       └─ Loaded 39900 trajectory points.
+[14:27:25] INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+14:27:25 | INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+[14:27:25] INFO |   └─ Using input laser vectors for correspondences...
+14:27:25 | INFO |   └─ Using input laser vectors for correspondences...
+[14:27:25] INFO |   └─ Correcting laser vectors B with ICP results...
+14:27:25 | INFO |   └─ Correcting laser vectors B with ICP results...
+[14:27:26] INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch/Flights_5_6/cor_outputs/
+14:27:26 | INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch/Flights_5_6/cor_outputs/
+[14:27:34] INFO | [Pipeline summary]
+14:27:34 | INFO | [Pipeline summary]
+[14:27:34] INFO |       Model setup: 0.37s
+14:27:34 | INFO |       Model setup: 0.37s
+[14:27:34] INFO |     Preprocessing: 529.69s
+14:27:34 | INFO |     Preprocessing: 529.69s
+[14:27:34] INFO |         Detection: 128.19s
+14:27:34 | INFO |         Detection: 128.19s
+[14:27:34] INFO |       Description: 199.48s
+14:27:34 | INFO |       Description: 199.48s
+[14:27:34] INFO |          Matching: 33.02s
+14:27:34 | INFO |          Matching: 33.02s
+[14:27:34] INFO |            RANSAC: 0.82s
+14:27:34 | INFO |            RANSAC: 0.82s
+[14:27:34] INFO |               ICP: 4193.54s
+14:27:34 | INFO |               ICP: 4193.54s
+[14:27:34] INFO |             Total: 5095.04s
+14:27:34 | INFO |             Total: 5095.04s
+[14:27:34] INFO | [Metrics]
+14:27:34 | INFO | [Metrics]
+[14:27:34] INFO |          Points A: 49577438
+14:27:34 | INFO |          Points A: 49577438
+[14:27:34] INFO |          Points B: 57004723
+14:27:34 | INFO |          Points B: 57004723
+[14:27:34] INFO |        Tiles num.: 17
+14:27:34 | INFO |        Tiles num.: 17
+[14:27:34] INFO |       Keypoints A: 336598
+14:27:34 | INFO |       Keypoints A: 336598
+[14:27:34] INFO |       Keypoints B: 349287
+14:27:34 | INFO |       Keypoints B: 349287
+[14:27:34] INFO |       Raw matches: 101362
+14:27:34 | INFO |       Raw matches: 101362
+[14:27:34] INFO |    RANSAC matches: 60202
+14:27:34 | INFO |    RANSAC matches: 60202
+[14:27:34] INFO | Peak RAM: 19.60 GB
+14:27:34 | INFO | Peak RAM: 19.60 GB
+[14:27:34] INFO | LiMatch pipeline completed.
+14:27:34 | INFO | LiMatch pipeline completed.
+
+======================================
+[pipeline] Starting pipeline
+[pipeline] mode:            patcher
+[pipeline] scenario:        georef_ALL_traj_outage_1
+[pipeline] root_out_dir:    /media/b085164/Elements/CALIB_26_02_25
+[pipeline] limatch_cfg:     /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/configs/MLS.yml
+[pipeline] patcher_cfg:     Patcher/config/MLS_Epalinges_config.yml
+======================================
+
+
+======================================
+[pipeline] Resolved inputs
+[pipeline] merged_out:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged
+[pipeline] georef ref cfg:  /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+======================================
+
+
+======================================
+[limatch] Running LiMatch on Patcher outputs
+[limatch] patcher_out_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/patcher_pairs_2
+[limatch] out_root:         /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch
+[limatch] total pairs:      1
+======================================
+
+[limatch] pair=Flights_5_6 | cloud1=Patch_from_scan_5_with_6.las | cloud2=Patch_from_scan_6_with_5.las
+[limatch-api] prj_folder=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch/Flights_5_6/
+
+======================================
+[merge_correspondences] Merging LiMatch correspondences
+[merge_correspondences] workflow_type: patcher
+[merge_correspondences] limatch_root:  /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch
+[merge_correspondences] pattern:      LiDAR_p2p_Patch*
+[merge_correspondences] n files:      3
+[merge_correspondences] output_file:  /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch/LiDAR_p2p.txt
+======================================
+
+[merge_correspondences] Done: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch/LiDAR_p2p.txt

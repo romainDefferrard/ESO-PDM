@@ -1,0 +1,148 @@
+16:06:04 | INFO | 
+16:06:04 | INFO | ============================================================
+16:06:04 | INFO |                  PIPELINE CONFIGURATION
+16:06:04 | INFO | ============================================================
+16:06:04 | INFO | Mode: chunk
+16:06:04 | INFO | Scenario name: georef_ALL_traj_outage_1
+16:06:04 | INFO | 
+16:06:04 | INFO | Trajectory:
+16:06:04 | INFO |    Path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+16:06:04 | INFO |    Type: SBET
+16:06:04 | INFO | 
+16:06:04 | INFO | Distance filtering:
+16:06:04 | INFO |    enable: True
+16:06:04 | INFO |    max_distance_m: 30
+16:06:04 | INFO |    map_epsg: EPSG:2056
+16:06:04 | INFO |    filter_trj: None
+16:06:04 | INFO | 
+16:06:04 | INFO | Scanners:
+16:06:04 | INFO |    ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml  (scanner_name=HA)
+16:06:04 | INFO |    lr_cfg: navtools_PDM/PDM_configs/scanner_LR.yml  (scanner_name=LR)
+16:06:04 | INFO |    puck_cfg: navtools_PDM/PDM_configs/scanner_PUCK.yml  (scanner_name=PUCK)
+16:06:04 | INFO | 
+16:06:04 | INFO | Paths:
+16:06:04 | INFO |    root_out_dir: /media/b085164/Elements/CALIB_26_02_25
+16:06:04 | INFO |    patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+16:06:04 | INFO |    limatch_cfg: Patcher/submodules/limatch/configs/MLS.yml
+16:06:04 | INFO |    gps_input: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt
+16:06:04 | INFO | 
+16:06:04 | INFO | Steps:
+16:06:04 | INFO |    georef: False
+16:06:04 | INFO |    merge: False
+16:06:04 | INFO |    vux_puck_merge: False
+16:06:04 | INFO |    chunk: True
+16:06:04 | INFO |    limatch: True
+16:06:04 | INFO |    gps_outage_file: False
+16:06:04 | INFO | 
+16:06:04 | INFO | Merge:
+16:06:04 | INFO |    out_prefix: merged_
+16:06:04 | INFO |    out_suffix: _HA_LR
+16:06:04 | INFO | 
+16:06:04 | INFO | VUX+PUCK merge:
+16:06:04 | INFO |    enabled: True
+16:06:04 | INFO |    name: ALL
+16:06:04 | INFO |    vux_group: HA_LR
+16:06:04 | INFO |    puck_scanner: puck_cfg
+16:06:04 | INFO |    vux_input_dir: None
+16:06:04 | INFO |    output_dir: None
+16:06:04 | INFO |    manifest_path: None
+16:06:04 | INFO |    output_suffix: _VUX_PUCK
+16:06:04 | INFO |    scanner_src_vux: 2
+16:06:04 | INFO |    scanner_src_puck: 1
+16:06:04 | INFO |    chunk_size: 10000000
+16:06:04 | INFO | 
+16:06:04 | INFO | Chunk:
+16:06:04 | INFO |    source: generate
+16:06:04 | INFO |    existing_root: None
+16:06:04 | INFO |    merged_input_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL
+16:06:04 | INFO |    merged_group: None
+16:06:04 | INFO |    reference_scanner: HA
+16:06:04 | INFO |    output_root: None
+16:06:04 | INFO |    length_m: 15.0
+16:06:04 | INFO |    min_last_chunk_m: 10.0
+16:06:04 | INFO |    min_points: 2000
+16:06:04 | INFO |    epsg_out: EPSG:2056
+16:06:04 | INFO |    delimiter: ,
+16:06:04 | INFO |    skiprows: 0
+16:06:04 | INFO |    cloud_fmt: las
+16:06:04 | INFO |    time_field: gps_time
+16:06:04 | INFO |    manifest_name: merged_manifest.csv
+16:06:04 | INFO |    use_manifest: True
+16:06:04 | INFO | 
+16:06:04 | INFO | Chunk variant:
+16:06:04 | INFO |    type: outage_window
+16:06:04 | INFO |    outage_window.enabled: True
+16:06:04 | INFO |    outage_window.output_root: None
+16:06:04 | INFO |    outage_window.outages: [[305120.0, 580.0]]
+16:06:04 | INFO |    outage_window.pre_s: 10.0
+16:06:04 | INFO |    outage_window.post_s: 10.0
+16:06:04 | INFO | 
+16:06:04 | INFO | LiMatch:
+16:06:04 | INFO |    run: True
+16:06:04 | INFO |    output_root: None
+16:06:04 | INFO |    neighbor_k: 1
+16:06:04 | INFO |    do_cross_scan: True
+16:06:04 | INFO |    do_spatial_crossings: True
+16:06:04 | INFO |    crossings_output_root: None
+16:06:04 | INFO |    crossing_min_separation: 30
+16:06:04 | INFO |    crossing_overlap_margin_m: 1.2
+16:06:04 | INFO | 
+16:06:04 | INFO | Merge correspondences:
+16:06:04 | INFO |    enabled: True
+16:06:04 | INFO |    output_file: None
+16:06:04 | INFO | 
+16:06:04 | INFO | Patcher:
+16:06:04 | INFO |    run: False
+16:06:04 | INFO |    source: existing
+16:06:04 | INFO |    output_root: None
+16:06:04 | INFO |    gps_outage_file:
+16:06:04 | INFO |       enabled: False
+16:06:04 | INFO |       output_root: None
+16:06:04 | INFO |       outages: []
+16:06:04 | INFO | ============================================================
+16:06:04 | INFO | 
+16:06:04 | INFO | [pipeline] Generating temporary georef configs...
+16:06:04 | INFO |    scanner=HA | source=navtools_PDM/PDM_configs/scanner_HA.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+16:06:04 | INFO |    scanner=LR | source=navtools_PDM/PDM_configs/scanner_LR.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_LR.generated.yml
+16:06:04 | INFO |    scanner=PUCK | source=navtools_PDM/PDM_configs/scanner_PUCK.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_PUCK.generated.yml
+16:06:04 | INFO | [pipeline] Temporary config generation done.
+
+======================================
+[pipeline] Starting pipeline
+[pipeline] mode:            chunk
+[pipeline] scenario:        georef_ALL_traj_outage_1
+[pipeline] root_out_dir:    /media/b085164/Elements/CALIB_26_02_25
+[pipeline] limatch_cfg:     /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/configs/MLS.yml
+[pipeline] patcher_cfg:     Patcher/config/MLS_Epalinges_config.yml
+======================================
+
+
+======================================
+[pipeline] Resolved inputs
+[pipeline] merged_out:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL
+[pipeline] georef ref cfg:  /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+======================================
+
+[combined] GPS_outage written: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/GPS_outage.txt (kept=2876, removed=581)
+
+==============================
+[combined scenario]
+Outages: [[305120.0, 580.0]]
+Expanded intervals: [(305110.0, 305710.0)]
+cloud_fmt: las
+time_field: gps_time
+==============================
+
+[combined] Using manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL/merged_manifest.csv
+[outage selection] merged_1000_VUX_PUCK.las                      time=[305060.001,305313.526] -> involved
+[outage selection] merged_2000_VUX_PUCK.las                      time=[305313.556,305375.866] -> involved
+[outage selection] merged_3000_VUX_PUCK.las                      time=[305433.946,305705.924] -> involved
+[outage selection] merged_4000_VUX_PUCK.las                      time=[305718.806,305736.393] -> stop (after)
+
+[outage summary] 3 / 6 involved
+
+[combined] WARNING: could not load trajectory for bbox (name 'load_config' is not defined) — falling back to point-cloud bbox
+[combined] CHUNK DIRECT 15.0m merged_1000_VUX_PUCK.las -> /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK
+Loading file /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+Converting orientation info from local NED to ECEF
+Chunk merged_1000_VUX_PUCK.las:   0%|          | 0/294117790 [00:00<?, ?pts/s]Chunk merged_1000_VUX_PUCK.las:   3%|▎         | 8000000/294117790 [00:00<00:04, 63025327.01pts/s]Chunk merged_1000_VUX_PUCK.las:   5%|▌         | 16000000/294117790 [00:00<00:04, 60814155.34pts/s]Chunk merged_1000_VUX_PUCK.las:   8%|▊         | 24000000/294117790 [00:00<00:04, 60158406.72pts/s]Chunk merged_1000_VUX_PUCK.las:  11%|█         | 32000000/294117790 [00:00<00:09, 28000004.02pts/s]Chunk merged_1000_VUX_PUCK.las:  13%|█▎        | 38000000/294117790 [00:01<00:17, 14679884.83pts/s]Chunk merged_1000_VUX_PUCK.las:  14%|█▍        | 42000000/294117790 [00:02<00:21, 11683642.66pts/s]Chunk merged_1000_VUX_PUCK.las:  16%|█▌        | 46000000/294117790 [00:02<00:24, 10011881.94pts/s]Chunk merged_1000_VUX_PUCK.las:  16%|█▋        | 48000000/294117790 [00:03<00:26, 9365781.91pts/s] Chunk merged_1000_VUX_PUCK.las:  17%|█▋        | 50000000/294117790 [00:03<00:27, 8854467.66pts/s]Chunk merged_1000_VUX_PUCK.las:  18%|█▊        | 52000000/294117790 [00:03<00:28, 8407757.28pts/s]Chunk merged_1000_VUX_PUCK.las:  18%|█▊        | 54000000/294117790 [00:04<00:29, 8037916.11pts/s]Chunk merged_1000_VUX_PUCK.las:  19%|█▉        | 56000000/294117790 [00:04<00:30, 7718619.80pts/s]Chunk merged_1000_VUX_PUCK.las:  20%|█▉        | 58000000/294117790 [00:04<00:31, 7414948.21pts/s]Chunk merged_1000_VUX_PUCK.las:  20%|██        | 60000000/294117790 [00:04<00:32, 7239792.59pts/s]Chunk merged_1000_VUX_PUCK.las:  21%|██        | 62000000/294117790 [00:05<00:32, 7169661.02pts/s]Chunk merged_1000_VUX_PUCK.las:  22%|██▏       | 64000000/294117790 [00:05<00:32, 7132045.68pts/s]Chunk merged_1000_VUX_PUCK.las:  22%|██▏       | 66000000/294117790 [00:05<00:32, 7076882.47pts/s]Chunk merged_1000_VUX_PUCK.las:  23%|██▎       | 68000000/294117790 [00:06<00:32, 6992385.03pts/s]Chunk merged_1000_VUX_PUCK.las:  24%|██▍       | 70000000/294117790 [00:06<00:32, 6963127.39pts/s]Chunk merged_1000_VUX_PUCK.las:  24%|██▍       | 72000000/294117790 [00:06<00:32, 6898205.03pts/s]Chunk merged_1000_VUX_PUCK.las:  25%|██▌       | 74000000/294117790 [00:07<00:31, 6896015.13pts/s]Chunk merged_1000_VUX_PUCK.las:  26%|██▌       | 76000000/294117790 [00:07<00:31, 6911710.95pts/s]Chunk merged_1000_VUX_PUCK.las:  27%|██▋       | 78000000/294117790 [00:07<00:31, 6912898.38pts/s]Chunk merged_1000_VUX_PUCK.las:  27%|██▋       | 80000000/294117790 [00:07<00:30, 6964485.16pts/s]Chunk merged_1000_VUX_PUCK.las:  28%|██▊       | 82000000/294117790 [00:08<00:30, 6894444.96pts/s]Chunk merged_1000_VUX_PUCK.las:  29%|██▊       | 84000000/294117790 [00:08<00:30, 6874644.93pts/s]Chunk merged_1000_VUX_PUCK.las:  29%|██▉       | 86000000/294117790 [00:08<00:30, 6859162.71pts/s]Chunk merged_1000_VUX_PUCK.las:  30%|██▉       | 88000000/294117790 [00:09<00:29, 6906521.98pts/s]Chunk merged_1000_VUX_PUCK.las:  31%|███       | 90000000/294117790 [00:09<00:29, 6899993.74pts/s]Chunk merged_1000_VUX_PUCK.las:  31%|███▏      | 92000000/294117790 [00:09<00:29, 6910953.71pts/s]Chunk merged_1000_VUX_PUCK.las:  32%|███▏      | 94000000/294117790 [00:09<00:28, 6947889.38pts/s]Chunk merged_1000_VUX_PUCK.las:  33%|███▎      | 96000000/294117790 [00:10<00:28, 6846187.80pts/s]Chunk merged_1000_VUX_PUCK.las:  33%|███▎      | 98000000/294117790 [00:10<00:29, 6637023.23pts/s]Chunk merged_1000_VUX_PUCK.las:  34%|███▍      | 100000000/294117790 [00:10<00:29, 6569424.85pts/s]Chunk merged_1000_VUX_PUCK.las:  35%|███▍      | 102000000/294117790 [00:11<00:28, 6658192.74pts/s]Chunk merged_1000_VUX_PUCK.las:  35%|███▌      | 104000000/294117790 [00:11<00:28, 6751667.61pts/s]Chunk merged_1000_VUX_PUCK.las:  36%|███▌      | 106000000/294117790 [00:11<00:27, 6840843.82pts/s]Chunk merged_1000_VUX_PUCK.las:  37%|███▋      | 108000000/294117790 [00:11<00:26, 6914497.38pts/s]Chunk merged_1000_VUX_PUCK.las:  37%|███▋      | 110000000/294117790 [00:12<00:26, 6861543.68pts/s]Chunk merged_1000_VUX_PUCK.las:  38%|███▊      | 112000000/294117790 [00:12<00:26, 6913701.54pts/s]Chunk merged_1000_VUX_PUCK.las:  39%|███▉      | 114000000/294117790 [00:12<00:26, 6891618.11pts/s]Chunk merged_1000_VUX_PUCK.las:  39%|███▉      | 116000000/294117790 [00:13<00:27, 6440136.06pts/s]Chunk merged_1000_VUX_PUCK.las:  40%|████      | 118000000/294117790 [00:13<00:27, 6321976.34pts/s]

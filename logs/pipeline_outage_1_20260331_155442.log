@@ -1,0 +1,427 @@
+15:54:42 | INFO | 
+15:54:42 | INFO | ============================================================
+15:54:42 | INFO |                  PIPELINE CONFIGURATION
+15:54:42 | INFO | ============================================================
+15:54:42 | INFO | Mode: chunk
+15:54:42 | INFO | Scenario name: georef_ALL_traj_outage_1
+15:54:42 | INFO | 
+15:54:42 | INFO | Trajectory:
+15:54:42 | INFO |    Path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+15:54:42 | INFO |    Type: SBET
+15:54:42 | INFO | 
+15:54:42 | INFO | Distance filtering:
+15:54:42 | INFO |    enable: True
+15:54:42 | INFO |    max_distance_m: 30
+15:54:42 | INFO |    map_epsg: EPSG:2056
+15:54:42 | INFO |    filter_trj: None
+15:54:42 | INFO | 
+15:54:42 | INFO | Scanners:
+15:54:42 | INFO |    ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml  (scanner_name=HA)
+15:54:42 | INFO |    lr_cfg: navtools_PDM/PDM_configs/scanner_LR.yml  (scanner_name=LR)
+15:54:42 | INFO |    puck_cfg: navtools_PDM/PDM_configs/scanner_PUCK.yml  (scanner_name=PUCK)
+15:54:42 | INFO | 
+15:54:42 | INFO | Paths:
+15:54:42 | INFO |    root_out_dir: /media/b085164/Elements/CALIB_26_02_25
+15:54:42 | INFO |    patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+15:54:42 | INFO |    limatch_cfg: Patcher/submodules/limatch/configs/MLS.yml
+15:54:42 | INFO |    gps_input: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt
+15:54:42 | INFO | 
+15:54:42 | INFO | Steps:
+15:54:42 | INFO |    georef: False
+15:54:42 | INFO |    merge: False
+15:54:42 | INFO |    vux_puck_merge: False
+15:54:42 | INFO |    chunk: True
+15:54:42 | INFO |    limatch: True
+15:54:42 | INFO |    gps_outage_file: False
+15:54:42 | INFO | 
+15:54:42 | INFO | Merge:
+15:54:42 | INFO |    out_prefix: merged_
+15:54:42 | INFO |    out_suffix: _HA_LR
+15:54:42 | INFO | 
+15:54:42 | INFO | VUX+PUCK merge:
+15:54:42 | INFO |    enabled: True
+15:54:42 | INFO |    name: ALL
+15:54:42 | INFO |    vux_group: HA_LR
+15:54:42 | INFO |    puck_scanner: puck_cfg
+15:54:42 | INFO |    vux_input_dir: None
+15:54:42 | INFO |    output_dir: None
+15:54:42 | INFO |    manifest_path: None
+15:54:42 | INFO |    output_suffix: _VUX_PUCK
+15:54:42 | INFO |    scanner_src_vux: 2
+15:54:42 | INFO |    scanner_src_puck: 1
+15:54:42 | INFO |    chunk_size: 10000000
+15:54:42 | INFO | 
+15:54:42 | INFO | Chunk:
+15:54:42 | INFO |    source: generate
+15:54:42 | INFO |    existing_root: None
+15:54:42 | INFO |    merged_input_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL
+15:54:42 | INFO |    merged_group: None
+15:54:42 | INFO |    reference_scanner: HA
+15:54:42 | INFO |    output_root: None
+15:54:42 | INFO |    length_m: 15.0
+15:54:42 | INFO |    min_last_chunk_m: 10.0
+15:54:42 | INFO |    min_points: 2000
+15:54:42 | INFO |    epsg_out: EPSG:2056
+15:54:42 | INFO |    delimiter: ,
+15:54:42 | INFO |    skiprows: 0
+15:54:42 | INFO |    cloud_fmt: las
+15:54:42 | INFO |    time_field: gps_time
+15:54:42 | INFO |    manifest_name: merged_manifest.csv
+15:54:42 | INFO |    use_manifest: True
+15:54:42 | INFO | 
+15:54:42 | INFO | Chunk variant:
+15:54:42 | INFO |    type: outage_window
+15:54:42 | INFO |    outage_window.enabled: True
+15:54:42 | INFO |    outage_window.output_root: None
+15:54:42 | INFO |    outage_window.outages: [[305120.0, 580.0]]
+15:54:42 | INFO |    outage_window.pre_s: 10.0
+15:54:42 | INFO |    outage_window.post_s: 10.0
+15:54:42 | INFO | 
+15:54:42 | INFO | LiMatch:
+15:54:42 | INFO |    run: True
+15:54:42 | INFO |    output_root: None
+15:54:42 | INFO |    neighbor_k: 1
+15:54:42 | INFO |    do_cross_scan: True
+15:54:42 | INFO |    do_spatial_crossings: True
+15:54:42 | INFO |    crossings_output_root: None
+15:54:42 | INFO |    crossing_min_separation: 30
+15:54:42 | INFO |    crossing_overlap_margin_m: 1.2
+15:54:42 | INFO | 
+15:54:42 | INFO | Merge correspondences:
+15:54:42 | INFO |    enabled: True
+15:54:42 | INFO |    output_file: None
+15:54:42 | INFO | 
+15:54:42 | INFO | Patcher:
+15:54:42 | INFO |    run: False
+15:54:42 | INFO |    source: existing
+15:54:42 | INFO |    output_root: None
+15:54:42 | INFO |    gps_outage_file:
+15:54:42 | INFO |       enabled: False
+15:54:42 | INFO |       output_root: None
+15:54:42 | INFO |       outages: []
+15:54:42 | INFO | ============================================================
+15:54:42 | INFO | 
+15:54:42 | INFO | [pipeline] Generating temporary georef configs...
+15:54:42 | INFO |    scanner=HA | source=navtools_PDM/PDM_configs/scanner_HA.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+15:54:42 | INFO |    scanner=LR | source=navtools_PDM/PDM_configs/scanner_LR.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_LR.generated.yml
+15:54:42 | INFO |    scanner=PUCK | source=navtools_PDM/PDM_configs/scanner_PUCK.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_PUCK.generated.yml
+15:54:42 | INFO | [pipeline] Temporary config generation done.
+
+======================================
+[pipeline] Starting pipeline
+[pipeline] mode:            chunk
+[pipeline] scenario:        georef_ALL_traj_outage_1
+[pipeline] root_out_dir:    /media/b085164/Elements/CALIB_26_02_25
+[pipeline] limatch_cfg:     /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/configs/MLS.yml
+[pipeline] patcher_cfg:     Patcher/config/MLS_Epalinges_config.yml
+======================================
+
+
+======================================
+[pipeline] Resolved inputs
+[pipeline] merged_out:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL
+[pipeline] georef ref cfg:  /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+======================================
+
+[combined] GPS_outage written: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/GPS_outage.txt (kept=2876, removed=581)
+
+==============================
+[combined scenario]
+Outages: [[305120.0, 580.0]]
+Expanded intervals: [(305110.0, 305710.0)]
+cloud_fmt: las
+time_field: gps_time
+==============================
+
+[combined] Using manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL/merged_manifest.csv
+[outage selection] merged_1000_VUX_PUCK.las                      time=[305060.001,305313.526] -> involved
+[outage selection] merged_2000_VUX_PUCK.las                      time=[305313.556,305375.866] -> involved
+[outage selection] merged_3000_VUX_PUCK.las                      time=[305433.946,305705.924] -> involved
+[outage selection] merged_4000_VUX_PUCK.las                      time=[305718.806,305736.393] -> stop (after)
+
+[outage summary] 3 / 6 involved
+
+Loading file /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+Converting orientation info from local NED to ECEF
+[combined] Trajectory loaded for vehicle-based bbox
+[combined] CHUNK DIRECT 15.0m merged_1000_VUX_PUCK.las -> /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK
+Loading file /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+Converting orientation info from local NED to ECEF
+Chunk merged_1000_VUX_PUCK.las:   0%|          | 0/294117790 [00:00<?, ?pts/s]Chunk merged_1000_VUX_PUCK.las:   3%|▎         | 8000000/294117790 [00:00<00:04, 62422553.24pts/s]Chunk merged_1000_VUX_PUCK.las:   5%|▌         | 16000000/294117790 [00:00<00:04, 60428404.37pts/s]Chunk merged_1000_VUX_PUCK.las:   8%|▊         | 24000000/294117790 [00:00<00:04, 59265316.89pts/s]Chunk merged_1000_VUX_PUCK.las:  10%|█         | 30000000/294117790 [00:00<00:05, 44191613.51pts/s]Chunk merged_1000_VUX_PUCK.las:  12%|█▏        | 36000000/294117790 [00:01<00:14, 17707714.02pts/s]Chunk merged_1000_VUX_PUCK.las:  14%|█▎        | 40000000/294117790 [00:01<00:18, 13657829.30pts/s]Chunk merged_1000_VUX_PUCK.las:  15%|█▍        | 44000000/294117790 [00:02<00:21, 11470393.05pts/s]Chunk merged_1000_VUX_PUCK.las:  16%|█▌        | 46000000/294117790 [00:02<00:23, 10648594.33pts/s]Chunk merged_1000_VUX_PUCK.las:  16%|█▋        | 48000000/294117790 [00:02<00:24, 9894140.24pts/s] Chunk merged_1000_VUX_PUCK.las:  17%|█▋        | 50000000/294117790 [00:03<00:26, 9289810.66pts/s]Chunk merged_1000_VUX_PUCK.las:  18%|█▊        | 52000000/294117790 [00:03<00:27, 8747300.85pts/s]Chunk merged_1000_VUX_PUCK.las:  18%|█▊        | 54000000/294117790 [00:03<00:30, 7969907.34pts/s]Chunk merged_1000_VUX_PUCK.las:  19%|█▉        | 56000000/294117790 [00:04<00:30, 7868679.41pts/s]Chunk merged_1000_VUX_PUCK.las:  20%|█▉        | 58000000/294117790 [00:04<00:30, 7820361.69pts/s]Chunk merged_1000_VUX_PUCK.las:  20%|██        | 60000000/294117790 [00:04<00:30, 7782082.98pts/s]Chunk merged_1000_VUX_PUCK.las:  21%|██        | 62000000/294117790 [00:04<00:30, 7708176.62pts/s]Chunk merged_1000_VUX_PUCK.las:  22%|██▏       | 64000000/294117790 [00:05<00:29, 7735338.70pts/s]Chunk merged_1000_VUX_PUCK.las:  22%|██▏       | 66000000/294117790 [00:05<00:29, 7689150.67pts/s]Chunk merged_1000_VUX_PUCK.las:  23%|██▎       | 68000000/294117790 [00:05<00:29, 7697173.27pts/s]Chunk merged_1000_VUX_PUCK.las:  24%|██▍       | 70000000/294117790 [00:05<00:29, 7666532.04pts/s]Chunk merged_1000_VUX_PUCK.las:  24%|██▍       | 72000000/294117790 [00:06<00:29, 7654757.54pts/s]Chunk merged_1000_VUX_PUCK.las:  25%|██▌       | 74000000/294117790 [00:06<00:28, 7700665.05pts/s]Chunk merged_1000_VUX_PUCK.las:  26%|██▌       | 76000000/294117790 [00:06<00:28, 7703421.89pts/s]Chunk merged_1000_VUX_PUCK.las:  27%|██▋       | 78000000/294117790 [00:06<00:27, 7739685.65pts/s]Chunk merged_1000_VUX_PUCK.las:  27%|██▋       | 80000000/294117790 [00:07<00:27, 7732063.67pts/s]Chunk merged_1000_VUX_PUCK.las:  28%|██▊       | 82000000/294117790 [00:07<00:27, 7765217.61pts/s]Chunk merged_1000_VUX_PUCK.las:  29%|██▊       | 84000000/294117790 [00:07<00:27, 7754109.71pts/s]Chunk merged_1000_VUX_PUCK.las:  29%|██▉       | 86000000/294117790 [00:07<00:26, 7713126.68pts/s]Chunk merged_1000_VUX_PUCK.las:  30%|██▉       | 88000000/294117790 [00:08<00:27, 7614647.72pts/s]Chunk merged_1000_VUX_PUCK.las:  31%|███       | 90000000/294117790 [00:08<00:26, 7659641.67pts/s]Chunk merged_1000_VUX_PUCK.las:  31%|███▏      | 92000000/294117790 [00:08<00:27, 7277665.68pts/s]Chunk merged_1000_VUX_PUCK.las:  32%|███▏      | 94000000/294117790 [00:09<00:26, 7438601.69pts/s]Chunk merged_1000_VUX_PUCK.las:  33%|███▎      | 96000000/294117790 [00:09<00:26, 7523971.28pts/s]Chunk merged_1000_VUX_PUCK.las:  33%|███▎      | 98000000/294117790 [00:09<00:25, 7641395.68pts/s]Chunk merged_1000_VUX_PUCK.las:  34%|███▍      | 100000000/294117790 [00:09<00:25, 7601265.26pts/s]Chunk merged_1000_VUX_PUCK.las:  35%|███▍      | 102000000/294117790 [00:10<00:25, 7591113.87pts/s]Chunk merged_1000_VUX_PUCK.las:  35%|███▌      | 104000000/294117790 [00:10<00:25, 7540912.47pts/s]Chunk merged_1000_VUX_PUCK.las:  36%|███▌      | 106000000/294117790 [00:10<00:25, 7245573.19pts/s]Chunk merged_1000_VUX_PUCK.las:  37%|███▋      | 108000000/294117790 [00:10<00:25, 7259048.87pts/s]Chunk merged_1000_VUX_PUCK.las:  37%|███▋      | 110000000/294117790 [00:11<00:24, 7395905.45pts/s]Chunk merged_1000_VUX_PUCK.las:  38%|███▊      | 112000000/294117790 [00:11<00:24, 7488159.86pts/s]Chunk merged_1000_VUX_PUCK.las:  39%|███▉      | 114000000/294117790 [00:11<00:23, 7591876.31pts/s]Chunk merged_1000_VUX_PUCK.las:  39%|███▉      | 116000000/294117790 [00:11<00:23, 7673378.18pts/s]Chunk merged_1000_VUX_PUCK.las:  40%|████      | 118000000/294117790 [00:12<00:22, 7730942.19pts/s]Chunk merged_1000_VUX_PUCK.las:  41%|████      | 120000000/294117790 [00:12<00:22, 7770211.69pts/s]Chunk merged_1000_VUX_PUCK.las:  41%|████▏     | 122000000/294117790 [00:12<00:22, 7748893.04pts/s]Chunk merged_1000_VUX_PUCK.las:  42%|████▏     | 124000000/294117790 [00:12<00:21, 7770546.77pts/s]Chunk merged_1000_VUX_PUCK.las:  43%|████▎     | 126000000/294117790 [00:13<00:21, 7744861.52pts/s]Chunk merged_1000_VUX_PUCK.las:  44%|████▎     | 128000000/294117790 [00:13<00:21, 7737860.01pts/s]Chunk merged_1000_VUX_PUCK.las:  44%|████▍     | 130000000/294117790 [00:13<00:21, 7721358.66pts/s]Chunk merged_1000_VUX_PUCK.las:  45%|████▍     | 132000000/294117790 [00:14<00:20, 7756797.18pts/s]Chunk merged_1000_VUX_PUCK.las:  46%|████▌     | 134000000/294117790 [00:14<00:20, 7748153.56pts/s]Chunk merged_1000_VUX_PUCK.las:  46%|████▌     | 136000000/294117790 [00:14<00:20, 7737285.74pts/s]Chunk merged_1000_VUX_PUCK.las:  47%|████▋     | 138000000/294117790 [00:14<00:20, 7732156.58pts/s]Chunk merged_1000_VUX_PUCK.las:  48%|████▊     | 140000000/294117790 [00:15<00:19, 7723542.88pts/s]Chunk merged_1000_VUX_PUCK.las:  48%|████▊     | 142000000/294117790 [00:15<00:19, 7690459.83pts/s]Chunk merged_1000_VUX_PUCK.las:  49%|████▉     | 144000000/294117790 [00:15<00:19, 7732498.19pts/s]Chunk merged_1000_VUX_PUCK.las:  50%|████▉     | 146000000/294117790 [00:15<00:20, 7312234.23pts/s]Chunk merged_1000_VUX_PUCK.las:  50%|█████     | 148000000/294117790 [00:16<00:17, 8339086.87pts/s]Chunk merged_1000_VUX_PUCK.las:  52%|█████▏    | 154000000/294117790 [00:16<00:08, 16139047.61pts/s]Chunk merged_1000_VUX_PUCK.las:  54%|█████▍    | 160000000/294117790 [00:16<00:05, 23842591.20pts/s]Chunk merged_1000_VUX_PUCK.las:  56%|█████▋    | 166000000/294117790 [00:16<00:04, 30966577.81pts/s]Chunk merged_1000_VUX_PUCK.las:  58%|█████▊    | 172000000/294117790 [00:17<00:09, 13332320.87pts/s]Chunk merged_1000_VUX_PUCK.las:  60%|█████▉    | 176000000/294117790 [00:18<00:12, 9281862.15pts/s] Chunk merged_1000_VUX_PUCK.las:  61%|██████    | 180000000/294117790 [00:18<00:15, 7491589.01pts/s]Chunk merged_1000_VUX_PUCK.las:  62%|██████▏   | 182000000/294117790 [00:19<00:16, 6814925.59pts/s]Chunk merged_1000_VUX_PUCK.las:  63%|██████▎   | 184000000/294117790 [00:19<00:17, 6346984.38pts/s]Chunk merged_1000_VUX_PUCK.las:  63%|██████▎   | 186000000/294117790 [00:20<00:17, 6176143.60pts/s]Chunk merged_1000_VUX_PUCK.las:  64%|██████▍   | 188000000/294117790 [00:20<00:19, 5412901.49pts/s]Chunk merged_1000_VUX_PUCK.las:  65%|██████▍   | 190000000/294117790 [00:21<00:19, 5342172.60pts/s]Chunk merged_1000_VUX_PUCK.las:  65%|██████▌   | 192000000/294117790 [00:21<00:20, 4867058.55pts/s]Chunk merged_1000_VUX_PUCK.las:  66%|██████▌   | 194000000/294117790 [00:21<00:20, 4863539.72pts/s]Chunk merged_1000_VUX_PUCK.las:  67%|██████▋   | 196000000/294117790 [00:22<00:20, 4857367.36pts/s]Chunk merged_1000_VUX_PUCK.las:  67%|██████▋   | 198000000/294117790 [00:22<00:20, 4623342.79pts/s]Chunk merged_1000_VUX_PUCK.las:  68%|██████▊   | 200000000/294117790 [00:23<00:21, 4329715.87pts/s]Chunk merged_1000_VUX_PUCK.las:  69%|██████▊   | 202000000/294117790 [00:23<00:21, 4330084.87pts/s]Chunk merged_1000_VUX_PUCK.las:  69%|██████▉   | 204000000/294117790 [00:24<00:20, 4379272.39pts/s]Chunk merged_1000_VUX_PUCK.las:  70%|███████   | 206000000/294117790 [00:24<00:20, 4364287.08pts/s]Chunk merged_1000_VUX_PUCK.las:  71%|███████   | 208000000/294117790 [00:25<00:19, 4407865.98pts/s]Chunk merged_1000_VUX_PUCK.las:  71%|███████▏  | 210000000/294117790 [00:25<00:20, 4008845.28pts/s]Chunk merged_1000_VUX_PUCK.las:  72%|███████▏  | 212000000/294117790 [00:26<00:20, 4079062.87pts/s]Chunk merged_1000_VUX_PUCK.las:  73%|███████▎  | 214000000/294117790 [00:26<00:19, 4185603.18pts/s]Chunk merged_1000_VUX_PUCK.las:  73%|███████▎  | 216000000/294117790 [00:27<00:18, 4324027.56pts/s]Chunk merged_1000_VUX_PUCK.las:  74%|███████▍  | 218000000/294117790 [00:27<00:16, 4623375.78pts/s]Chunk merged_1000_VUX_PUCK.las:  75%|███████▍  | 220000000/294117790 [00:27<00:15, 4806695.07pts/s]Chunk merged_1000_VUX_PUCK.las:  75%|███████▌  | 222000000/294117790 [00:28<00:14, 4883687.51pts/s]Chunk merged_1000_VUX_PUCK.las:  76%|███████▌  | 224000000/294117790 [00:28<00:16, 4315144.99pts/s]Chunk merged_1000_VUX_PUCK.las:  77%|███████▋  | 226000000/294117790 [00:29<00:15, 4307142.37pts/s]Chunk merged_1000_VUX_PUCK.las:  78%|███████▊  | 228000000/294117790 [00:29<00:16, 3902592.95pts/s]Chunk merged_1000_VUX_PUCK.las:  78%|███████▊  | 230000000/294117790 [00:30<00:20, 3056120.60pts/s]Chunk merged_1000_VUX_PUCK.las:  79%|███████▉  | 232000000/294117790 [00:31<00:19, 3195371.80pts/s]Chunk merged_1000_VUX_PUCK.las:  80%|███████▉  | 234000000/294117790 [00:32<00:21, 2761138.87pts/s]Chunk merged_1000_VUX_PUCK.las:  80%|████████  | 236000000/294117790 [00:32<00:19, 3028708.15pts/s]Chunk merged_1000_VUX_PUCK.las:  81%|████████  | 238000000/294117790 [00:33<00:19, 2871322.47pts/s]Chunk merged_1000_VUX_PUCK.las:  82%|████████▏ | 240000000/294117790 [00:34<00:20, 2617796.52pts/s]Chunk merged_1000_VUX_PUCK.las:  82%|████████▏ | 242000000/294117790 [00:35<00:22, 2303383.23pts/s]Chunk merged_1000_VUX_PUCK.las:  83%|████████▎ | 244000000/294117790 [00:36<00:18, 2702945.36pts/s]Chunk merged_1000_VUX_PUCK.las:  84%|████████▎ | 246000000/294117790 [00:37<00:21, 2232310.61pts/s]Chunk merged_1000_VUX_PUCK.las:  84%|████████▍ | 248000000/294117790 [00:38<00:23, 1980421.67pts/s]Chunk merged_1000_VUX_PUCK.las:  85%|████████▍ | 250000000/294117790 [00:39<00:22, 1969418.69pts/s]Chunk merged_1000_VUX_PUCK.las:  86%|████████▌ | 252000000/294117790 [00:40<00:18, 2265850.38pts/s]Chunk merged_1000_VUX_PUCK.las:  86%|████████▋ | 254000000/294117790 [00:41<00:19, 2009392.63pts/s]Chunk merged_1000_VUX_PUCK.las:  87%|████████▋ | 256000000/294117790 [00:42<00:20, 1819541.38pts/s]Chunk merged_1000_VUX_PUCK.las:  88%|████████▊ | 258000000/294117790 [00:43<00:17, 2101466.67pts/s]Chunk merged_1000_VUX_PUCK.las:  88%|████████▊ | 260000000/294117790 [00:44<00:13, 2481958.87pts/s]Chunk merged_1000_VUX_PUCK.las:  89%|████████▉ | 262000000/294117790 [00:44<00:11, 2826676.16pts/s]Chunk merged_1000_VUX_PUCK.las:  90%|████████▉ | 264000000/294117790 [00:45<00:13, 2159341.41pts/s]Chunk merged_1000_VUX_PUCK.las:  90%|█████████ | 266000000/294117790 [00:47<00:15, 1838074.87pts/s]Chunk merged_1000_VUX_PUCK.las:  91%|█████████ | 268000000/294117790 [00:47<00:10, 2452477.24pts/s]Chunk merged_1000_VUX_PUCK.las:  92%|█████████▏| 272000000/294117790 [00:47<00:05, 4064458.80pts/s]Chunk merged_1000_VUX_PUCK.las:  93%|█████████▎| 274000000/294117790 [00:48<00:05, 3749457.51pts/s]Chunk merged_1000_VUX_PUCK.las:  94%|█████████▍| 276000000/294117790 [00:48<00:04, 3972657.31pts/s]Chunk merged_1000_VUX_PUCK.las:  95%|█████████▍| 278000000/294117790 [00:49<00:05, 3147640.41pts/s]Chunk merged_1000_VUX_PUCK.las:  95%|█████████▌| 280000000/294117790 [00:50<00:03, 3535734.85pts/s]Chunk merged_1000_VUX_PUCK.las:  96%|█████████▌| 282000000/294117790 [00:50<00:03, 3716997.99pts/s]Chunk merged_1000_VUX_PUCK.las:  97%|█████████▋| 284000000/294117790 [00:51<00:02, 4091268.59pts/s]Chunk merged_1000_VUX_PUCK.las:  97%|█████████▋| 286000000/294117790 [00:51<00:01, 4370849.21pts/s]Chunk merged_1000_VUX_PUCK.las:  98%|█████████▊| 288000000/294117790 [00:51<00:01, 4815499.54pts/s]Chunk merged_1000_VUX_PUCK.las:  99%|█████████▊| 290000000/294117790 [00:52<00:00, 4779440.57pts/s]Chunk merged_1000_VUX_PUCK.las:  99%|█████████▉| 292000000/294117790 [00:52<00:00, 4736150.45pts/s]Chunk merged_1000_VUX_PUCK.las: 100%|█████████▉| 294000000/294117790 [00:53<00:00, 3180355.89pts/s]Chunk merged_1000_VUX_PUCK.las: 100%|██████████| 294117790/294117790 [00:54<00:00, 5436484.95pts/s]
+[chunk_intervals] done for merged_1000_VUX_PUCK.las
+[chunk_bbox] Using trajectory positions for bbox (vehicle-based)
+[bbox] Warning: could not read chunk_1000.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1001.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1002.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1003.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1004.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1005.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1006.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1007.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1008.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1009.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1010.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1011.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1012.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1013.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1014.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1015.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1016.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1017.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1018.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1019.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1020.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1021.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1022.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1023.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1024.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1025.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1026.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1027.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1028.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1029.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1030.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1031.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1032.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1033.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1034.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1035.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1036.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1037.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1038.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1039.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1040.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1041.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1042.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1043.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1044.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1045.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1046.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1047.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1048.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1049.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1050.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1051.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1052.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1053.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1054.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1055.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1056.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1057.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1058.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1059.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1060.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1061.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1062.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1063.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1064.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1065.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1066.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1067.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1068.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1069.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1070.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1071.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1072.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1073.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1074.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1075.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1076.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1077.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1078.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1079.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1080.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1081.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1082.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1083.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1084.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1085.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1086.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1087.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1088.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1089.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1090.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1091.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1092.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1093.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1094.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1095.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1096.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1097.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1098.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1099.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1100.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1101.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1102.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1103.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1104.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1105.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1106.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1107.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1108.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1109.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1110.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1111.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1112.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1113.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1114.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1115.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1116.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1117.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1118.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1119.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1120.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1121.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1122.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1123.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1124.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1125.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1126.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1127.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1128.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1129.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1130.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1131.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1132.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1133.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1134.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1135.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1136.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1137.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1138.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1139.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1140.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1141.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1142.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1143.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1144.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1145.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1146.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1147.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1148.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1149.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1150.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1151.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1152.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1153.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1154.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1155.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1156.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1157.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1158.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1159.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1160.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1161.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1162.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1163.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1164.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1165.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1166.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1167.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1168.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1169.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1170.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1171.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1172.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1173.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1174.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1175.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1176.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1177.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1178.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1179.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1180.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1181.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1182.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1183.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1184.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1185.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1186.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1187.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1188.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1189.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1190.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1191.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1192.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1193.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1194.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1195.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1196.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1197.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1198.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1199.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1200.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1201.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1202.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1203.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1204.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_1205.las: fp and xp are not of the same length.
+[combined] CHUNK DIRECT 15.0m merged_2000_VUX_PUCK.las -> /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_2000_VUX_PUCK
+Loading file /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+Converting orientation info from local NED to ECEF
+Chunk merged_2000_VUX_PUCK.las:   0%|          | 0/66950257 [00:00<?, ?pts/s]Chunk merged_2000_VUX_PUCK.las:   6%|▌         | 4000000/66950257 [00:00<00:04, 13554958.40pts/s]Chunk merged_2000_VUX_PUCK.las:   9%|▉         | 6000000/66950257 [00:00<00:05, 10259868.68pts/s]Chunk merged_2000_VUX_PUCK.las:  12%|█▏        | 8000000/66950257 [00:00<00:06, 9083859.42pts/s] Chunk merged_2000_VUX_PUCK.las:  15%|█▍        | 10000000/66950257 [00:01<00:06, 8587541.03pts/s]Chunk merged_2000_VUX_PUCK.las:  18%|█▊        | 12000000/66950257 [00:01<00:06, 8333462.00pts/s]Chunk merged_2000_VUX_PUCK.las:  21%|██        | 14000000/66950257 [00:01<00:06, 8106090.65pts/s]Chunk merged_2000_VUX_PUCK.las:  24%|██▍       | 16000000/66950257 [00:01<00:06, 7982858.32pts/s]Chunk merged_2000_VUX_PUCK.las:  27%|██▋       | 18000000/66950257 [00:02<00:06, 7911326.99pts/s]Chunk merged_2000_VUX_PUCK.las:  30%|██▉       | 20000000/66950257 [00:02<00:06, 7824962.40pts/s]Chunk merged_2000_VUX_PUCK.las:  33%|███▎      | 22000000/66950257 [00:02<00:05, 7745516.35pts/s]Chunk merged_2000_VUX_PUCK.las:  36%|███▌      | 24000000/66950257 [00:02<00:05, 7738033.92pts/s]Chunk merged_2000_VUX_PUCK.las:  39%|███▉      | 26000000/66950257 [00:03<00:05, 7674331.34pts/s]Chunk merged_2000_VUX_PUCK.las:  42%|████▏     | 28000000/66950257 [00:03<00:05, 7611129.01pts/s]Chunk merged_2000_VUX_PUCK.las:  45%|████▍     | 30000000/66950257 [00:03<00:04, 7659363.81pts/s]Chunk merged_2000_VUX_PUCK.las:  48%|████▊     | 32000000/66950257 [00:03<00:04, 7715171.10pts/s]Chunk merged_2000_VUX_PUCK.las:  51%|█████     | 34000000/66950257 [00:04<00:04, 7771731.31pts/s]Chunk merged_2000_VUX_PUCK.las:  54%|█████▍    | 36000000/66950257 [00:04<00:04, 7374574.71pts/s]Chunk merged_2000_VUX_PUCK.las:  57%|█████▋    | 38000000/66950257 [00:05<00:07, 3797978.05pts/s]Chunk merged_2000_VUX_PUCK.las:  60%|█████▉    | 40000000/66950257 [00:06<00:06, 3942477.04pts/s]Chunk merged_2000_VUX_PUCK.las:  63%|██████▎   | 42000000/66950257 [00:06<00:05, 4162945.45pts/s]Chunk merged_2000_VUX_PUCK.las:  66%|██████▌   | 44000000/66950257 [00:07<00:07, 3260667.14pts/s]Chunk merged_2000_VUX_PUCK.las:  69%|██████▊   | 46000000/66950257 [00:07<00:05, 3704205.09pts/s]Chunk merged_2000_VUX_PUCK.las:  72%|███████▏  | 48000000/66950257 [00:08<00:04, 3981465.13pts/s]Chunk merged_2000_VUX_PUCK.las:  75%|███████▍  | 50000000/66950257 [00:08<00:04, 4193050.37pts/s]Chunk merged_2000_VUX_PUCK.las:  78%|███████▊  | 52000000/66950257 [00:09<00:03, 4201593.22pts/s]Chunk merged_2000_VUX_PUCK.las:  81%|████████  | 54000000/66950257 [00:09<00:02, 4358889.53pts/s]Chunk merged_2000_VUX_PUCK.las:  84%|████████▎ | 56000000/66950257 [00:10<00:02, 4087276.47pts/s]Chunk merged_2000_VUX_PUCK.las:  87%|████████▋ | 58000000/66950257 [00:10<00:02, 4356562.16pts/s]Chunk merged_2000_VUX_PUCK.las:  90%|████████▉ | 60000000/66950257 [00:10<00:01, 4568646.32pts/s]Chunk merged_2000_VUX_PUCK.las:  93%|█████████▎| 62000000/66950257 [00:11<00:01, 3940467.33pts/s]Chunk merged_2000_VUX_PUCK.las:  96%|█████████▌| 64000000/66950257 [00:11<00:00, 4513100.54pts/s]Chunk merged_2000_VUX_PUCK.las:  99%|█████████▊| 66000000/66950257 [00:12<00:00, 4677601.91pts/s]Chunk merged_2000_VUX_PUCK.las: 100%|██████████| 66950257/66950257 [00:12<00:00, 3995652.94pts/s]Chunk merged_2000_VUX_PUCK.las: 100%|██████████| 66950257/66950257 [00:12<00:00, 5257930.68pts/s]
+[chunk_intervals] done for merged_2000_VUX_PUCK.las
+[chunk_bbox] Using trajectory positions for bbox (vehicle-based)
+[bbox] Warning: could not read chunk_2000.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2001.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2002.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2003.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2004.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2005.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2006.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2007.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2008.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2009.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2010.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2011.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2012.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2013.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2014.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2015.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2016.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2017.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2018.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2019.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2020.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2021.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2022.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2023.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2024.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2025.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2026.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2027.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2028.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2029.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2030.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2031.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2032.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2033.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2034.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2035.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2036.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2037.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2038.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2039.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2040.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2041.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2042.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2043.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2044.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2045.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2046.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2047.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2048.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2049.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2050.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2051.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2052.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2053.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2054.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2055.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2056.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2057.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2058.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2059.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2060.las: fp and xp are not of the same length.
+[bbox] Warning: could not read chunk_2061.las: fp and xp are not of the same length.
+[combined] CHUNK DIRECT 15.0m merged_3000_VUX_PUCK.las -> /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_3000_VUX_PUCK

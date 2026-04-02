@@ -1,0 +1,105 @@
+repo_root: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM"
+limatch_cfg_base: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/configs/MLS.yml"
+batch_root: "/media/b085164/Elements/CALIB_26_02_25/crops/limatch_bore"
+
+run_mode: "one"          # "all" ou "one"
+selected_scenario: "baseline"
+
+pairs:
+  - name: "cloud_1_2"
+    cloud1: "/media/b085164/Elements/CALIB_26_02_25/crops/v2/cloud_1.las"
+    cloud2: "/media/b085164/Elements/CALIB_26_02_25/crops/v2/cloud_2.las"
+
+  # - name: "cloud_3_4"
+  #   cloud1: "/media/b085164/Elements/CALIB_26_02_25/georef_puck/PUCK/subclouds2/output_cloud_3.las"
+  #   cloud2: "/media/b085164/Elements/CALIB_26_02_25/georef_puck/PUCK/subclouds2/output_cloud_4.las"
+
+  # - name: "cloud_4_5"
+  #   cloud1: "/media/b085164/Elements/CALIB_26_02_25/georef_puck/PUCK/calib/output_cloud_1.las"
+  #   cloud2: "/media/b085164/Elements/CALIB_26_02_25/georef_puck/PUCK/calib/output_cloud_2.las"
+
+
+scenarios:
+  - name: baseline
+    icp_patch_r: 2.5
+    icp_max_n: 150
+    icp_thresh: 0.05
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.0
+
+  - name: patch_r_down
+    icp_patch_r: 2.0
+    icp_max_n: 150
+    icp_thresh: 0.05
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.0
+
+  - name: patch_r_up
+    icp_patch_r: 3.0
+    icp_max_n: 150
+    icp_thresh: 0.05
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.0
+
+  - name: max_n_down
+    icp_patch_r: 2.5
+    icp_max_n: 100
+    icp_thresh: 0.05
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.0
+
+  - name: max_n_up
+    icp_patch_r: 2.5
+    icp_max_n: 200
+    icp_thresh: 0.05
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.0
+
+  - name: thresh_down
+    icp_patch_r: 2.5
+    icp_max_n: 150
+    icp_thresh: 0.03
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.0
+
+  - name: thresh_up_0125
+    icp_patch_r: 2.5
+    icp_max_n: 150
+    icp_thresh: 0.125
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.0
+
+  - name: thresh_up_02
+    icp_patch_r: 2.5
+    icp_max_n: 150
+    icp_thresh: 0.2
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.0
+
+  - name: conv_looser
+    icp_patch_r: 2.5
+    icp_max_n: 150
+    icp_thresh: 0.05
+    icp_conv: 1.0e-4
+    icp_vox_s: 0.0
+
+  - name: conv_medium
+    icp_patch_r: 2.5
+    icp_max_n: 150
+    icp_thresh: 0.05
+    icp_conv: 1.0e-5
+    icp_vox_s: 0.0
+
+  - name: vox_0075
+    icp_patch_r: 2.5
+    icp_max_n: 150
+    icp_thresh: 0.05
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.075
+
+  - name: vox_01
+    icp_patch_r: 2.5
+    icp_max_n: 150
+    icp_thresh: 0.05
+    icp_conv: 1.0e-7
+    icp_vox_s: 0.1

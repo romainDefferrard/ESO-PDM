@@ -1,0 +1,159 @@
+# ==============================================================
+# PIPELINE — OUTAGE 2
+# Outage window : 305645 -> 306120 (475 s)
+# Scenario      : georef_ALL_traj_outage_2
+# ==============================================================
+
+mode: "chunk"
+scenario_name: "georef_ALL_traj_outage_2"
+
+# ==============================================================
+# SCANNER CONFIGURATIONS
+# ==============================================================
+scanners:
+  ha_cfg:   "navtools_PDM/PDM_configs/scanner_HA.yml"
+  lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR.yml"
+  puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK.yml"
+
+merge_groups:
+  - name: "HA_LR"
+    scanners: ["ha_cfg", "lr_cfg"]
+
+# ==============================================================
+# TRAJECTORY
+# ==============================================================
+trajectory:
+  type: "SBET"
+  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_2_305645_306120/traj_outage/outage_2.out"
+  cfg:
+    type: "SBET"
+
+# ==============================================================
+# GEOREF TIME WINDOW FILTER
+# Only georef points inside [305645 - 60, 305645 + 475 + 60] = [305585, 306180]
+# ==============================================================
+georef_time_window:
+  enable: true
+  outage: [305645.0, 475.0]
+  margin_s: 60.0
+
+# ==============================================================
+# DISTANCE FILTERING
+# ==============================================================
+distance_filtering:
+  enable: true
+  max_distance_m: 30
+  map_epsg: "EPSG:2056"
+  filter_trj: null
+
+# ==============================================================
+# PATHS
+# ==============================================================
+paths:
+  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
+  patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
+  limatch_cfg:  "Patcher/submodules/limatch/configs/MLS.yml"
+  gps_input:    "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt"
+
+# ==============================================================
+# STEPS
+# ==============================================================
+steps:
+  georef:           false
+  merge:            false
+  vux_puck_merge:   false
+  chunk:            false
+  limatch:          true
+  gps_outage_file:  false
+
+# ==============================================================
+# MERGE HA+LR
+# ==============================================================
+merge:
+  out_prefix: "merged_"
+  out_suffix: "_HA_LR"
+
+# ==============================================================
+# VUX+PUCK MERGE
+# ==============================================================
+vux_puck_merge:
+  enabled: true
+  name: "ALL"
+  vux_group: "HA_LR"
+  puck_scanner: "puck_cfg"
+  vux_input_dir: null
+  output_dir: null
+  manifest_path: null
+  output_suffix: "_VUX_PUCK"
+  scanner_src_vux: 2
+  scanner_src_puck: 1
+  chunk_size: 10000000
+
+# ==============================================================
+# MERGE CORRESPONDENCES
+# ==============================================================
+merge_correspondences:
+  enabled: true
+  output_file: null
+
+# ==============================================================
+# CHUNKING
+# ==============================================================
+chunk:
+  source: "existing"
+  existing_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/scenario_combined/chunks_15m"
+  merged_input_root: null
+  merged_group: null # "ALL"
+  reference_scanner: "HA"
+  output_root: null
+  length_m: 15.0
+  min_last_chunk_m: 10.0
+  min_points: 2000
+  epsg_out: "EPSG:2056"
+  delimiter: ","
+  skiprows: 0
+  cloud_fmt: "las"
+  time_field: "gps_time"
+  manifest_name: "merged_manifest.csv"
+  use_manifest: true
+
+# ==============================================================
+# CHUNK VARIANT — outage window around outage 2
+# ==============================================================
+chunk_variant:
+  type: "outage_window"
+
+  outage_window:
+    enabled: true
+    output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/scenario_combined"
+    outages:
+      - [305645.0, 475.0]       # [t_start, duration]
+    pre_s: 10.0
+    post_s: 10.0
+
+# ==============================================================
+# LIMATCH
+# k+1 consecutive pairs  +  spatial crossings
+# ==============================================================
+limatch:
+  run: true
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/limatch_crossings"
+  neighbor_k: 0
+  do_cross_scan: false
+
+  do_spatial_crossings: true
+  crossings_output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/limatch_crossings"
+  crossing_min_separation: 30
+  crossing_overlap_margin_m: 1.2
+
+# ==============================================================
+# PATCHER (unused here)
+# ==============================================================
+patcher:
+  run: false
+  source: "existing"
+  output_root: null
+  gps_outage_file:
+    enabled: false
+    output_root: null
+    outages: []

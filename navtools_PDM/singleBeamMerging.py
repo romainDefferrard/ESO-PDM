@@ -4,19 +4,18 @@ import re
 import numpy as np
 import laspy as lp
 
-SCAN_RE = re.compile(r"(\d{6})")
-
+SCAN_RE = re.compile(r"^(\d{6})_(\d{6})")
 
 def extract_scan_id(p: Path) -> Optional[int]:
     """
     Example:
-      250220_094545_VUX-HA1_pcd.las -> 94545
-      250220_094545_VUX1-LR_pcd.las -> 94545
+      260225_124306_VUX-HA1_pcd.las -> 124306
+      260225_124306_VUX1-LR_pcd.las -> 124306
     """
-    m = SCAN_RE.search(p.stem)
+    m = SCAN_RE.match(p.stem)
     if not m:
         return None
-    return int(m.group(1))
+    return int(m.group(2))
 
 
 def list_clouds(dir_path: Path) -> list[Path]:
@@ -80,77 +79,89 @@ def merge_two_las(
     *,
     sort_by_time: bool = True,
 ) -> None:
-    las_a = lp.read(a)
-    las_b = lp.read(b)
 
-    dim_a = list(las_a.point_format.dimension_names)
-    dim_b = list(las_b.point_format.dimension_names)
-
-    if dim_a != dim_b:
-        raise ValueError(
-            f"LAS dimension mismatch:\n"
-            f"  {a.name}: {dim_a}\n"
-            f"  {b.name}: {dim_b}"
+    if sort_by_time:
+        raise NotImplementedError(
+            "sort_by_time=True is too memory expensive for large LAS merges. "
+            "Use sort_by_time=False for streaming merge."
         )
 
-    n_a = len(las_a.points)
-    n_b = len(las_b.points)
+    with lp.open(a) as fa, lp.open(b) as fb:
+        header_a = fa.header
+        header_b = fb.header
 
-    # Merge real-world coordinates, not raw integer storage
-    x = np.concatenate([np.asarray(las_a.x), np.asarray(las_b.x)])
-    y = np.concatenate([np.asarray(las_a.y), np.asarray(las_b.y)])
-    z = np.concatenate([np.asarray(las_a.z), np.asarray(las_b.z)])
+        dim_a = list(header_a.point_format.dimension_names)
+        dim_b = list(header_b.point_format.dimension_names)
 
-    has_gps_time = "gps_time" in dim_a
-    if has_gps_time:
-        gps_time = np.concatenate([
-            np.asarray(las_a.gps_time),
-            np.asarray(las_b.gps_time)
-        ])
+        if dim_a != dim_b:
+            raise ValueError(
+                f"LAS dimension mismatch:\n"
+                f"  {a.name}: {dim_a}\n"
+                f"  {b.name}: {dim_b}"
+            )
 
-    has_lasvec = all(d in dim_a for d in ("lasvec_x", "lasvec_y", "lasvec_z"))
-    if has_lasvec:
-        lasvec_x = np.concatenate([np.asarray(las_a["lasvec_x"]), np.asarray(las_b["lasvec_x"])])
-        lasvec_y = np.concatenate([np.asarray(las_a["lasvec_y"]), np.asarray(las_b["lasvec_y"])])
-        lasvec_z = np.concatenate([np.asarray(las_a["lasvec_z"]), np.asarray(las_b["lasvec_z"])])
+        has_lasvec = all(d in dim_a for d in ("lasvec_x", "lasvec_y", "lasvec_z"))
 
-    # sort if needed
-    if sort_by_time and has_gps_time:
-        order = np.argsort(gps_time)
-        x = x[order]
-        y = y[order]
-        z = z[order]
-        gps_time = gps_time[order]
-        if has_lasvec:
-            lasvec_x = lasvec_x[order]
-            lasvec_y = lasvec_y[order]
-            lasvec_z = lasvec_z[order]
+        # build output header from A
+        header = lp.LasHeader(
+            point_format=header_a.point_format,
+            version=header_a.version,
+        )
+        header.scales = np.minimum(
+            np.array(header_a.scales, dtype=np.float64),
+            np.array(header_b.scales, dtype=np.float64),
+        )
+        mins_a = np.array(header_a.mins, dtype=np.float64)
+        mins_b = np.array(header_b.mins, dtype=np.float64)
+        header.offsets = np.floor(np.minimum(mins_a, mins_b))
 
-    # create a fresh header
-    header = lp.LasHeader(point_format=1, version="1.4")
-    header.scales = las_a.header.scales
-    header.offsets = np.array([np.min(x), np.min(y), np.min(z)])
+        if has_lasvec and "lasvec_x" not in list(header.point_format.dimension_names):
+            header.add_extra_dim(lp.ExtraBytesParams(name="lasvec_x", type=np.float32))
+            header.add_extra_dim(lp.ExtraBytesParams(name="lasvec_y", type=np.float32))
+            header.add_extra_dim(lp.ExtraBytesParams(name="lasvec_z", type=np.float32))
 
-    if has_lasvec:
-        header.add_extra_dim(lp.ExtraBytesParams(name="lasvec_x", type=np.float32))
-        header.add_extra_dim(lp.ExtraBytesParams(name="lasvec_y", type=np.float32))
-        header.add_extra_dim(lp.ExtraBytesParams(name="lasvec_z", type=np.float32))
+        out.parent.mkdir(parents=True, exist_ok=True)
 
-    merged = lp.LasData(header)
-    merged.x = x
-    merged.y = y
-    merged.z = z
+        n_a = header_a.point_count
+        n_b = header_b.point_count
 
-    if has_gps_time:
-        merged.gps_time = gps_time
+        def reencode_chunk(points, header_out):
+            """
+            Re-encode a chunk into the output header so X/Y/Z use the correct
+            scales/offsets and do not get spatially shifted.
+            """
+            las_in = lp.ScaleAwarePointRecord(
+                points.array,
+                point_format=points.point_format,
+                scales=points.scales,
+                offsets=points.offsets,
+            )
 
-    if has_lasvec:
-        merged["lasvec_x"] = lasvec_x.astype(np.float32)
-        merged["lasvec_y"] = lasvec_y.astype(np.float32)
-        merged["lasvec_z"] = lasvec_z.astype(np.float32)
+            las_out = lp.LasData(header_out)
 
-    out.parent.mkdir(parents=True, exist_ok=True)
-    merged.write(out)
+            # coordinates re-encoded with output header
+            las_out.x = las_in.x
+            las_out.y = las_in.y
+            las_out.z = las_in.z
+
+            # copy all other dimensions except raw/internal XYZ
+            for dim in header_out.point_format.dimension_names:
+                if dim in ("X", "Y", "Z", "x", "y", "z"):
+                    continue
+                if dim in points.array.dtype.names:
+                    las_out[dim] = points[dim]
+
+            return las_out
+
+        with lp.open(out, mode="w", header=header) as writer:
+            for points in fa.chunk_iterator(1_000_000):
+                las_out = reencode_chunk(points, header)
+                writer.write_points(las_out.points)
+
+            for points in fb.chunk_iterator(1_000_000):
+                las_out = reencode_chunk(points, header)
+                writer.write_points(las_out.points)
+
     print(f"{a.name} + {b.name} -> {out.name} ({n_a} + {n_b} pts)")
 
 def merge_cloud_pairs(
@@ -162,6 +173,8 @@ def merge_cloud_pairs(
     sort_by_time: bool = True,
     out_prefix: str = "merged_",
     out_suffix: str = "",
+    start_idx: Optional[int] = None,
+    step: int = 1000,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -183,17 +196,17 @@ def merge_cloud_pairs(
         return
 
     ok = 0
-    for scan in scans:
+    for i, scan in enumerate(scans):
         a = idx_a[scan]
         b = idx_b[scan]
-
+        scan_label = start_idx + i * step if start_idx is not None else scan
         if a.suffix.lower() != b.suffix.lower():
             raise ValueError(
                 f"Extension mismatch for scan {scan}: {a.name} vs {b.name}"
             )
 
         if a.suffix.lower() == ".txt":
-            out = out_dir / f"{out_prefix}{scan}{out_suffix}.txt"
+            out = out_dir / f"{out_prefix}{scan_label}{out_suffix}.txt"
             print(f"\n[Merging TXT] files {a} and {b}")
             merge_two_txt(
                 a, b, out,
@@ -203,7 +216,7 @@ def merge_cloud_pairs(
             )
 
         elif a.suffix.lower() in (".las", ".laz"):
-            out = out_dir / f"{out_prefix}{scan}{out_suffix}{a.suffix.lower()}"
+            out = out_dir / f"{out_prefix}{scan_label}{out_suffix}{a.suffix.lower()}"
             print(f"\n[Merging LAS] files {a} and {b}")
             merge_two_las(
                 a, b, out,
@@ -229,3 +242,4 @@ def merge_cloud_pairs(
 
 def merge_txt_pairs(*args, **kwargs):
     return merge_cloud_pairs(*args, **kwargs)
+

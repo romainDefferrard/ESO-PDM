@@ -1,0 +1,130 @@
+13:21:11 | INFO | 
+13:21:11 | INFO | ============================================================
+13:21:11 | INFO |                  PIPELINE CONFIGURATION
+13:21:11 | INFO | ============================================================
+13:21:11 | INFO | Mode: patcher
+13:21:11 | INFO | Scenario name: georef_ALL_traj_outage_1
+13:21:11 | INFO | 
+13:21:11 | INFO | Trajectory:
+13:21:11 | INFO |    Path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+13:21:11 | INFO |    Type: SBET
+13:21:11 | INFO | 
+13:21:11 | INFO | Distance filtering:
+13:21:11 | INFO |    enable: True
+13:21:11 | INFO |    max_distance_m: 30
+13:21:11 | INFO |    map_epsg: EPSG:2056
+13:21:11 | INFO |    filter_trj: None
+13:21:11 | INFO | 
+13:21:11 | INFO | Scanners:
+13:21:11 | INFO |    ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml  (scanner_name=HA)
+13:21:11 | INFO |    lr_cfg: navtools_PDM/PDM_configs/scanner_LR.yml  (scanner_name=LR)
+13:21:11 | INFO |    puck_cfg: navtools_PDM/PDM_configs/scanner_PUCK.yml  (scanner_name=PUCK)
+13:21:11 | INFO | 
+13:21:11 | INFO | Paths:
+13:21:11 | INFO |    root_out_dir: /media/b085164/Elements/CALIB_26_02_25
+13:21:11 | INFO |    patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+13:21:11 | INFO |    limatch_cfg: Patcher/submodules/limatch/configs/MLS.yml
+13:21:11 | INFO |    gps_input: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt
+13:21:11 | INFO | 
+13:21:11 | INFO | Steps:
+13:21:11 | INFO |    georef: False
+13:21:11 | INFO |    merge: False
+13:21:11 | INFO |    chunk: False
+13:21:11 | INFO |    limatch: True
+13:21:11 | INFO |    gps_outage_file: False
+13:21:11 | INFO | 
+13:21:11 | INFO | Merge:
+13:21:11 | INFO |    out_prefix: merged_
+13:21:11 | INFO |    out_suffix: _HA_LR
+13:21:11 | INFO | 
+13:21:11 | INFO | VUX+PUCK merge:
+13:21:11 | INFO |    enabled: False
+13:21:11 | INFO |    name: ALL
+13:21:11 | INFO |    vux_group: HA_LR
+13:21:11 | INFO |    puck_scanner: puck_cfg
+13:21:11 | INFO |    output_dir: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged
+13:21:11 | INFO |    manifest_path: None
+13:21:11 | INFO |    output_suffix: _VUX_PUCK
+13:21:11 | INFO |    scanner_src_vux: 2
+13:21:11 | INFO |    scanner_src_puck: 1
+13:21:11 | INFO |    chunk_size: 10000000
+13:21:11 | INFO | 
+13:21:11 | INFO | Chunk:
+13:21:11 | INFO |    source: generate
+13:21:11 | INFO |    merged_input_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged
+13:21:11 | INFO |    reference_scanner: HA
+13:21:11 | INFO |    output_root: None
+13:21:11 | INFO |    length_m: 15.0
+13:21:11 | INFO |    min_last_chunk_m: 10.0
+13:21:11 | INFO |    min_points: 2000
+13:21:11 | INFO |    epsg_out: EPSG:2056
+13:21:11 | INFO |    delimiter: ,
+13:21:11 | INFO |    skiprows: 0
+13:21:11 | INFO |    cloud_fmt: las
+13:21:11 | INFO |    time_field: gps_time
+13:21:11 | INFO |    manifest_name: merged_manifest.csv
+13:21:11 | INFO |    use_manifest: True
+13:21:11 | INFO | 
+13:21:11 | INFO | Chunk variant:
+13:21:11 | INFO |    type: outage_window
+13:21:11 | INFO |    outage_window.enabled: True
+13:21:11 | INFO |    outage_window.output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/chunks_v2
+13:21:11 | INFO |    outage_window.outages: [[305120.0, 580.0]]
+13:21:11 | INFO |    outage_window.pre_s: 10.0
+13:21:11 | INFO |    outage_window.post_s: 10.0
+13:21:11 | INFO | 
+13:21:11 | INFO | LiMatch:
+13:21:11 | INFO |    run: True
+13:21:11 | INFO |    output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch_25m
+13:21:11 | INFO |    neighbor_k: 1
+13:21:11 | INFO |    do_cross_scan: False
+13:21:11 | INFO |    do_spatial_crossings: False
+13:21:11 | INFO |    crossings_output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/limatch_crossings_10
+13:21:11 | INFO |    crossing_min_separation: 50
+13:21:11 | INFO |    crossing_overlap_margin_m: 3.0
+13:21:11 | INFO | 
+13:21:11 | INFO | Merge correspondences:
+13:21:11 | INFO |    enabled: True
+13:21:11 | INFO |    output_file: None
+13:21:11 | INFO | 
+13:21:11 | INFO | Patcher:
+13:21:11 | INFO |    run: True
+13:21:11 | INFO |    source: existing
+13:21:11 | INFO |    output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/pairs_3
+13:21:11 | INFO |    gps_outage_file:
+13:21:11 | INFO |       enabled: False
+13:21:11 | INFO |       output_root: /media/b085164/Elements/CALIB_26_02_25/georef_VUX_traj_ODyN/Patcher_long_outage/GPS_outage
+13:21:11 | INFO |       outages: [[305120.0, 580.0]]
+13:21:11 | INFO | ============================================================
+13:21:11 | INFO | 
+13:21:12 | INFO | [pipeline] Generating temporary georef configs...
+13:21:12 | INFO |    scanner=HA | source=navtools_PDM/PDM_configs/scanner_HA.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+13:21:12 | INFO |    scanner=LR | source=navtools_PDM/PDM_configs/scanner_LR.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_LR.generated.yml
+13:21:12 | INFO |    scanner=PUCK | source=navtools_PDM/PDM_configs/scanner_PUCK.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_PUCK.generated.yml
+13:21:12 | INFO | [pipeline] Temporary config generation done.
+13:21:15 | INFO | Loading faiss with AVX2 support.
+13:21:15 | INFO | Successfully loaded faiss with AVX2 support.
+[13:21:15] INFO | Starting LiMatch pipeline...
+13:21:15 | INFO | Starting LiMatch pipeline...
+[13:21:15] INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch_25m/Flights_5_6/
+13:21:15 | INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch_25m/Flights_5_6/
+[13:21:15] INFO | Visualization set to False
+13:21:15 | INFO | Visualization set to False
+[13:21:15] INFO | [0/7] Model setup
+13:21:15 | INFO | [0/7] Model setup
+[13:21:15] INFO |   └─ Using CUDA for descriptor inference.
+13:21:15 | INFO |   └─ Using CUDA for descriptor inference.
+[13:21:15] INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+13:21:15 | INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+[13:21:16] INFO |   └─ Loaded nested checkpoint with key 'model'.
+13:21:16 | INFO |   └─ Loaded nested checkpoint with key 'model'.
+[13:21:16] INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+13:21:16 | INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+[13:21:16] INFO | [1/7] Preprocessing
+13:21:16 | INFO | [1/7] Preprocessing
+[13:21:16] INFO |   └─ Loading point clouds...
+13:21:16 | INFO |   └─ Loading point clouds...
+[13:22:03] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/pairs_3/Flights_5_6/Patch_from_scan_5_with_6.las
+13:22:03 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/pairs_3/Flights_5_6/Patch_from_scan_5_with_6.las
+[13:23:28] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/pairs_3/Flights_5_6/Patch_from_scan_6_with_5.las
+13:23:28 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/pairs_3/Flights_5_6/Patch_from_scan_6_with_5.las
