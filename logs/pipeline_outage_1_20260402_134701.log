@@ -4212,3 +4212,783 @@
 13:55:37 | INFO |   └─ Generated 1 valid tiles.
 [13:55:37] INFO |   └─ Applying voxelization with size 0.025 m...
 13:55:37 | INFO |   └─ Applying voxelization with size 0.025 m...
+[13:55:38] INFO |       └─ voxelized from 1229537 to 723729 pts (58.86%)
+13:55:38 | INFO |       └─ voxelized from 1229537 to 723729 pts (58.86%)
+[13:55:39] INFO |       └─ voxelized from 1378669 to 866919 pts (62.88%)
+13:55:39 | INFO |       └─ voxelized from 1378669 to 866919 pts (62.88%)
+[13:55:39] INFO | [2/7] Keypoint detection
+13:55:39 | INFO | [2/7] Keypoint detection
+[13:55:41] INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+13:55:41 | INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+[13:55:41] INFO |       └─ 8480 keypoints kept (81.54%) 
+13:55:41 | INFO |       └─ 8480 keypoints kept (81.54%) 
+[13:55:41] INFO |       └─ 10691 keypoints kept (66.88%) 
+13:55:41 | INFO |       └─ 10691 keypoints kept (66.88%) 
+[13:55:41] INFO | [3/7] Description
+13:55:41 | INFO | [3/7] Description
+[13:55:41] INFO |   └─ Computing descriptors for Tile A...
+13:55:41 | INFO |   └─ Computing descriptors for Tile A...
+[13:55:41] INFO |       └─ batch 1/1...
+13:55:41 | INFO |       └─ batch 1/1...
+[13:55:43] INFO |   └─ Computing descriptors for Tile B...
+13:55:43 | INFO |   └─ Computing descriptors for Tile B...
+[13:55:43] INFO |       └─ batch 1/1...
+13:55:43 | INFO |       └─ batch 1/1...
+[13:55:45] INFO | [4/7] Matching
+13:55:45 | INFO | [4/7] Matching
+[13:55:46] INFO |   └─ Applying reciprocity test...
+13:55:46 | INFO |   └─ Applying reciprocity test...
+[13:55:46] INFO |   └─ Keeping 15.61% reciprocal matches
+13:55:46 | INFO |   └─ Keeping 15.61% reciprocal matches
+[13:55:46] INFO | [5/7] RANSAC filtering
+13:55:46 | INFO | [5/7] RANSAC filtering
+[13:55:46] INFO |   └─ Tile 1: keeping 8.61%
+13:55:46 | INFO |   └─ Tile 1: keeping 8.61%
+[13:55:46] INFO | [6/7] ICP refinement
+13:55:46 | INFO | [6/7] ICP refinement
+[13:55:46] INFO |   └─ ICP refining tile 1 with 114 correspondences...
+13:55:46 | INFO |   └─ ICP refining tile 1 with 114 correspondences...
+[13:55:48] INFO | [7/7] Building output
+13:55:48 | INFO | [7/7] Building output
+[13:55:48] INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+13:55:48 | INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+[13:55:48] INFO |       └─ Loaded 39900 trajectory points.
+13:55:48 | INFO |       └─ Loaded 39900 trajectory points.
+[13:55:48] INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+13:55:48 | INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+[13:55:49] INFO |   └─ Using input laser vectors for correspondences...
+13:55:49 | INFO |   └─ Using input laser vectors for correspondences...
+[13:55:49] INFO |   └─ Correcting laser vectors B with ICP results...
+13:55:49 | INFO |   └─ Correcting laser vectors B with ICP results...
+[13:55:49] INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1038__chunk_1039/cor_outputs/
+13:55:49 | INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1038__chunk_1039/cor_outputs/
+[13:55:50] INFO | [Pipeline summary]
+13:55:50 | INFO | [Pipeline summary]
+[13:55:50] INFO |       Model setup: 0.05s
+13:55:50 | INFO |       Model setup: 0.05s
+[13:55:50] INFO |     Preprocessing: 4.40s
+13:55:50 | INFO |     Preprocessing: 4.40s
+[13:55:50] INFO |         Detection: 2.06s
+13:55:50 | INFO |         Detection: 2.06s
+[13:55:50] INFO |       Description: 4.10s
+13:55:50 | INFO |       Description: 4.10s
+[13:55:50] INFO |          Matching: 0.34s
+13:55:50 | INFO |          Matching: 0.34s
+[13:55:50] INFO |            RANSAC: 0.01s
+13:55:50 | INFO |            RANSAC: 0.01s
+[13:55:50] INFO |               ICP: 2.87s
+13:55:50 | INFO |               ICP: 2.87s
+[13:55:50] INFO |             Total: 15.88s
+13:55:50 | INFO |             Total: 15.88s
+[13:55:50] INFO | [Metrics]
+13:55:50 | INFO | [Metrics]
+[13:55:50] INFO |          Points A: 721139
+13:55:50 | INFO |          Points A: 721139
+[13:55:50] INFO |          Points B: 864270
+13:55:50 | INFO |          Points B: 864270
+[13:55:50] INFO |        Tiles num.: 1
+13:55:50 | INFO |        Tiles num.: 1
+[13:55:50] INFO |       Keypoints A: 8480
+13:55:50 | INFO |       Keypoints A: 8480
+[13:55:50] INFO |       Keypoints B: 10691
+13:55:50 | INFO |       Keypoints B: 10691
+[13:55:50] INFO |       Raw matches: 1324
+13:55:50 | INFO |       Raw matches: 1324
+[13:55:50] INFO |    RANSAC matches: 114
+13:55:50 | INFO |    RANSAC matches: 114
+[13:55:50] INFO | Peak RAM: 3.54 GB
+13:55:50 | INFO | Peak RAM: 3.54 GB
+[13:55:50] INFO | LiMatch pipeline completed.
+13:55:50 | INFO | LiMatch pipeline completed.
+[13:55:50] INFO | Starting LiMatch pipeline...
+13:55:50 | INFO | Starting LiMatch pipeline...
+[13:55:50] INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1039__chunk_1040/
+13:55:50 | INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1039__chunk_1040/
+[13:55:50] INFO | Visualization set to False
+13:55:50 | INFO | Visualization set to False
+[13:55:50] INFO | [0/7] Model setup
+13:55:50 | INFO | [0/7] Model setup
+[13:55:50] INFO |   └─ Using CUDA for descriptor inference.
+13:55:50 | INFO |   └─ Using CUDA for descriptor inference.
+[13:55:51] INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+13:55:51 | INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+[13:55:51] INFO |   └─ Loaded nested checkpoint with key 'model'.
+13:55:51 | INFO |   └─ Loaded nested checkpoint with key 'model'.
+[13:55:51] INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+13:55:51 | INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+[13:55:51] INFO | [1/7] Preprocessing
+13:55:51 | INFO | [1/7] Preprocessing
+[13:55:51] INFO |   └─ Loading point clouds...
+13:55:51 | INFO |   └─ Loading point clouds...
+[13:55:51] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1039.las
+13:55:51 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1039.las
+[13:55:52] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1040.las
+13:55:52 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1040.las
+[13:55:52] INFO |   └─ Tiling with size 500x500...
+13:55:52 | INFO |   └─ Tiling with size 500x500...
+[13:55:53] INFO |   └─ Shifting point clouds toward origin...
+13:55:53 | INFO |   └─ Shifting point clouds toward origin...
+[13:55:53] INFO |       └─ [2543120.5  1157514.76     926.27] m...
+13:55:53 | INFO |       └─ [2543120.5  1157514.76     926.27] m...
+[13:55:53] INFO |       └─ (Coordinates shifted back at export)
+13:55:53 | INFO |       └─ (Coordinates shifted back at export)
+[13:55:53] INFO |   └─ Generated 1 valid tiles.
+13:55:53 | INFO |   └─ Generated 1 valid tiles.
+[13:55:53] INFO |   └─ Applying voxelization with size 0.025 m...
+13:55:53 | INFO |   └─ Applying voxelization with size 0.025 m...
+[13:55:54] INFO |       └─ voxelized from 1294368 to 782774 pts (60.48%)
+13:55:54 | INFO |       └─ voxelized from 1294368 to 782774 pts (60.48%)
+[13:55:54] INFO |       └─ voxelized from 1269489 to 752472 pts (59.27%)
+13:55:54 | INFO |       └─ voxelized from 1269489 to 752472 pts (59.27%)
+[13:55:55] INFO | [2/7] Keypoint detection
+13:55:55 | INFO | [2/7] Keypoint detection
+[13:55:57] INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+13:55:57 | INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+[13:55:57] INFO |       └─ 8403 keypoints kept (62.72%) 
+13:55:57 | INFO |       └─ 8403 keypoints kept (62.72%) 
+[13:55:57] INFO |       └─ 8758 keypoints kept (74.98%) 
+13:55:57 | INFO |       └─ 8758 keypoints kept (74.98%) 
+[13:55:57] INFO | [3/7] Description
+13:55:57 | INFO | [3/7] Description
+[13:55:57] INFO |   └─ Computing descriptors for Tile A...
+13:55:57 | INFO |   └─ Computing descriptors for Tile A...
+[13:55:57] INFO |       └─ batch 1/1...
+13:55:57 | INFO |       └─ batch 1/1...
+[13:55:58] INFO |   └─ Computing descriptors for Tile B...
+13:55:58 | INFO |   └─ Computing descriptors for Tile B...
+[13:55:58] INFO |       └─ batch 1/1...
+13:55:58 | INFO |       └─ batch 1/1...
+[13:56:00] INFO | [4/7] Matching
+13:56:00 | INFO | [4/7] Matching
+[13:56:01] INFO |   └─ Applying reciprocity test...
+13:56:01 | INFO |   └─ Applying reciprocity test...
+[13:56:01] INFO |   └─ Keeping 14.90% reciprocal matches
+13:56:01 | INFO |   └─ Keeping 14.90% reciprocal matches
+[13:56:01] INFO | [5/7] RANSAC filtering
+13:56:01 | INFO | [5/7] RANSAC filtering
+[13:56:01] INFO |   └─ Tile 1: keeping 6.95%
+13:56:01 | INFO |   └─ Tile 1: keeping 6.95%
+[13:56:01] INFO | [6/7] ICP refinement
+13:56:01 | INFO | [6/7] ICP refinement
+[13:56:01] INFO |   └─ ICP refining tile 1 with 87 correspondences...
+13:56:01 | INFO |   └─ ICP refining tile 1 with 87 correspondences...
+[13:56:03] INFO | [7/7] Building output
+13:56:03 | INFO | [7/7] Building output
+[13:56:03] INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+13:56:03 | INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+[13:56:03] INFO |       └─ Loaded 39900 trajectory points.
+13:56:03 | INFO |       └─ Loaded 39900 trajectory points.
+[13:56:03] INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+13:56:03 | INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+[13:56:04] INFO |   └─ Using input laser vectors for correspondences...
+13:56:04 | INFO |   └─ Using input laser vectors for correspondences...
+[13:56:04] INFO |   └─ Correcting laser vectors B with ICP results...
+13:56:04 | INFO |   └─ Correcting laser vectors B with ICP results...
+[13:56:04] INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1039__chunk_1040/cor_outputs/
+13:56:04 | INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1039__chunk_1040/cor_outputs/
+[13:56:05] INFO | [Pipeline summary]
+13:56:05 | INFO | [Pipeline summary]
+[13:56:05] INFO |       Model setup: 0.05s
+13:56:05 | INFO |       Model setup: 0.05s
+[13:56:05] INFO |     Preprocessing: 4.12s
+13:56:05 | INFO |     Preprocessing: 4.12s
+[13:56:05] INFO |         Detection: 1.97s
+13:56:05 | INFO |         Detection: 1.97s
+[13:56:05] INFO |       Description: 3.78s
+13:56:05 | INFO |       Description: 3.78s
+[13:56:05] INFO |          Matching: 0.31s
+13:56:05 | INFO |          Matching: 0.31s
+[13:56:05] INFO |            RANSAC: 0.01s
+13:56:05 | INFO |            RANSAC: 0.01s
+[13:56:05] INFO |               ICP: 2.48s
+13:56:05 | INFO |               ICP: 2.48s
+[13:56:05] INFO |             Total: 14.32s
+13:56:05 | INFO |             Total: 14.32s
+[13:56:05] INFO | [Metrics]
+13:56:05 | INFO | [Metrics]
+[13:56:05] INFO |          Points A: 780058
+13:56:05 | INFO |          Points A: 780058
+[13:56:05] INFO |          Points B: 749774
+13:56:05 | INFO |          Points B: 749774
+[13:56:05] INFO |        Tiles num.: 1
+13:56:05 | INFO |        Tiles num.: 1
+[13:56:05] INFO |       Keypoints A: 8403
+13:56:05 | INFO |       Keypoints A: 8403
+[13:56:05] INFO |       Keypoints B: 8758
+13:56:05 | INFO |       Keypoints B: 8758
+[13:56:05] INFO |       Raw matches: 1252
+13:56:05 | INFO |       Raw matches: 1252
+[13:56:05] INFO |    RANSAC matches: 87
+13:56:05 | INFO |    RANSAC matches: 87
+[13:56:05] INFO | Peak RAM: 3.56 GB
+13:56:05 | INFO | Peak RAM: 3.56 GB
+[13:56:05] INFO | LiMatch pipeline completed.
+13:56:05 | INFO | LiMatch pipeline completed.
+[13:56:05] INFO | Starting LiMatch pipeline...
+13:56:05 | INFO | Starting LiMatch pipeline...
+[13:56:05] INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1040__chunk_1041/
+13:56:05 | INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1040__chunk_1041/
+[13:56:05] INFO | Visualization set to False
+13:56:05 | INFO | Visualization set to False
+[13:56:05] INFO | [0/7] Model setup
+13:56:05 | INFO | [0/7] Model setup
+[13:56:05] INFO |   └─ Using CUDA for descriptor inference.
+13:56:05 | INFO |   └─ Using CUDA for descriptor inference.
+[13:56:05] INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+13:56:05 | INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+[13:56:05] INFO |   └─ Loaded nested checkpoint with key 'model'.
+13:56:05 | INFO |   └─ Loaded nested checkpoint with key 'model'.
+[13:56:05] INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+13:56:05 | INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+[13:56:05] INFO | [1/7] Preprocessing
+13:56:05 | INFO | [1/7] Preprocessing
+[13:56:05] INFO |   └─ Loading point clouds...
+13:56:05 | INFO |   └─ Loading point clouds...
+[13:56:05] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1040.las
+13:56:05 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1040.las
+[13:56:06] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1041.las
+13:56:06 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1041.las
+[13:56:06] INFO |   └─ Tiling with size 500x500...
+13:56:06 | INFO |   └─ Tiling with size 500x500...
+[13:56:07] INFO |   └─ Shifting point clouds toward origin...
+13:56:07 | INFO |   └─ Shifting point clouds toward origin...
+[13:56:07] INFO |       └─ [2543134.95 1157523.8      925.78] m...
+13:56:07 | INFO |       └─ [2543134.95 1157523.8      925.78] m...
+[13:56:07] INFO |       └─ (Coordinates shifted back at export)
+13:56:07 | INFO |       └─ (Coordinates shifted back at export)
+[13:56:07] INFO |   └─ Generated 1 valid tiles.
+13:56:07 | INFO |   └─ Generated 1 valid tiles.
+[13:56:07] INFO |   └─ Applying voxelization with size 0.025 m...
+13:56:07 | INFO |   └─ Applying voxelization with size 0.025 m...
+[13:56:08] INFO |       └─ voxelized from 1200125 to 683011 pts (56.91%)
+13:56:08 | INFO |       └─ voxelized from 1200125 to 683011 pts (56.91%)
+[13:56:09] INFO |       └─ voxelized from 1303970 to 793868 pts (60.88%)
+13:56:09 | INFO |       └─ voxelized from 1303970 to 793868 pts (60.88%)
+[13:56:09] INFO | [2/7] Keypoint detection
+13:56:09 | INFO | [2/7] Keypoint detection
+[13:56:11] INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+13:56:11 | INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+[13:56:11] INFO |       └─ 8178 keypoints kept (89.40%) 
+13:56:11 | INFO |       └─ 8178 keypoints kept (89.40%) 
+[13:56:11] INFO |       └─ 10340 keypoints kept (70.31%) 
+13:56:11 | INFO |       └─ 10340 keypoints kept (70.31%) 
+[13:56:11] INFO | [3/7] Description
+13:56:11 | INFO | [3/7] Description
+[13:56:11] INFO |   └─ Computing descriptors for Tile A...
+13:56:11 | INFO |   └─ Computing descriptors for Tile A...
+[13:56:11] INFO |       └─ batch 1/1...
+13:56:11 | INFO |       └─ batch 1/1...
+[13:56:12] INFO |   └─ Computing descriptors for Tile B...
+13:56:12 | INFO |   └─ Computing descriptors for Tile B...
+[13:56:12] INFO |       └─ batch 1/1...
+13:56:12 | INFO |       └─ batch 1/1...
+[13:56:15] INFO | [4/7] Matching
+13:56:15 | INFO | [4/7] Matching
+[13:56:15] INFO |   └─ Applying reciprocity test...
+13:56:15 | INFO |   └─ Applying reciprocity test...
+[13:56:15] INFO |   └─ Keeping 20.57% reciprocal matches
+13:56:15 | INFO |   └─ Keeping 20.57% reciprocal matches
+[13:56:15] INFO | [5/7] RANSAC filtering
+13:56:15 | INFO | [5/7] RANSAC filtering
+[13:56:15] INFO |   └─ Tile 1: keeping 14.63%
+13:56:15 | INFO |   └─ Tile 1: keeping 14.63%
+[13:56:15] INFO | [6/7] ICP refinement
+13:56:15 | INFO | [6/7] ICP refinement
+[13:56:15] INFO |   └─ ICP refining tile 1 with 246 correspondences...
+13:56:15 | INFO |   └─ ICP refining tile 1 with 246 correspondences...
+[13:56:24] INFO | [7/7] Building output
+13:56:24 | INFO | [7/7] Building output
+[13:56:24] INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+13:56:24 | INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+[13:56:24] INFO |       └─ Loaded 39900 trajectory points.
+13:56:24 | INFO |       └─ Loaded 39900 trajectory points.
+[13:56:24] INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+13:56:24 | INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+[13:56:25] INFO |   └─ Using input laser vectors for correspondences...
+13:56:25 | INFO |   └─ Using input laser vectors for correspondences...
+[13:56:25] INFO |   └─ Correcting laser vectors B with ICP results...
+13:56:25 | INFO |   └─ Correcting laser vectors B with ICP results...
+[13:56:25] INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1040__chunk_1041/cor_outputs/
+13:56:25 | INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1040__chunk_1041/cor_outputs/
+[13:56:26] INFO | [Pipeline summary]
+13:56:26 | INFO | [Pipeline summary]
+[13:56:26] INFO |       Model setup: 0.06s
+13:56:26 | INFO |       Model setup: 0.06s
+[13:56:26] INFO |     Preprocessing: 3.92s
+13:56:26 | INFO |     Preprocessing: 3.92s
+[13:56:26] INFO |         Detection: 1.84s
+13:56:26 | INFO |         Detection: 1.84s
+[13:56:26] INFO |       Description: 4.21s
+13:56:26 | INFO |       Description: 4.21s
+[13:56:26] INFO |          Matching: 0.50s
+13:56:26 | INFO |          Matching: 0.50s
+[13:56:26] INFO |            RANSAC: 0.01s
+13:56:26 | INFO |            RANSAC: 0.01s
+[13:56:26] INFO |               ICP: 8.78s
+13:56:26 | INFO |               ICP: 8.78s
+[13:56:26] INFO |             Total: 20.91s
+13:56:26 | INFO |             Total: 20.91s
+[13:56:26] INFO | [Metrics]
+13:56:26 | INFO | [Metrics]
+[13:56:26] INFO |          Points A: 680445
+13:56:26 | INFO |          Points A: 680445
+[13:56:26] INFO |          Points B: 791325
+13:56:26 | INFO |          Points B: 791325
+[13:56:26] INFO |        Tiles num.: 1
+13:56:26 | INFO |        Tiles num.: 1
+[13:56:26] INFO |       Keypoints A: 8178
+13:56:26 | INFO |       Keypoints A: 8178
+[13:56:26] INFO |       Keypoints B: 10340
+13:56:26 | INFO |       Keypoints B: 10340
+[13:56:26] INFO |       Raw matches: 1682
+13:56:26 | INFO |       Raw matches: 1682
+[13:56:26] INFO |    RANSAC matches: 246
+13:56:26 | INFO |    RANSAC matches: 246
+[13:56:26] INFO | Peak RAM: 3.58 GB
+13:56:26 | INFO | Peak RAM: 3.58 GB
+[13:56:26] INFO | LiMatch pipeline completed.
+13:56:26 | INFO | LiMatch pipeline completed.
+[13:56:26] INFO | Starting LiMatch pipeline...
+13:56:26 | INFO | Starting LiMatch pipeline...
+[13:56:26] INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1041__chunk_1042/
+13:56:26 | INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1041__chunk_1042/
+[13:56:26] INFO | Visualization set to False
+13:56:26 | INFO | Visualization set to False
+[13:56:26] INFO | [0/7] Model setup
+13:56:26 | INFO | [0/7] Model setup
+[13:56:26] INFO |   └─ Using CUDA for descriptor inference.
+13:56:26 | INFO |   └─ Using CUDA for descriptor inference.
+[13:56:26] INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+13:56:26 | INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+[13:56:26] INFO |   └─ Loaded nested checkpoint with key 'model'.
+13:56:26 | INFO |   └─ Loaded nested checkpoint with key 'model'.
+[13:56:26] INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+13:56:26 | INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+[13:56:26] INFO | [1/7] Preprocessing
+13:56:26 | INFO | [1/7] Preprocessing
+[13:56:26] INFO |   └─ Loading point clouds...
+13:56:26 | INFO |   └─ Loading point clouds...
+[13:56:26] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1041.las
+13:56:26 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1041.las
+[13:56:27] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1042.las
+13:56:27 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1042.las
+[13:56:28] INFO |   └─ Tiling with size 500x500...
+13:56:28 | INFO |   └─ Tiling with size 500x500...
+[13:56:28] INFO |   └─ Shifting point clouds toward origin...
+13:56:28 | INFO |   └─ Shifting point clouds toward origin...
+[13:56:28] INFO |       └─ [2543147.97 1157529.87     925.88] m...
+13:56:28 | INFO |       └─ [2543147.97 1157529.87     925.88] m...
+[13:56:28] INFO |       └─ (Coordinates shifted back at export)
+13:56:28 | INFO |       └─ (Coordinates shifted back at export)
+[13:56:28] INFO |   └─ Generated 1 valid tiles.
+13:56:28 | INFO |   └─ Generated 1 valid tiles.
+[13:56:28] INFO |   └─ Applying voxelization with size 0.025 m...
+13:56:28 | INFO |   └─ Applying voxelization with size 0.025 m...
+[13:56:29] INFO |       └─ voxelized from 1213097 to 703622 pts (58.00%)
+13:56:29 | INFO |       └─ voxelized from 1213097 to 703622 pts (58.00%)
+[13:56:30] INFO |       └─ voxelized from 1337435 to 827048 pts (61.84%)
+13:56:30 | INFO |       └─ voxelized from 1337435 to 827048 pts (61.84%)
+[13:56:30] INFO | [2/7] Keypoint detection
+13:56:30 | INFO | [2/7] Keypoint detection
+[13:56:32] INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+13:56:32 | INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+[13:56:32] INFO |       └─ 9434 keypoints kept (82.25%) 
+13:56:32 | INFO |       └─ 9434 keypoints kept (82.25%) 
+[13:56:32] INFO |       └─ 9982 keypoints kept (65.59%) 
+13:56:32 | INFO |       └─ 9982 keypoints kept (65.59%) 
+[13:56:32] INFO | [3/7] Description
+13:56:32 | INFO | [3/7] Description
+[13:56:32] INFO |   └─ Computing descriptors for Tile A...
+13:56:32 | INFO |   └─ Computing descriptors for Tile A...
+[13:56:32] INFO |       └─ batch 1/1...
+13:56:32 | INFO |       └─ batch 1/1...
+[13:56:34] INFO |   └─ Computing descriptors for Tile B...
+13:56:34 | INFO |   └─ Computing descriptors for Tile B...
+[13:56:34] INFO |       └─ batch 1/1...
+13:56:34 | INFO |       └─ batch 1/1...
+[13:56:36] INFO | [4/7] Matching
+13:56:36 | INFO | [4/7] Matching
+[13:56:37] INFO |   └─ Applying reciprocity test...
+13:56:37 | INFO |   └─ Applying reciprocity test...
+[13:56:37] INFO |   └─ Keeping 18.92% reciprocal matches
+13:56:37 | INFO |   └─ Keeping 18.92% reciprocal matches
+[13:56:37] INFO | [5/7] RANSAC filtering
+13:56:37 | INFO | [5/7] RANSAC filtering
+[13:56:37] INFO |   └─ Tile 1: keeping 10.98%
+13:56:37 | INFO |   └─ Tile 1: keeping 10.98%
+[13:56:37] INFO | [6/7] ICP refinement
+13:56:37 | INFO | [6/7] ICP refinement
+[13:56:37] INFO |   └─ ICP refining tile 1 with 196 correspondences...
+13:56:37 | INFO |   └─ ICP refining tile 1 with 196 correspondences...
+[13:56:47] INFO | [7/7] Building output
+13:56:47 | INFO | [7/7] Building output
+[13:56:47] INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+13:56:47 | INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+[13:56:47] INFO |       └─ Loaded 39900 trajectory points.
+13:56:47 | INFO |       └─ Loaded 39900 trajectory points.
+[13:56:47] INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+13:56:47 | INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+[13:56:48] INFO |   └─ Using input laser vectors for correspondences...
+13:56:48 | INFO |   └─ Using input laser vectors for correspondences...
+[13:56:48] INFO |   └─ Correcting laser vectors B with ICP results...
+13:56:48 | INFO |   └─ Correcting laser vectors B with ICP results...
+[13:56:48] INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1041__chunk_1042/cor_outputs/
+13:56:48 | INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1041__chunk_1042/cor_outputs/
+[13:56:49] INFO | [Pipeline summary]
+13:56:49 | INFO | [Pipeline summary]
+[13:56:49] INFO |       Model setup: 0.05s
+13:56:49 | INFO |       Model setup: 0.05s
+[13:56:49] INFO |     Preprocessing: 4.27s
+13:56:49 | INFO |     Preprocessing: 4.27s
+[13:56:49] INFO |         Detection: 1.77s
+13:56:49 | INFO |         Detection: 1.77s
+[13:56:49] INFO |       Description: 4.56s
+13:56:49 | INFO |       Description: 4.56s
+[13:56:49] INFO |          Matching: 0.53s
+13:56:49 | INFO |          Matching: 0.53s
+[13:56:49] INFO |            RANSAC: 0.01s
+13:56:49 | INFO |            RANSAC: 0.01s
+[13:56:49] INFO |               ICP: 10.33s
+13:56:49 | INFO |               ICP: 10.33s
+[13:56:49] INFO |             Total: 23.13s
+13:56:49 | INFO |             Total: 23.13s
+[13:56:49] INFO | [Metrics]
+13:56:49 | INFO | [Metrics]
+[13:56:49] INFO |          Points A: 700996
+13:56:49 | INFO |          Points A: 700996
+[13:56:49] INFO |          Points B: 824325
+13:56:49 | INFO |          Points B: 824325
+[13:56:49] INFO |        Tiles num.: 1
+13:56:49 | INFO |        Tiles num.: 1
+[13:56:49] INFO |       Keypoints A: 9434
+13:56:49 | INFO |       Keypoints A: 9434
+[13:56:49] INFO |       Keypoints B: 9982
+13:56:49 | INFO |       Keypoints B: 9982
+[13:56:49] INFO |       Raw matches: 1785
+13:56:49 | INFO |       Raw matches: 1785
+[13:56:49] INFO |    RANSAC matches: 196
+13:56:49 | INFO |    RANSAC matches: 196
+[13:56:49] INFO | Peak RAM: 3.65 GB
+13:56:49 | INFO | Peak RAM: 3.65 GB
+[13:56:49] INFO | LiMatch pipeline completed.
+13:56:49 | INFO | LiMatch pipeline completed.
+[13:56:49] INFO | Starting LiMatch pipeline...
+13:56:49 | INFO | Starting LiMatch pipeline...
+[13:56:49] INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1042__chunk_1043/
+13:56:49 | INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1042__chunk_1043/
+[13:56:49] INFO | Visualization set to False
+13:56:49 | INFO | Visualization set to False
+[13:56:49] INFO | [0/7] Model setup
+13:56:49 | INFO | [0/7] Model setup
+[13:56:49] INFO |   └─ Using CUDA for descriptor inference.
+13:56:49 | INFO |   └─ Using CUDA for descriptor inference.
+[13:56:49] INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+13:56:49 | INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+[13:56:49] INFO |   └─ Loaded nested checkpoint with key 'model'.
+13:56:49 | INFO |   └─ Loaded nested checkpoint with key 'model'.
+[13:56:49] INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+13:56:49 | INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+[13:56:49] INFO | [1/7] Preprocessing
+13:56:49 | INFO | [1/7] Preprocessing
+[13:56:49] INFO |   └─ Loading point clouds...
+13:56:49 | INFO |   └─ Loading point clouds...
+[13:56:49] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1042.las
+13:56:49 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1042.las
+[13:56:50] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1043.las
+13:56:50 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1043.las
+[13:56:51] INFO |   └─ Tiling with size 500x500...
+13:56:51 | INFO |   └─ Tiling with size 500x500...
+[13:56:51] INFO |   └─ Shifting point clouds toward origin...
+13:56:51 | INFO |   └─ Shifting point clouds toward origin...
+[13:56:51] INFO |       └─ [2543161.84 1157536.77     926.07] m...
+13:56:51 | INFO |       └─ [2543161.84 1157536.77     926.07] m...
+[13:56:51] INFO |       └─ (Coordinates shifted back at export)
+13:56:51 | INFO |       └─ (Coordinates shifted back at export)
+[13:56:52] INFO |   └─ Generated 1 valid tiles.
+13:56:52 | INFO |   └─ Generated 1 valid tiles.
+[13:56:52] INFO |   └─ Applying voxelization with size 0.025 m...
+13:56:52 | INFO |   └─ Applying voxelization with size 0.025 m...
+[13:56:52] INFO |       └─ voxelized from 1287335 to 777156 pts (60.37%)
+13:56:52 | INFO |       └─ voxelized from 1287335 to 777156 pts (60.37%)
+[13:56:53] INFO |       └─ voxelized from 1397443 to 882087 pts (63.12%)
+13:56:53 | INFO |       └─ voxelized from 1397443 to 882087 pts (63.12%)
+[13:56:53] INFO | [2/7] Keypoint detection
+13:56:53 | INFO | [2/7] Keypoint detection
+[13:56:55] INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+13:56:55 | INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+[13:56:55] INFO |       └─ 10480 keypoints kept (74.52%) 
+13:56:55 | INFO |       └─ 10480 keypoints kept (74.52%) 
+[13:56:55] INFO |       └─ 11390 keypoints kept (68.61%) 
+13:56:55 | INFO |       └─ 11390 keypoints kept (68.61%) 
+[13:56:55] INFO | [3/7] Description
+13:56:55 | INFO | [3/7] Description
+[13:56:55] INFO |   └─ Computing descriptors for Tile A...
+13:56:55 | INFO |   └─ Computing descriptors for Tile A...
+[13:56:55] INFO |       └─ batch 1/1...
+13:56:55 | INFO |       └─ batch 1/1...
+[13:56:58] INFO |   └─ Computing descriptors for Tile B...
+13:56:58 | INFO |   └─ Computing descriptors for Tile B...
+[13:56:58] INFO |       └─ batch 1/1...
+13:56:58 | INFO |       └─ batch 1/1...
+[13:57:00] INFO | [4/7] Matching
+13:57:00 | INFO | [4/7] Matching
+[13:57:01] INFO |   └─ Applying reciprocity test...
+13:57:01 | INFO |   └─ Applying reciprocity test...
+[13:57:01] INFO |   └─ Keeping 19.28% reciprocal matches
+13:57:01 | INFO |   └─ Keeping 19.28% reciprocal matches
+[13:57:01] INFO | [5/7] RANSAC filtering
+13:57:01 | INFO | [5/7] RANSAC filtering
+[13:57:01] INFO |   └─ Tile 1: keeping 31.22%
+13:57:01 | INFO |   └─ Tile 1: keeping 31.22%
+[13:57:01] INFO | [6/7] ICP refinement
+13:57:01 | INFO | [6/7] ICP refinement
+[13:57:01] INFO |   └─ ICP refining tile 1 with 631 correspondences...
+13:57:01 | INFO |   └─ ICP refining tile 1 with 631 correspondences...
+[13:57:23] INFO | [7/7] Building output
+13:57:23 | INFO | [7/7] Building output
+[13:57:23] INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+13:57:23 | INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+[13:57:23] INFO |       └─ Loaded 39900 trajectory points.
+13:57:23 | INFO |       └─ Loaded 39900 trajectory points.
+[13:57:23] INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+13:57:23 | INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+[13:57:23] INFO |   └─ Using input laser vectors for correspondences...
+13:57:23 | INFO |   └─ Using input laser vectors for correspondences...
+[13:57:23] INFO |   └─ Correcting laser vectors B with ICP results...
+13:57:23 | INFO |   └─ Correcting laser vectors B with ICP results...
+[13:57:23] INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1042__chunk_1043/cor_outputs/
+13:57:23 | INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1042__chunk_1043/cor_outputs/
+[13:57:24] INFO | [Pipeline summary]
+13:57:24 | INFO | [Pipeline summary]
+[13:57:24] INFO |       Model setup: 0.06s
+13:57:24 | INFO |       Model setup: 0.06s
+[13:57:24] INFO |     Preprocessing: 4.47s
+13:57:24 | INFO |     Preprocessing: 4.47s
+[13:57:24] INFO |         Detection: 1.95s
+13:57:24 | INFO |         Detection: 1.95s
+[13:57:24] INFO |       Description: 5.09s
+13:57:24 | INFO |       Description: 5.09s
+[13:57:24] INFO |          Matching: 0.59s
+13:57:24 | INFO |          Matching: 0.59s
+[13:57:24] INFO |            RANSAC: 0.01s
+13:57:24 | INFO |            RANSAC: 0.01s
+[13:57:24] INFO |               ICP: 21.74s
+13:57:24 | INFO |               ICP: 21.74s
+[13:57:24] INFO |             Total: 35.54s
+13:57:24 | INFO |             Total: 35.54s
+[13:57:24] INFO | [Metrics]
+13:57:24 | INFO | [Metrics]
+[13:57:24] INFO |          Points A: 774496
+13:57:24 | INFO |          Points A: 774496
+[13:57:24] INFO |          Points B: 879549
+13:57:24 | INFO |          Points B: 879549
+[13:57:24] INFO |        Tiles num.: 1
+13:57:24 | INFO |        Tiles num.: 1
+[13:57:24] INFO |       Keypoints A: 10480
+13:57:24 | INFO |       Keypoints A: 10480
+[13:57:24] INFO |       Keypoints B: 11390
+13:57:24 | INFO |       Keypoints B: 11390
+[13:57:24] INFO |       Raw matches: 2021
+13:57:24 | INFO |       Raw matches: 2021
+[13:57:24] INFO |    RANSAC matches: 631
+13:57:24 | INFO |    RANSAC matches: 631
+[13:57:24] INFO | Peak RAM: 3.75 GB
+13:57:24 | INFO | Peak RAM: 3.75 GB
+[13:57:24] INFO | LiMatch pipeline completed.
+13:57:24 | INFO | LiMatch pipeline completed.
+[13:57:24] INFO | Starting LiMatch pipeline...
+13:57:24 | INFO | Starting LiMatch pipeline...
+[13:57:24] INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1043__chunk_1044/
+13:57:24 | INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1043__chunk_1044/
+[13:57:24] INFO | Visualization set to False
+13:57:24 | INFO | Visualization set to False
+[13:57:24] INFO | [0/7] Model setup
+13:57:24 | INFO | [0/7] Model setup
+[13:57:24] INFO |   └─ Using CUDA for descriptor inference.
+13:57:24 | INFO |   └─ Using CUDA for descriptor inference.
+[13:57:24] INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+13:57:24 | INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+[13:57:24] INFO |   └─ Loaded nested checkpoint with key 'model'.
+13:57:24 | INFO |   └─ Loaded nested checkpoint with key 'model'.
+[13:57:24] INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+13:57:24 | INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+[13:57:24] INFO | [1/7] Preprocessing
+13:57:24 | INFO | [1/7] Preprocessing
+[13:57:24] INFO |   └─ Loading point clouds...
+13:57:24 | INFO |   └─ Loading point clouds...
+[13:57:25] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1043.las
+13:57:25 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1043.las
+[13:57:26] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1044.las
+13:57:26 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1044.las
+[13:57:26] INFO |   └─ Tiling with size 500x500...
+13:57:26 | INFO |   └─ Tiling with size 500x500...
+[13:57:27] INFO |   └─ Shifting point clouds toward origin...
+13:57:27 | INFO |   └─ Shifting point clouds toward origin...
+[13:57:27] INFO |       └─ [2543175.65 1157543.37     926.32] m...
+13:57:27 | INFO |       └─ [2543175.65 1157543.37     926.32] m...
+[13:57:27] INFO |       └─ (Coordinates shifted back at export)
+13:57:27 | INFO |       └─ (Coordinates shifted back at export)
+[13:57:27] INFO |   └─ Generated 1 valid tiles.
+13:57:27 | INFO |   └─ Generated 1 valid tiles.
+[13:57:27] INFO |   └─ Applying voxelization with size 0.025 m...
+13:57:27 | INFO |   └─ Applying voxelization with size 0.025 m...
+[13:57:28] INFO |       └─ voxelized from 1333136 to 818027 pts (61.36%)
+13:57:28 | INFO |       └─ voxelized from 1333136 to 818027 pts (61.36%)
+[13:57:29] INFO |       └─ voxelized from 1443151 to 935085 pts (64.79%)
+13:57:29 | INFO |       └─ voxelized from 1443151 to 935085 pts (64.79%)
+[13:57:29] INFO | [2/7] Keypoint detection
+13:57:29 | INFO | [2/7] Keypoint detection
+[13:57:31] INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+13:57:31 | INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+[13:57:31] INFO |       └─ 11912 keypoints kept (79.93%) 
+13:57:31 | INFO |       └─ 11912 keypoints kept (79.93%) 
+[13:57:31] INFO |       └─ 12638 keypoints kept (68.24%) 
+13:57:31 | INFO |       └─ 12638 keypoints kept (68.24%) 
+[13:57:31] INFO | [3/7] Description
+13:57:31 | INFO | [3/7] Description
+[13:57:31] INFO |   └─ Computing descriptors for Tile A...
+13:57:31 | INFO |   └─ Computing descriptors for Tile A...
+[13:57:31] INFO |       └─ batch 1/1...
+13:57:31 | INFO |       └─ batch 1/1...
+[13:57:34] INFO |   └─ Computing descriptors for Tile B...
+13:57:34 | INFO |   └─ Computing descriptors for Tile B...
+[13:57:34] INFO |       └─ batch 1/1...
+13:57:34 | INFO |       └─ batch 1/1...
+[13:57:37] INFO | [4/7] Matching
+13:57:37 | INFO | [4/7] Matching
+[13:57:38] INFO |   └─ Applying reciprocity test...
+13:57:38 | INFO |   └─ Applying reciprocity test...
+[13:57:38] INFO |   └─ Keeping 20.77% reciprocal matches
+13:57:38 | INFO |   └─ Keeping 20.77% reciprocal matches
+[13:57:38] INFO | [5/7] RANSAC filtering
+13:57:38 | INFO | [5/7] RANSAC filtering
+[13:57:38] INFO |   └─ Tile 1: keeping 11.56%
+13:57:38 | INFO |   └─ Tile 1: keeping 11.56%
+[13:57:38] INFO | [6/7] ICP refinement
+13:57:38 | INFO | [6/7] ICP refinement
+[13:57:38] INFO |   └─ ICP refining tile 1 with 286 correspondences...
+13:57:38 | INFO |   └─ ICP refining tile 1 with 286 correspondences...
+[13:57:55] INFO | [7/7] Building output
+13:57:55 | INFO | [7/7] Building output
+[13:57:55] INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+13:57:55 | INFO |   └─ Loading trajectory from SBET: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out...
+[13:57:55] INFO |       └─ Loaded 39900 trajectory points.
+13:57:55 | INFO |       └─ Loaded 39900 trajectory points.
+[13:57:55] INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+13:57:55 | INFO |       └─ Time span: 304790.004265 to 306784.9542645355 s.
+[13:57:56] INFO |   └─ Using input laser vectors for correspondences...
+13:57:56 | INFO |   └─ Using input laser vectors for correspondences...
+[13:57:56] INFO |   └─ Correcting laser vectors B with ICP results...
+13:57:56 | INFO |   └─ Correcting laser vectors B with ICP results...
+[13:57:56] INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1043__chunk_1044/cor_outputs/
+13:57:56 | INFO |   └─ Saving to /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1043__chunk_1044/cor_outputs/
+[13:57:57] INFO | [Pipeline summary]
+13:57:57 | INFO | [Pipeline summary]
+[13:57:57] INFO |       Model setup: 0.07s
+13:57:57 | INFO |       Model setup: 0.07s
+[13:57:57] INFO |     Preprocessing: 4.38s
+13:57:57 | INFO |     Preprocessing: 4.38s
+[13:57:57] INFO |         Detection: 2.14s
+13:57:57 | INFO |         Detection: 2.14s
+[13:57:57] INFO |       Description: 5.70s
+13:57:57 | INFO |       Description: 5.70s
+[13:57:57] INFO |          Matching: 1.31s
+13:57:57 | INFO |          Matching: 1.31s
+[13:57:57] INFO |            RANSAC: 0.01s
+13:57:57 | INFO |            RANSAC: 0.01s
+[13:57:57] INFO |               ICP: 17.02s
+13:57:57 | INFO |               ICP: 17.02s
+[13:57:57] INFO |             Total: 32.28s
+13:57:57 | INFO |             Total: 32.28s
+[13:57:57] INFO | [Metrics]
+13:57:57 | INFO | [Metrics]
+[13:57:57] INFO |          Points A: 815466
+13:57:57 | INFO |          Points A: 815466
+[13:57:57] INFO |          Points B: 932487
+13:57:57 | INFO |          Points B: 932487
+[13:57:57] INFO |        Tiles num.: 1
+13:57:57 | INFO |        Tiles num.: 1
+[13:57:57] INFO |       Keypoints A: 11912
+13:57:57 | INFO |       Keypoints A: 11912
+[13:57:57] INFO |       Keypoints B: 12638
+13:57:57 | INFO |       Keypoints B: 12638
+[13:57:57] INFO |       Raw matches: 2474
+13:57:57 | INFO |       Raw matches: 2474
+[13:57:57] INFO |    RANSAC matches: 286
+13:57:57 | INFO |    RANSAC matches: 286
+[13:57:57] INFO | Peak RAM: 3.91 GB
+13:57:57 | INFO | Peak RAM: 3.91 GB
+[13:57:57] INFO | LiMatch pipeline completed.
+13:57:57 | INFO | LiMatch pipeline completed.
+[13:57:57] INFO | Starting LiMatch pipeline...
+13:57:57 | INFO | Starting LiMatch pipeline...
+[13:57:57] INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1044__chunk_1045/
+13:57:57 | INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500/merged_1000_VUX_PUCK/chunk_1044__chunk_1045/
+[13:57:57] INFO | Visualization set to False
+13:57:57 | INFO | Visualization set to False
+[13:57:57] INFO | [0/7] Model setup
+13:57:57 | INFO | [0/7] Model setup
+[13:57:57] INFO |   └─ Using CUDA for descriptor inference.
+13:57:57 | INFO |   └─ Using CUDA for descriptor inference.
+[13:57:57] INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+13:57:57 | INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+[13:57:57] INFO |   └─ Loaded nested checkpoint with key 'model'.
+13:57:57 | INFO |   └─ Loaded nested checkpoint with key 'model'.
+[13:57:57] INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+13:57:57 | INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+[13:57:57] INFO | [1/7] Preprocessing
+13:57:57 | INFO | [1/7] Preprocessing
+[13:57:57] INFO |   └─ Loading point clouds...
+13:57:57 | INFO |   └─ Loading point clouds...
+[13:57:57] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1044.las
+13:57:57 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1044.las
+[13:57:58] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1045.las
+13:57:58 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK/chunk_1045.las
+[13:57:58] INFO |   └─ Tiling with size 500x500...
+13:57:58 | INFO |   └─ Tiling with size 500x500...
+[13:57:59] INFO |   └─ Shifting point clouds toward origin...
+13:57:59 | INFO |   └─ Shifting point clouds toward origin...
+[13:57:59] INFO |       └─ [2543189.23 1157548.43     926.82] m...
+13:57:59 | INFO |       └─ [2543189.23 1157548.43     926.82] m...
+[13:57:59] INFO |       └─ (Coordinates shifted back at export)
+13:57:59 | INFO |       └─ (Coordinates shifted back at export)
+[13:57:59] INFO |   └─ Generated 1 valid tiles.
+13:57:59 | INFO |   └─ Generated 1 valid tiles.
+[13:57:59] INFO |   └─ Applying voxelization with size 0.025 m...
+13:57:59 | INFO |   └─ Applying voxelization with size 0.025 m...
+[13:58:00] INFO |       └─ voxelized from 1369855 to 861749 pts (62.91%)
+13:58:00 | INFO |       └─ voxelized from 1369855 to 861749 pts (62.91%)
+[13:58:01] INFO |       └─ voxelized from 1428724 to 925193 pts (64.76%)
+13:58:01 | INFO |       └─ voxelized from 1428724 to 925193 pts (64.76%)
+[13:58:01] INFO | [2/7] Keypoint detection
+13:58:01 | INFO | [2/7] Keypoint detection
+[13:58:03] INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+13:58:03 | INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+[13:58:03] INFO |       └─ 13173 keypoints kept (81.32%) 
+13:58:03 | INFO |       └─ 13173 keypoints kept (81.32%) 
+[13:58:03] INFO |       └─ 14116 keypoints kept (77.74%) 
+13:58:03 | INFO |       └─ 14116 keypoints kept (77.74%) 
+[13:58:03] INFO | [3/7] Description
+13:58:03 | INFO | [3/7] Description
+[13:58:03] INFO |   └─ Computing descriptors for Tile A...
+13:58:03 | INFO |   └─ Computing descriptors for Tile A...
+[13:58:03] INFO |       └─ batch 1/1...
+13:58:03 | INFO |       └─ batch 1/1...
+[13:58:06] INFO |   └─ Computing descriptors for Tile B...
+13:58:06 | INFO |   └─ Computing descriptors for Tile B...
+[13:58:06] INFO |       └─ batch 1/1...
+13:58:06 | INFO |       └─ batch 1/1...
+[13:58:09] INFO | [4/7] Matching
+13:58:09 | INFO | [4/7] Matching
+[13:58:10] INFO |   └─ Applying reciprocity test...
+13:58:10 | INFO |   └─ Applying reciprocity test...
+[13:58:10] INFO |   └─ Keeping 23.34% reciprocal matches
+13:58:10 | INFO |   └─ Keeping 23.34% reciprocal matches
+[13:58:10] INFO | [5/7] RANSAC filtering
+13:58:10 | INFO | [5/7] RANSAC filtering
+[13:58:10] INFO |   └─ Tile 1: keeping 49.80%
+13:58:10 | INFO |   └─ Tile 1: keeping 49.80%
+[13:58:10] INFO | [6/7] ICP refinement
+13:58:10 | INFO | [6/7] ICP refinement
+[13:58:10] INFO |   └─ ICP refining tile 1 with 1531 correspondences...
+13:58:10 | INFO |   └─ ICP refining tile 1 with 1531 correspondences...
