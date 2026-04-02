@@ -1,0 +1,145 @@
+15:53:04 | INFO | 
+15:53:04 | INFO | ============================================================
+15:53:04 | INFO |                  PIPELINE CONFIGURATION
+15:53:04 | INFO | ============================================================
+15:53:04 | INFO | Mode: chunk
+15:53:04 | INFO | Scenario name: georef_ALL_traj_outage_1
+15:53:04 | INFO | 
+15:53:04 | INFO | Trajectory:
+15:53:04 | INFO |    Path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+15:53:04 | INFO |    Type: SBET
+15:53:04 | INFO | 
+15:53:04 | INFO | Distance filtering:
+15:53:04 | INFO |    enable: True
+15:53:04 | INFO |    max_distance_m: 30
+15:53:04 | INFO |    map_epsg: EPSG:2056
+15:53:04 | INFO |    filter_trj: None
+15:53:04 | INFO | 
+15:53:04 | INFO | Scanners:
+15:53:04 | INFO |    ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml  (scanner_name=HA)
+15:53:04 | INFO |    lr_cfg: navtools_PDM/PDM_configs/scanner_LR.yml  (scanner_name=LR)
+15:53:04 | INFO |    puck_cfg: navtools_PDM/PDM_configs/scanner_PUCK.yml  (scanner_name=PUCK)
+15:53:04 | INFO | 
+15:53:04 | INFO | Paths:
+15:53:04 | INFO |    root_out_dir: /media/b085164/Elements/CALIB_26_02_25
+15:53:04 | INFO |    patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+15:53:04 | INFO |    limatch_cfg: Patcher/submodules/limatch/configs/MLS.yml
+15:53:04 | INFO |    gps_input: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt
+15:53:04 | INFO | 
+15:53:04 | INFO | Steps:
+15:53:04 | INFO |    georef: False
+15:53:04 | INFO |    merge: False
+15:53:04 | INFO |    vux_puck_merge: False
+15:53:04 | INFO |    chunk: True
+15:53:04 | INFO |    limatch: True
+15:53:04 | INFO |    gps_outage_file: False
+15:53:04 | INFO | 
+15:53:04 | INFO | Merge:
+15:53:04 | INFO |    out_prefix: merged_
+15:53:04 | INFO |    out_suffix: _HA_LR
+15:53:04 | INFO | 
+15:53:04 | INFO | VUX+PUCK merge:
+15:53:04 | INFO |    enabled: True
+15:53:04 | INFO |    name: ALL
+15:53:04 | INFO |    vux_group: HA_LR
+15:53:04 | INFO |    puck_scanner: puck_cfg
+15:53:04 | INFO |    vux_input_dir: None
+15:53:04 | INFO |    output_dir: None
+15:53:04 | INFO |    manifest_path: None
+15:53:04 | INFO |    output_suffix: _VUX_PUCK
+15:53:04 | INFO |    scanner_src_vux: 2
+15:53:04 | INFO |    scanner_src_puck: 1
+15:53:04 | INFO |    chunk_size: 10000000
+15:53:04 | INFO | 
+15:53:04 | INFO | Chunk:
+15:53:04 | INFO |    source: generate
+15:53:04 | INFO |    existing_root: None
+15:53:04 | INFO |    merged_input_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL
+15:53:04 | INFO |    merged_group: None
+15:53:04 | INFO |    reference_scanner: HA
+15:53:04 | INFO |    output_root: None
+15:53:04 | INFO |    length_m: 15.0
+15:53:04 | INFO |    min_last_chunk_m: 10.0
+15:53:04 | INFO |    min_points: 2000
+15:53:04 | INFO |    epsg_out: EPSG:2056
+15:53:04 | INFO |    delimiter: ,
+15:53:04 | INFO |    skiprows: 0
+15:53:04 | INFO |    cloud_fmt: las
+15:53:04 | INFO |    time_field: gps_time
+15:53:04 | INFO |    manifest_name: merged_manifest.csv
+15:53:04 | INFO |    use_manifest: True
+15:53:04 | INFO | 
+15:53:04 | INFO | Chunk variant:
+15:53:04 | INFO |    type: outage_window
+15:53:04 | INFO |    outage_window.enabled: True
+15:53:04 | INFO |    outage_window.output_root: None
+15:53:04 | INFO |    outage_window.outages: [[305120.0, 580.0]]
+15:53:04 | INFO |    outage_window.pre_s: 10.0
+15:53:04 | INFO |    outage_window.post_s: 10.0
+15:53:04 | INFO | 
+15:53:04 | INFO | LiMatch:
+15:53:04 | INFO |    run: True
+15:53:04 | INFO |    output_root: None
+15:53:04 | INFO |    neighbor_k: 1
+15:53:04 | INFO |    do_cross_scan: True
+15:53:04 | INFO |    do_spatial_crossings: True
+15:53:04 | INFO |    crossings_output_root: None
+15:53:04 | INFO |    crossing_min_separation: 30
+15:53:04 | INFO |    crossing_overlap_margin_m: 1.2
+15:53:04 | INFO | 
+15:53:04 | INFO | Merge correspondences:
+15:53:04 | INFO |    enabled: True
+15:53:04 | INFO |    output_file: None
+15:53:04 | INFO | 
+15:53:04 | INFO | Patcher:
+15:53:04 | INFO |    run: False
+15:53:04 | INFO |    source: existing
+15:53:04 | INFO |    output_root: None
+15:53:04 | INFO |    gps_outage_file:
+15:53:04 | INFO |       enabled: False
+15:53:04 | INFO |       output_root: None
+15:53:04 | INFO |       outages: []
+15:53:04 | INFO | ============================================================
+15:53:04 | INFO | 
+15:53:04 | INFO | [pipeline] Generating temporary georef configs...
+15:53:04 | INFO |    scanner=HA | source=navtools_PDM/PDM_configs/scanner_HA.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+15:53:04 | INFO |    scanner=LR | source=navtools_PDM/PDM_configs/scanner_LR.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_LR.generated.yml
+15:53:04 | INFO |    scanner=PUCK | source=navtools_PDM/PDM_configs/scanner_PUCK.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_PUCK.generated.yml
+15:53:04 | INFO | [pipeline] Temporary config generation done.
+
+======================================
+[pipeline] Starting pipeline
+[pipeline] mode:            chunk
+[pipeline] scenario:        georef_ALL_traj_outage_1
+[pipeline] root_out_dir:    /media/b085164/Elements/CALIB_26_02_25
+[pipeline] limatch_cfg:     /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/configs/MLS.yml
+[pipeline] patcher_cfg:     Patcher/config/MLS_Epalinges_config.yml
+======================================
+
+
+======================================
+[pipeline] Resolved inputs
+[pipeline] merged_out:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL
+[pipeline] georef ref cfg:  /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+======================================
+
+[combined] GPS_outage written: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/GPS_outage.txt (kept=2876, removed=581)
+
+==============================
+[combined scenario]
+Outages: [[305120.0, 580.0]]
+Expanded intervals: [(305110.0, 305710.0)]
+cloud_fmt: las
+time_field: gps_time
+==============================
+
+[combined] Using manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL/merged_manifest.csv
+[outage selection] merged_1000_VUX_PUCK.las                      time=[305060.001,305313.526] -> involved
+[outage selection] merged_2000_VUX_PUCK.las                      time=[305313.556,305375.866] -> involved
+[outage selection] merged_3000_VUX_PUCK.las                      time=[305433.946,305705.924] -> involved
+[outage selection] merged_4000_VUX_PUCK.las                      time=[305718.806,305736.393] -> stop (after)
+
+[outage summary] 3 / 6 involved
+
+[combined] WARNING: could not load trajectory for bbox (name 'load_config' is not defined) — falling back to point-cloud bbox
+[combined] CHUNK DIRECT 15.0m merged_1000_VUX_PUCK.las -> /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK

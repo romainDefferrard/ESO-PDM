@@ -4,13 +4,13 @@
 SCAN_MODE: "MLS"     # difference in patching method and GUI
 
 # Project name
-PRJ_NAME: "SAM_Epalinges_test"
+PRJ_NAME: "optim_limatch2"
 
 # Input files / directories
-OUTPUT_DIR: "/media/b085164/Elements/PCD_SAM/village/output_Patcher/" 
-PC_DIR: "/media/b085164/Elements/PCD_SAM/village/merged/merged_{flight_id}_HA_LR" # point cloud directory with files template name
+OUTPUT_DIR: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/Patcher/limatch" 
+PC_DIR: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/merged/ALL/merged_{flight_id}_VUX_PUCK"  # point cloud directory with files template name
 
-OUTPUT_PC_FMT: "txt" # Point cloud extraction format | "laz" | "las" | "txt" | "txyzs" |
+OUTPUT_PC_FMT: "las" # Point cloud extraction format | "laz" | "las" | "txt" | "txyzs" |
 
 # Grid (Generic)
 GRID_RES: 5     # Grid resolution [m]
@@ -30,4 +30,4 @@ LIMATCH_CFG: "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/lim
               
 
 # GUI
-CRS: #"EPSG:2056"     # (Optionnal) Spatial reference system
+CRS: "EPSG:2056"     # (Optionnal) Spatial reference system

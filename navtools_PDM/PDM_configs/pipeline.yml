@@ -18,7 +18,7 @@
 # ==============================================================
 # WORKFLOW MODE
 # ==============================================================
-mode: "georef_only"
+mode: "chunk"
 
 # Possible values:
 #   chunk
@@ -31,7 +31,7 @@ mode: "georef_only"
 # SCENARIO NAME
 # ==============================================================
 # Used to name output folders and generated config files
-scenario_name: "test_georef_2_las_txt"
+scenario_name: "georef_ALL_traj_ODyN"
 
 # ==============================================================
 # SCANNER CONFIGURATIONS
@@ -41,7 +41,11 @@ scenario_name: "test_georef_2_las_txt"
 scanners:
   ha_cfg: "navtools_PDM/PDM_configs/scanner_HA.yml"
   lr_cfg: "navtools_PDM/PDM_configs/scanner_LR.yml"
+  puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK.yml"
 
+merge_groups:
+  - name: "HA_LR"
+    scanners: ["ha_cfg", "lr_cfg"]
 
 # ==============================================================
 # TRAJECTORY USED FOR GEOREFERENCING
@@ -49,9 +53,25 @@ scanners:
 trajectory:
 
   type: "SBET"
-  path: "/media/b085164/Elements/Gobet_ODyN_v1/v1_base_AB/out/reference.out"
+  #path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/reference.out" # JV
+  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out" # ODyN ref 
+  #path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/outage/outage_GNSS/out/ODyN_outage.out" # ODyN outage 
   cfg:
     type: "SBET"
+
+# ==============================================================
+# GEOREF TIME WINDOW FILTER
+# ==============================================================
+# If enabled, only LiDAR points within [t_start - margin_s, t_start + duration + margin_s]
+# are georeferenced. Useful to focus processing around a specific outage zone.
+#
+# outage: [t_start, duration]  (GPS seconds)
+# margin_s: extra seconds added on both sides of the outage window
+
+georef_time_window:
+  enable: false
+  outage: [305120.0, 475.0]   # [t_start, duration]  — same format as patcher/chunk outages
+  margin_s: 60.0              # seconds added before and after
 
 # ==============================================================
 # OPTIONAL DISTANCE FILTERING
@@ -60,7 +80,7 @@ trajectory:
 
 distance_filtering:
   enable: true
-  max_distance_m: 20
+  max_distance_m: 30
   map_epsg: "EPSG:2056"
   filter_trj: null
 
@@ -68,15 +88,14 @@ distance_filtering:
 # INPUT / OUTPUT PATHS
 # ==============================================================
 paths:
-
   # Root directory for all outputs produced by the pipeline
-  root_out_dir: "/media/b085164/Elements/PCD_SAM/"
+  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
   # Path to Patcher configuration file
   patcher_cfg: "Patcher/config/MLS_Epalinges_config.yml"
   # LiMatch configuration
   limatch_cfg: "Patcher/submodules/limatch/configs/MLS.yml"
   # Input GNSS trajectory file (used in outage scenarios)
-  gps_input: "/media/b085164/Elements/Gobet_ODyN_v1/v1_base_AB/in/GPS.txt"
+  gps_input: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt" # GPS FULL CALIB
 
 
 
@@ -86,10 +105,14 @@ paths:
 # Enable or disable individual processing steps
 
 steps:
-  georef: true
+  georef: false
   merge: false
+  # Standalone VUX+PUCK merge — runs independently of steps.merge.
+  # Useful when georef was done in a previous run and you only want to merge.
+  # Reads vux_puck_merge config block below for dirs and parameters.
+  vux_puck_merge: false
   chunk: false
-  limatch: false
+  limatch: true
   gps_outage_file: false
 
 
@@ -110,20 +133,57 @@ merge_correspondences:
   #   patcher -> root_out_dir / scenario_name / "output_limatch" / "LiDAR_p2p.txt"
   output_file: null
 
+vux_puck_merge:
+  enabled: false
+  name: "ALL"
+  vux_group: "HA_LR"
+  puck_scanner: "puck_cfg"
+  # vux_input_dir: explicit path to the HA_LR merged dir.
+  # If null, defaults to root_out_dir/scenario_name/merged/vux_group.
+  # Required when steps.vux_puck_merge=true and steps.merge=false
+  # (i.e. reusing clouds georeferenced in a previous run).
+  vux_input_dir: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged/HA_LR"
+  output_dir: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged"
+  manifest_path: null
+  output_suffix: "_VUX_PUCK"
+  scanner_src_vux: 2
+  scanner_src_puck: 1
+  chunk_size: 10000000
+
 # ==============================================================
 # CHUNKING PARAMETERS
 # ==============================================================
 
 chunk:
-  source: "existing"   # "generate" or "existing"
-  existing_root: "/media/b085164/Elements/PCD_SAM/longue_ligne/scenario_combined/chunks_15m"
+  source: "generate"
+  merged_input_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged"
+  reference_scanner: "HA"
   output_root: null
   length_m: 15.0
+  min_last_chunk_m: 10.0 # minimum length of last chunk of scan
   min_points: 2000
   epsg_out: "EPSG:2056"
   delimiter: ","
   skiprows: 0
+  cloud_fmt: "las"
+  time_field: "gps_time"
+  manifest_name: "merged_manifest.csv"
+  use_manifest: true
 
+# chunk:
+#   source: "generate"
+#   merged_group: "ALL"
+#   reference_scanner: "HA"
+#   output_root: null
+#   length_m: 15.0
+#   min_points: 2000
+#   epsg_out: "EPSG:2056"
+#   delimiter: ","
+#   skiprows: 0
+#   cloud_fmt: "las"
+#   time_field: "gps_time"
+#   manifest_name: "merged_manifest.csv"
+#   use_manifest: true
 
 # ==============================================================
 # CHUNK SCENARIO VARIANTS
@@ -131,16 +191,15 @@ chunk:
 # Used only if mode = "chunk"
 
 chunk_variant:
-  type: "standard"   # "standard" or "outage_window"
+  type: "outage_window"   # "standard" or "outage_window"
 
   outage_window:
-    enabled: false
-    output_root: "/media/b085164/Elements/PCD_SAM/longue_ligne/scenario_combined"
+    enabled: true
+    output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/chunks_v2"
     outages:
-      - [466930.0, 200.0]
-    pre_s: 30.0
-    post_s: 30.0
-
+      - [305645.0, 475.0] # [Start, Duration] outage Front-to-Back
+    pre_s: 10.0
+    post_s: 10.0
 
 
 # ==============================================================
@@ -148,14 +207,15 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/limatch_crossings_10_v2"
+  neighbor_k: 0
+  do_cross_scan: false
 
-  # Optional custom output directory for LiMatch results
-  # If null, default = root_out_dir / scenario_name / "limatch"
-  output_root: null
-
-  neighbor_k: 2
-  do_cross_scan: true
-
+  # Croisements spatiaux
+  do_spatial_crossings: true
+  crossings_output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/limatch_crossings_v2"
+  crossing_min_separation: 50    # |id_i - id_j| minimum pour éviter les quasi-consécutifs
+  crossing_overlap_margin_m: 0.5 # marge autour des bbox pour le test d'overlap
 
 
 # ==============================================================
@@ -164,17 +224,15 @@ limatch:
 # Used only if mode = "patcher"
 
 patcher:
-  run: false
+  run: true
   # Choose source
   #   run      -> execute Patcher
   #   existing -> reuse Patcher outputs
   source: "existing"
-  output_root: "/media/b085164/Elements/PCD_SAM/longue_ligne/output_Patcher"
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/Patcher/split_vertical_easting"
 
   gps_outage_file:
-    enabled: false
-    output_root: "/media/b085164/Elements/PCD_SAM/longue_ligne/scenario_gps_outage"
+    enabled: true
+    output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_VUX_traj_ODyN/Patcher/GPS_outage"
     outages:
-      - [466930.0, 200.0]
-
-
+      - [305120.0, 475.0] # [Start, Duration] outage Scan-to-Scan

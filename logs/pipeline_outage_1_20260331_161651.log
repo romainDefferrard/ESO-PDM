@@ -1,0 +1,360 @@
+16:16:51 | INFO | 
+16:16:51 | INFO | ============================================================
+16:16:51 | INFO |                  PIPELINE CONFIGURATION
+16:16:51 | INFO | ============================================================
+16:16:51 | INFO | Mode: chunk
+16:16:51 | INFO | Scenario name: georef_ALL_traj_outage_1
+16:16:51 | INFO | 
+16:16:51 | INFO | Trajectory:
+16:16:51 | INFO |    Path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+16:16:51 | INFO |    Type: SBET
+16:16:51 | INFO | 
+16:16:51 | INFO | Distance filtering:
+16:16:51 | INFO |    enable: True
+16:16:51 | INFO |    max_distance_m: 30
+16:16:51 | INFO |    map_epsg: EPSG:2056
+16:16:51 | INFO |    filter_trj: None
+16:16:51 | INFO | 
+16:16:51 | INFO | Scanners:
+16:16:51 | INFO |    ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml  (scanner_name=HA)
+16:16:51 | INFO |    lr_cfg: navtools_PDM/PDM_configs/scanner_LR.yml  (scanner_name=LR)
+16:16:51 | INFO |    puck_cfg: navtools_PDM/PDM_configs/scanner_PUCK.yml  (scanner_name=PUCK)
+16:16:51 | INFO | 
+16:16:51 | INFO | Paths:
+16:16:51 | INFO |    root_out_dir: /media/b085164/Elements/CALIB_26_02_25
+16:16:51 | INFO |    patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+16:16:51 | INFO |    limatch_cfg: Patcher/submodules/limatch/configs/MLS.yml
+16:16:51 | INFO |    gps_input: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt
+16:16:51 | INFO | 
+16:16:51 | INFO | Steps:
+16:16:51 | INFO |    georef: False
+16:16:51 | INFO |    merge: False
+16:16:51 | INFO |    vux_puck_merge: False
+16:16:51 | INFO |    chunk: True
+16:16:51 | INFO |    limatch: True
+16:16:51 | INFO |    gps_outage_file: False
+16:16:51 | INFO | 
+16:16:51 | INFO | Merge:
+16:16:51 | INFO |    out_prefix: merged_
+16:16:51 | INFO |    out_suffix: _HA_LR
+16:16:51 | INFO | 
+16:16:51 | INFO | VUX+PUCK merge:
+16:16:51 | INFO |    enabled: True
+16:16:51 | INFO |    name: ALL
+16:16:51 | INFO |    vux_group: HA_LR
+16:16:51 | INFO |    puck_scanner: puck_cfg
+16:16:51 | INFO |    vux_input_dir: None
+16:16:51 | INFO |    output_dir: None
+16:16:51 | INFO |    manifest_path: None
+16:16:51 | INFO |    output_suffix: _VUX_PUCK
+16:16:51 | INFO |    scanner_src_vux: 2
+16:16:51 | INFO |    scanner_src_puck: 1
+16:16:51 | INFO |    chunk_size: 10000000
+16:16:51 | INFO | 
+16:16:51 | INFO | Chunk:
+16:16:51 | INFO |    source: generate
+16:16:51 | INFO |    existing_root: None
+16:16:51 | INFO |    merged_input_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL
+16:16:51 | INFO |    merged_group: None
+16:16:51 | INFO |    reference_scanner: HA
+16:16:51 | INFO |    output_root: None
+16:16:51 | INFO |    length_m: 15.0
+16:16:51 | INFO |    min_last_chunk_m: 10.0
+16:16:51 | INFO |    min_points: 2000
+16:16:51 | INFO |    epsg_out: EPSG:2056
+16:16:51 | INFO |    delimiter: ,
+16:16:51 | INFO |    skiprows: 0
+16:16:51 | INFO |    cloud_fmt: las
+16:16:51 | INFO |    time_field: gps_time
+16:16:51 | INFO |    manifest_name: merged_manifest.csv
+16:16:51 | INFO |    use_manifest: True
+16:16:51 | INFO | 
+16:16:51 | INFO | Chunk variant:
+16:16:51 | INFO |    type: outage_window
+16:16:51 | INFO |    outage_window.enabled: True
+16:16:51 | INFO |    outage_window.output_root: None
+16:16:51 | INFO |    outage_window.outages: [[305120.0, 580.0]]
+16:16:51 | INFO |    outage_window.pre_s: 10.0
+16:16:51 | INFO |    outage_window.post_s: 10.0
+16:16:51 | INFO | 
+16:16:51 | INFO | LiMatch:
+16:16:51 | INFO |    run: True
+16:16:51 | INFO |    output_root: None
+16:16:51 | INFO |    neighbor_k: 1
+16:16:51 | INFO |    do_cross_scan: True
+16:16:51 | INFO |    do_spatial_crossings: True
+16:16:51 | INFO |    crossings_output_root: None
+16:16:51 | INFO |    crossing_min_separation: 30
+16:16:51 | INFO |    crossing_overlap_margin_m: 1.2
+16:16:51 | INFO | 
+16:16:51 | INFO | Merge correspondences:
+16:16:51 | INFO |    enabled: True
+16:16:51 | INFO |    output_file: None
+16:16:51 | INFO | 
+16:16:51 | INFO | Patcher:
+16:16:51 | INFO |    run: False
+16:16:51 | INFO |    source: existing
+16:16:51 | INFO |    output_root: None
+16:16:51 | INFO |    gps_outage_file:
+16:16:51 | INFO |       enabled: False
+16:16:51 | INFO |       output_root: None
+16:16:51 | INFO |       outages: []
+16:16:51 | INFO | ============================================================
+16:16:51 | INFO | 
+16:16:51 | INFO | [pipeline] Generating temporary georef configs...
+16:16:51 | INFO |    scanner=HA | source=navtools_PDM/PDM_configs/scanner_HA.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+16:16:51 | INFO |    scanner=LR | source=navtools_PDM/PDM_configs/scanner_LR.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_LR.generated.yml
+16:16:51 | INFO |    scanner=PUCK | source=navtools_PDM/PDM_configs/scanner_PUCK.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_PUCK.generated.yml
+16:16:51 | INFO | [pipeline] Temporary config generation done.
+
+======================================
+[pipeline] Starting pipeline
+[pipeline] mode:            chunk
+[pipeline] scenario:        georef_ALL_traj_outage_1
+[pipeline] root_out_dir:    /media/b085164/Elements/CALIB_26_02_25
+[pipeline] limatch_cfg:     /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/configs/MLS.yml
+[pipeline] patcher_cfg:     Patcher/config/MLS_Epalinges_config.yml
+======================================
+
+
+======================================
+[pipeline] Resolved inputs
+[pipeline] merged_out:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL
+[pipeline] georef ref cfg:  /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+======================================
+
+[combined] GPS_outage written: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/GPS_outage.txt (kept=2876, removed=581)
+
+==============================
+[combined scenario]
+Outages: [[305120.0, 580.0]]
+Expanded intervals: [(305110.0, 305710.0)]
+cloud_fmt: las
+time_field: gps_time
+==============================
+
+[combined] Using manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL/merged_manifest.csv
+[outage selection] merged_1000_VUX_PUCK.las                      time=[305060.001,305313.526] -> involved
+[outage selection] merged_2000_VUX_PUCK.las                      time=[305313.556,305375.866] -> involved
+[outage selection] merged_3000_VUX_PUCK.las                      time=[305433.946,305705.924] -> involved
+[outage selection] merged_4000_VUX_PUCK.las                      time=[305718.806,305736.393] -> stop (after)
+
+[outage summary] 3 / 6 involved
+
+[combined] Trajectory loaded (39900 poses)
+[combined] CHUNK DIRECT 15.0m merged_1000_VUX_PUCK.las -> /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_1000_VUX_PUCK
+Loading file /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+Converting orientation info from local NED to ECEF
+Chunk merged_1000_VUX_PUCK.las:   0%|          | 0/294117790 [00:00<?, ?pts/s]Chunk merged_1000_VUX_PUCK.las:   3%|▎         | 8000000/294117790 [00:00<00:04, 59495045.10pts/s]Chunk merged_1000_VUX_PUCK.las:   5%|▍         | 14000000/294117790 [00:00<00:04, 57132511.01pts/s]Chunk merged_1000_VUX_PUCK.las:   7%|▋         | 20000000/294117790 [00:00<00:04, 56037794.18pts/s]Chunk merged_1000_VUX_PUCK.las:   9%|▉         | 26000000/294117790 [00:00<00:05, 52201160.55pts/s]Chunk merged_1000_VUX_PUCK.las:  11%|█         | 32000000/294117790 [00:00<00:10, 24445044.80pts/s]Chunk merged_1000_VUX_PUCK.las:  12%|█▏        | 36000000/294117790 [00:01<00:17, 14916371.85pts/s]Chunk merged_1000_VUX_PUCK.las:  14%|█▎        | 40000000/294117790 [00:02<00:22, 11392521.75pts/s]Chunk merged_1000_VUX_PUCK.las:  15%|█▍        | 44000000/294117790 [00:02<00:26, 9618786.99pts/s] Chunk merged_1000_VUX_PUCK.las:  16%|█▌        | 46000000/294117790 [00:03<00:27, 9031303.42pts/s]Chunk merged_1000_VUX_PUCK.las:  16%|█▋        | 48000000/294117790 [00:03<00:28, 8489342.33pts/s]Chunk merged_1000_VUX_PUCK.las:  17%|█▋        | 50000000/294117790 [00:03<00:30, 8102307.26pts/s]Chunk merged_1000_VUX_PUCK.las:  18%|█▊        | 52000000/294117790 [00:03<00:31, 7797107.34pts/s]Chunk merged_1000_VUX_PUCK.las:  18%|█▊        | 54000000/294117790 [00:04<00:31, 7549657.61pts/s]Chunk merged_1000_VUX_PUCK.las:  19%|█▉        | 56000000/294117790 [00:04<00:32, 7354988.47pts/s]Chunk merged_1000_VUX_PUCK.las:  20%|█▉        | 58000000/294117790 [00:04<00:32, 7168671.99pts/s]Chunk merged_1000_VUX_PUCK.las:  20%|██        | 60000000/294117790 [00:05<00:33, 7075326.90pts/s]Chunk merged_1000_VUX_PUCK.las:  21%|██        | 62000000/294117790 [00:05<00:32, 7062942.41pts/s]Chunk merged_1000_VUX_PUCK.las:  22%|██▏       | 64000000/294117790 [00:05<00:32, 7063198.02pts/s]Chunk merged_1000_VUX_PUCK.las:  22%|██▏       | 66000000/294117790 [00:05<00:32, 7053007.78pts/s]Chunk merged_1000_VUX_PUCK.las:  23%|██▎       | 68000000/294117790 [00:06<00:32, 6984770.52pts/s]Chunk merged_1000_VUX_PUCK.las:  24%|██▍       | 70000000/294117790 [00:06<00:32, 6906809.31pts/s]Chunk merged_1000_VUX_PUCK.las:  24%|██▍       | 72000000/294117790 [00:06<00:32, 6917417.29pts/s]Chunk merged_1000_VUX_PUCK.las:  25%|██▌       | 74000000/294117790 [00:07<00:31, 6923463.65pts/s]Chunk merged_1000_VUX_PUCK.las:  26%|██▌       | 76000000/294117790 [00:07<00:31, 6880962.41pts/s]Chunk merged_1000_VUX_PUCK.las:  27%|██▋       | 78000000/294117790 [00:07<00:31, 6851439.47pts/s]Chunk merged_1000_VUX_PUCK.las:  27%|██▋       | 80000000/294117790 [00:07<00:31, 6862048.57pts/s]Chunk merged_1000_VUX_PUCK.las:  28%|██▊       | 82000000/294117790 [00:08<00:30, 6883689.58pts/s]Chunk merged_1000_VUX_PUCK.las:  29%|██▊       | 84000000/294117790 [00:08<00:30, 6891212.91pts/s]Chunk merged_1000_VUX_PUCK.las:  29%|██▉       | 86000000/294117790 [00:08<00:30, 6906028.15pts/s]Chunk merged_1000_VUX_PUCK.las:  30%|██▉       | 88000000/294117790 [00:09<00:29, 6934758.06pts/s]Chunk merged_1000_VUX_PUCK.las:  31%|███       | 90000000/294117790 [00:09<00:29, 7010824.84pts/s]Chunk merged_1000_VUX_PUCK.las:  31%|███▏      | 92000000/294117790 [00:09<00:28, 7011152.19pts/s]Chunk merged_1000_VUX_PUCK.las:  32%|███▏      | 94000000/294117790 [00:09<00:28, 6986715.17pts/s]Chunk merged_1000_VUX_PUCK.las:  33%|███▎      | 96000000/294117790 [00:10<00:28, 6981936.03pts/s]Chunk merged_1000_VUX_PUCK.las:  33%|███▎      | 98000000/294117790 [00:10<00:29, 6589262.76pts/s]Chunk merged_1000_VUX_PUCK.las:  34%|███▍      | 100000000/294117790 [00:10<00:29, 6661603.96pts/s]Chunk merged_1000_VUX_PUCK.las:  35%|███▍      | 102000000/294117790 [00:11<00:28, 6714309.53pts/s]Chunk merged_1000_VUX_PUCK.las:  35%|███▌      | 104000000/294117790 [00:11<00:28, 6788112.49pts/s]Chunk merged_1000_VUX_PUCK.las:  36%|███▌      | 106000000/294117790 [00:11<00:27, 6774909.45pts/s]Chunk merged_1000_VUX_PUCK.las:  37%|███▋      | 108000000/294117790 [00:12<00:27, 6747002.50pts/s]Chunk merged_1000_VUX_PUCK.las:  37%|███▋      | 110000000/294117790 [00:12<00:27, 6668261.97pts/s]Chunk merged_1000_VUX_PUCK.las:  38%|███▊      | 112000000/294117790 [00:12<00:27, 6675515.11pts/s]Chunk merged_1000_VUX_PUCK.las:  39%|███▉      | 114000000/294117790 [00:12<00:26, 6812166.74pts/s]Chunk merged_1000_VUX_PUCK.las:  39%|███▉      | 116000000/294117790 [00:13<00:25, 6865229.89pts/s]Chunk merged_1000_VUX_PUCK.las:  40%|████      | 118000000/294117790 [00:13<00:25, 6896072.77pts/s]Chunk merged_1000_VUX_PUCK.las:  41%|████      | 120000000/294117790 [00:13<00:24, 6978608.32pts/s]Chunk merged_1000_VUX_PUCK.las:  41%|████▏     | 122000000/294117790 [00:14<00:24, 6962331.99pts/s]Chunk merged_1000_VUX_PUCK.las:  42%|████▏     | 124000000/294117790 [00:14<00:24, 6953804.76pts/s]Chunk merged_1000_VUX_PUCK.las:  43%|████▎     | 126000000/294117790 [00:14<00:24, 6934709.51pts/s]Chunk merged_1000_VUX_PUCK.las:  44%|████▎     | 128000000/294117790 [00:14<00:23, 6948383.83pts/s]Chunk merged_1000_VUX_PUCK.las:  44%|████▍     | 130000000/294117790 [00:15<00:23, 6987358.33pts/s]Chunk merged_1000_VUX_PUCK.las:  45%|████▍     | 132000000/294117790 [00:15<00:22, 7057215.67pts/s]Chunk merged_1000_VUX_PUCK.las:  46%|████▌     | 134000000/294117790 [00:15<00:22, 7052744.07pts/s]Chunk merged_1000_VUX_PUCK.las:  46%|████▌     | 136000000/294117790 [00:16<00:22, 7094000.66pts/s]Chunk merged_1000_VUX_PUCK.las:  47%|████▋     | 138000000/294117790 [00:16<00:21, 7115626.14pts/s]Chunk merged_1000_VUX_PUCK.las:  48%|████▊     | 140000000/294117790 [00:16<00:21, 7045673.47pts/s]Chunk merged_1000_VUX_PUCK.las:  48%|████▊     | 142000000/294117790 [00:16<00:21, 7082820.02pts/s]Chunk merged_1000_VUX_PUCK.las:  49%|████▉     | 144000000/294117790 [00:17<00:21, 7045535.06pts/s]Chunk merged_1000_VUX_PUCK.las:  50%|████▉     | 146000000/294117790 [00:17<00:22, 6509791.30pts/s]Chunk merged_1000_VUX_PUCK.las:  50%|█████     | 148000000/294117790 [00:17<00:19, 7471898.82pts/s]Chunk merged_1000_VUX_PUCK.las:  52%|█████▏    | 154000000/294117790 [00:17<00:09, 14657630.80pts/s]Chunk merged_1000_VUX_PUCK.las:  54%|█████▍    | 160000000/294117790 [00:17<00:06, 22003900.31pts/s]Chunk merged_1000_VUX_PUCK.las:  56%|█████▋    | 166000000/294117790 [00:18<00:04, 29100765.10pts/s]Chunk merged_1000_VUX_PUCK.las:  58%|█████▊    | 172000000/294117790 [00:18<00:07, 15286947.43pts/s]Chunk merged_1000_VUX_PUCK.las:  60%|█████▉    | 176000000/294117790 [00:19<00:11, 10345060.98pts/s]Chunk merged_1000_VUX_PUCK.las:  61%|██████    | 180000000/294117790 [00:20<00:14, 7763556.20pts/s] Chunk merged_1000_VUX_PUCK.las:  62%|██████▏   | 182000000/294117790 [00:20<00:16, 6853278.22pts/s]Chunk merged_1000_VUX_PUCK.las:  63%|██████▎   | 184000000/294117790 [00:21<00:17, 6426191.39pts/s]Chunk merged_1000_VUX_PUCK.las:  63%|██████▎   | 186000000/294117790 [00:21<00:18, 5976407.94pts/s]Chunk merged_1000_VUX_PUCK.las:  64%|██████▍   | 188000000/294117790 [00:22<00:19, 5416324.03pts/s]Chunk merged_1000_VUX_PUCK.las:  65%|██████▍   | 190000000/294117790 [00:22<00:19, 5253614.66pts/s]Chunk merged_1000_VUX_PUCK.las:  65%|██████▌   | 192000000/294117790 [00:23<00:22, 4547262.05pts/s]Chunk merged_1000_VUX_PUCK.las:  66%|██████▌   | 194000000/294117790 [00:23<00:22, 4422052.35pts/s]Chunk merged_1000_VUX_PUCK.las:  67%|██████▋   | 196000000/294117790 [00:24<00:20, 4695131.26pts/s]Chunk merged_1000_VUX_PUCK.las:  67%|██████▋   | 198000000/294117790 [00:24<00:19, 4914013.07pts/s]Chunk merged_1000_VUX_PUCK.las:  68%|██████▊   | 200000000/294117790 [00:24<00:19, 4920284.49pts/s]Chunk merged_1000_VUX_PUCK.las:  69%|██████▊   | 202000000/294117790 [00:25<00:18, 4973557.24pts/s]Chunk merged_1000_VUX_PUCK.las:  69%|██████▉   | 204000000/294117790 [00:25<00:17, 5084293.84pts/s]Chunk merged_1000_VUX_PUCK.las:  70%|███████   | 206000000/294117790 [00:25<00:16, 5232161.92pts/s]Chunk merged_1000_VUX_PUCK.las:  71%|███████   | 208000000/294117790 [00:26<00:16, 5281059.27pts/s]Chunk merged_1000_VUX_PUCK.las:  71%|███████▏  | 210000000/294117790 [00:26<00:15, 5405280.85pts/s]Chunk merged_1000_VUX_PUCK.las:  72%|███████▏  | 212000000/294117790 [00:27<00:15, 5348894.24pts/s]Chunk merged_1000_VUX_PUCK.las:  73%|███████▎  | 214000000/294117790 [00:28<00:23, 3404833.27pts/s]Chunk merged_1000_VUX_PUCK.las:  73%|███████▎  | 216000000/294117790 [00:28<00:21, 3663307.72pts/s]Chunk merged_1000_VUX_PUCK.las:  74%|███████▍  | 218000000/294117790 [00:29<00:19, 3811209.55pts/s]Chunk merged_1000_VUX_PUCK.las:  75%|███████▍  | 220000000/294117790 [00:29<00:17, 4225956.83pts/s]Chunk merged_1000_VUX_PUCK.las:  75%|███████▌  | 222000000/294117790 [00:30<00:18, 3868593.64pts/s]Chunk merged_1000_VUX_PUCK.las:  76%|███████▌  | 224000000/294117790 [00:30<00:19, 3557203.74pts/s]Chunk merged_1000_VUX_PUCK.las:  77%|███████▋  | 226000000/294117790 [00:31<00:19, 3466524.20pts/s]Chunk merged_1000_VUX_PUCK.las:  78%|███████▊  | 228000000/294117790 [00:31<00:18, 3600835.77pts/s]Chunk merged_1000_VUX_PUCK.las:  78%|███████▊  | 230000000/294117790 [00:32<00:17, 3636634.01pts/s]Chunk merged_1000_VUX_PUCK.las:  79%|███████▉  | 232000000/294117790 [00:32<00:15, 3933294.37pts/s]Chunk merged_1000_VUX_PUCK.las:  80%|███████▉  | 234000000/294117790 [00:33<00:15, 3845618.60pts/s]Chunk merged_1000_VUX_PUCK.las:  80%|████████  | 236000000/294117790 [00:33<00:15, 3871389.31pts/s]Chunk merged_1000_VUX_PUCK.las:  81%|████████  | 238000000/294117790 [00:34<00:18, 2981842.07pts/s]Chunk merged_1000_VUX_PUCK.las:  82%|████████▏ | 240000000/294117790 [00:35<00:19, 2843647.56pts/s]Chunk merged_1000_VUX_PUCK.las:  82%|████████▏ | 242000000/294117790 [00:36<00:17, 2986085.25pts/s]Chunk merged_1000_VUX_PUCK.las:  83%|████████▎ | 244000000/294117790 [00:36<00:15, 3272321.75pts/s]Chunk merged_1000_VUX_PUCK.las:  84%|████████▎ | 246000000/294117790 [00:38<00:20, 2365804.17pts/s]Chunk merged_1000_VUX_PUCK.las:  84%|████████▍ | 248000000/294117790 [00:38<00:16, 2719173.07pts/s]Chunk merged_1000_VUX_PUCK.las:  85%|████████▍ | 250000000/294117790 [00:39<00:20, 2204185.92pts/s]Chunk merged_1000_VUX_PUCK.las:  86%|████████▌ | 252000000/294117790 [00:40<00:17, 2450301.75pts/s]Chunk merged_1000_VUX_PUCK.las:  86%|████████▋ | 254000000/294117790 [00:41<00:17, 2244705.26pts/s]Chunk merged_1000_VUX_PUCK.las:  87%|████████▋ | 256000000/294117790 [00:42<00:18, 2079447.14pts/s]Chunk merged_1000_VUX_PUCK.las:  88%|████████▊ | 258000000/294117790 [00:43<00:18, 1952049.66pts/s]Chunk merged_1000_VUX_PUCK.las:  88%|████████▊ | 260000000/294117790 [00:45<00:19, 1759961.05pts/s]Chunk merged_1000_VUX_PUCK.las:  89%|████████▉ | 262000000/294117790 [00:46<00:18, 1766327.13pts/s]Chunk merged_1000_VUX_PUCK.las:  90%|████████▉ | 264000000/294117790 [00:47<00:17, 1705595.66pts/s]Chunk merged_1000_VUX_PUCK.las:  90%|█████████ | 266000000/294117790 [00:48<00:17, 1652668.81pts/s]Chunk merged_1000_VUX_PUCK.las:  91%|█████████ | 268000000/294117790 [00:49<00:11, 2185443.47pts/s]Chunk merged_1000_VUX_PUCK.las:  93%|█████████▎| 274000000/294117790 [00:50<00:06, 3010525.35pts/s]Chunk merged_1000_VUX_PUCK.las:  94%|█████████▍| 276000000/294117790 [00:52<00:07, 2331494.42pts/s]Chunk merged_1000_VUX_PUCK.las:  95%|█████████▍| 278000000/294117790 [00:53<00:07, 2112534.88pts/s]Chunk merged_1000_VUX_PUCK.las:  95%|█████████▌| 280000000/294117790 [00:54<00:07, 1864707.04pts/s]Chunk merged_1000_VUX_PUCK.las:  96%|█████████▌| 282000000/294117790 [00:56<00:07, 1712149.62pts/s]Chunk merged_1000_VUX_PUCK.las:  97%|█████████▋| 284000000/294117790 [00:57<00:06, 1594415.70pts/s]Chunk merged_1000_VUX_PUCK.las:  97%|█████████▋| 286000000/294117790 [00:59<00:05, 1508312.36pts/s]Chunk merged_1000_VUX_PUCK.las:  98%|█████████▊| 288000000/294117790 [01:00<00:04, 1429532.49pts/s]Chunk merged_1000_VUX_PUCK.las:  99%|█████████▊| 290000000/294117790 [01:02<00:03, 1337564.59pts/s]Chunk merged_1000_VUX_PUCK.las:  99%|█████████▉| 292000000/294117790 [01:04<00:01, 1309319.10pts/s]Chunk merged_1000_VUX_PUCK.las: 100%|█████████▉| 294000000/294117790 [01:05<00:00, 1253976.61pts/s]Chunk merged_1000_VUX_PUCK.las: 100%|██████████| 294117790/294117790 [01:07<00:00, 4336953.26pts/s]
+[chunk_intervals] done for merged_1000_VUX_PUCK.las
+[chunk_bbox] Using trajectory positions for bbox (vehicle-based)
+[bbox] Warning: could not read chunk_1000.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1001.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1002.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1003.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1004.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1005.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1006.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1007.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1008.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1009.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1010.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1011.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1012.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1013.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1014.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1015.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1016.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1017.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1018.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1019.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1020.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1021.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1022.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1023.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1024.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1025.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1026.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1027.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1028.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1029.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1030.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1031.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1032.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1033.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1034.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1035.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1036.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1037.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1038.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1039.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1040.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1041.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1042.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1043.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1044.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1045.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1046.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1047.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1048.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1049.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1050.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1051.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1052.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1053.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1054.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1055.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1056.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1057.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1058.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1059.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1060.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1061.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1062.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1063.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1064.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1065.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1066.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1067.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1068.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1069.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1070.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1071.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1072.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1073.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1074.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1075.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1076.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1077.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1078.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1079.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1080.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1081.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1082.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1083.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1084.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1085.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1086.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1087.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1088.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1089.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1090.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1091.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1092.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1093.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1094.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1095.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1096.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1097.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1098.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1099.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1100.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1101.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1102.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1103.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1104.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1105.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1106.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1107.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1108.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1109.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1110.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1111.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1112.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1113.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1114.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1115.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1116.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1117.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1118.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1119.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1120.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1121.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1122.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1123.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1124.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1125.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1126.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1127.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1128.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1129.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1130.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1131.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1132.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1133.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1134.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1135.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1136.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1137.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1138.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1139.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1140.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1141.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1142.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1143.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1144.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1145.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1146.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1147.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1148.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1149.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1150.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1151.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1152.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1153.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1154.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1155.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1156.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1157.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1158.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1159.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1160.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1161.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1162.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1163.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1164.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1165.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1166.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1167.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1168.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1169.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1170.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1171.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1172.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1173.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1174.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1175.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1176.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1177.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1178.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1179.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1180.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1181.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1182.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1183.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1184.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1185.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1186.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1187.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1188.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1189.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1190.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1191.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1192.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1193.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1194.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1195.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1196.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1197.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1198.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1199.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1200.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1201.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1202.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1203.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1204.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[bbox] Warning: could not read chunk_1205.las: Trajectory length mismatch: t=5071, x=39900, y=39900
+[combined] CHUNK DIRECT 15.0m merged_2000_VUX_PUCK.las -> /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_2000_VUX_PUCK
+Loading file /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+Converting orientation info from local NED to ECEF
+Chunk merged_2000_VUX_PUCK.las:   0%|          | 0/66950257 [00:00<?, ?pts/s]

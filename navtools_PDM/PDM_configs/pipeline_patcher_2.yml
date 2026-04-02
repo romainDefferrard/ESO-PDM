@@ -1,0 +1,202 @@
+# ==============================================================
+# PIPELINE CONFIGURATION
+# ==============================================================
+# This configuration file controls the full LiDAR processing pipeline:
+#
+# Possible workflows:
+#   - chunk      : chunking + LiMatch
+#   - patcher    : run Patcher + LiMatch
+#   - cycleslip  : generate GNSS cycle slip scenarios
+#   - georef_only: only run georeferencing
+#
+# The execution is controlled by:
+#   mode  -> selects the workflow
+#   steps -> enables or disables individual processing stages
+# ==============================================================
+
+
+# ==============================================================
+# WORKFLOW MODE
+# ==============================================================
+mode: "patcher"
+
+# Possible values:
+#   chunk
+#   patcher
+#   cycleslip
+#   georef_only
+
+
+# ==============================================================
+# SCENARIO NAME
+# ==============================================================
+# Used to name output folders and generated config files
+scenario_name: "georef_ALL_traj_outage_1"
+
+# ==============================================================
+# SCANNER CONFIGURATIONS
+# ==============================================================
+# Paths to scanner-specific configuration files
+# These define mounting matrices, lever arms etc.
+scanners:
+  ha_cfg: "navtools_PDM/PDM_configs/scanner_HA.yml"
+  lr_cfg: "navtools_PDM/PDM_configs/scanner_LR.yml"
+  puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK.yml"
+
+merge_groups:
+  - name: "HA_LR"
+    scanners: ["ha_cfg", "lr_cfg"]
+
+# ==============================================================
+# TRAJECTORY USED FOR GEOREFERENCING
+# ==============================================================
+trajectory:
+
+  type: "SBET"
+  #path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/reference.out" # JV
+  #path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out" # ODyN ref 
+  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out" # ODyN outage 1
+  cfg:
+    type: "SBET"
+
+# ==============================================================
+# OPTIONAL DISTANCE FILTERING
+# ==============================================================
+# Remove points that are too far from the trajectory
+
+distance_filtering:
+  enable: true
+  max_distance_m: 30
+  map_epsg: "EPSG:2056"
+  filter_trj: null
+
+# ==============================================================
+# INPUT / OUTPUT PATHS
+# ==============================================================
+paths:
+  # Root directory for all outputs produced by the pipeline
+  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
+  # Path to Patcher configuration file
+  patcher_cfg: "Patcher/config/MLS_Epalinges_config.yml"
+  # LiMatch configuration
+  limatch_cfg: "Patcher/submodules/limatch/configs/MLS.yml"
+  # Input GNSS trajectory file (used in outage scenarios)
+  gps_input: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt" # GPS FULL CALIB
+
+
+
+# ==============================================================
+# PIPELINE STEPS
+# ==============================================================
+# Enable or disable individual processing steps
+
+steps:
+  georef: false
+  merge: false
+  chunk: false
+  limatch: true
+  gps_outage_file: false
+
+
+
+# ==============================================================
+# MERGING PARAMETERS
+# ==============================================================
+merge:
+  out_prefix: "merged_"
+  out_suffix: "_HA_LR"
+
+merge_correspondences:
+  enabled: true
+
+  # Optional custom output file.
+  # If null, defaults are:
+  #   chunk   -> root_out_dir / scenario_name / "limatch" / "LiDAR_p2p.txt"
+  #   patcher -> root_out_dir / scenario_name / "output_limatch" / "LiDAR_p2p.txt"
+  output_file: null
+
+vux_puck_merge:
+  enabled: false
+  name: "ALL"
+  vux_group: "HA_LR"
+  puck_scanner: "puck_cfg"
+  output_dir: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged"
+  manifest_path: null
+  output_suffix: "_VUX_PUCK"
+  scanner_src_vux: 2
+  scanner_src_puck: 1
+  chunk_size: 10000000
+
+# ==============================================================
+# CHUNKING PARAMETERS
+# ==============================================================
+
+chunk:
+  source: "generate"
+  merged_input_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged"
+  reference_scanner: "HA"
+  output_root: null
+  length_m: 15.0
+  min_last_chunk_m: 10.0 # minimum length of last chunk of scan
+  min_points: 2000
+  epsg_out: "EPSG:2056"
+  delimiter: ","
+  skiprows: 0
+  cloud_fmt: "las"
+  time_field: "gps_time"
+  manifest_name: "merged_manifest.csv"
+  use_manifest: true
+
+# ==============================================================
+# CHUNK SCENARIO VARIANTS
+# ==============================================================
+# Used only if mode = "chunk"
+
+chunk_variant:
+  type: "outage_window"   # "standard" or "outage_window"
+
+  outage_window:
+    enabled: true
+    output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/chunks_v2"
+    outages:
+      - [305120.0, 580.0] # [Start, Duration] outage Front-to-Back
+    pre_s: 10.0
+    post_s: 10.0
+
+
+# ==============================================================
+# LIMATCH PARAMETERS
+# ==============================================================
+limatch:
+  run: true
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch_25m"
+  neighbor_k: 1
+  do_cross_scan: false
+
+  # Croisements spatiaux
+  do_spatial_crossings: false
+  crossings_output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/limatch_crossings_10"
+  crossing_min_separation: 50    # |id_i - id_j| minimum pour éviter les quasi-consécutifs
+  crossing_overlap_margin_m: 3.0 # marge autour des bbox pour le test d'overlap
+
+
+# ==============================================================
+# PATCHER WORKFLOW
+# ==============================================================
+# Used only if mode = "patcher"
+
+patcher:
+  run: true
+  # Choose source
+  #   run      -> execute Patcher
+  #   existing -> reuse Patcher outputs
+  source: "existing"
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/cropped/pairs_2"
+
+  gps_outage_file:
+    enabled: false
+    output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_VUX_traj_ODyN/Patcher_long_outage/GPS_outage"
+    outages:
+      - [305120.0, 580.0] # [Start, Duration] outage Scan-to-Scan
+
+

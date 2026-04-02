@@ -3,7 +3,7 @@ scanner_name: "LR"
 lasvec:
   type: 'SDC'
   cols: [0,3,4,5]
-  path: '/media/b085164/Elements/RD_SAM_SDC/subset_2_LR/'
+  path: '/media/b085164/Elements/CALIB_26_02_25/VUX_SDC/LR/'
 
 leapsec: 18
 
@@ -11,18 +11,18 @@ mount:
   R_mount:
     - [0.383797548988406, 0.743144825433119, -0.548119703917375]
     - [0.426250360987124, -0.669130606408031, -0.608748602730526]
-    - [-0.819152043975255, 1.91558269479465E-11, -0.573576436799109]
+    - [-0.819152043975255, 1.91558226604872E-11, -0.573576436799109]
 
   boresight:
-    roll: 0.00417329463823432
-    pitch: 0.00446934293659946
-    yaw: 0.0023397883952236
+    roll: 0.0048008771734608
+    pitch: 0.00480768395754358
+    yaw: 0.00113673294182391
 
-  lever_arm: [-0.352232739417906, -0.359090504106855, -0.247]
+  lever_arm: [-0.36493, -0.34999, -0.247]
 
 output_defaults:
   type: 'LAS'
   lasvec: True
   lasvec_to_body: True
 
-#limatch_output: 
+manifest_path: "/media/b085164/Elements/CALIB_26_02_25/manifests/manifest_LR.csv"

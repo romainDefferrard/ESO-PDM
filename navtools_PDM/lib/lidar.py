@@ -7,11 +7,11 @@ import multiprocessing
 from multiprocessing import Pool
 import math
 import struct
+from tqdm import tqdm
+from pathlib import Path
+import os
 
 cpu_count = multiprocessing.cpu_count()
-
-
-
 
 def loadLasVecAscii(cfg,limatch_output=False):
     """Load lasver vector from ascii file."""
@@ -31,35 +31,84 @@ def loadLasVecAscii(cfg,limatch_output=False):
         return np.hstack((lasvec_B, lasvec_A))
     else:
         return data[:, cfg['cols']]
-    
-def loadLasVecSDC(sdc_file):
 
-    with open(sdc_file, "rb") as file:
-        header_info = file.read(8)
+def loadLasVecSDC(sdc_file, chunk_records=2_000_000):
+    """
+    Fast SDC reader with tqdm progress bar.
+    Matches legacy mapping exactly:
+      record[[0, 3, 4, 5]]
+
+    Returns:
+        ndarray (N, 4): [time, x, y, z]
+    """
+    sdc_file = Path(sdc_file)
+
+    with open(sdc_file, "rb") as f:
+        header_info = f.read(8)
         size_of_header = struct.unpack("<I", header_info[:4])[0]
 
-        record_format = '=d f f f f f H H B B B H B B f H'
-                        
-        record_size = struct.calcsize(record_format)
+    record_dtype = np.dtype([
+        ("t",    "<f8"),  # field 0
+        ("f1",   "<f4"),  # field 1
+        ("f2",   "<f4"),  # field 2
+        ("x",    "<f4"),  # field 3
+        ("y",    "<f4"),  # field 4
+        ("z",    "<f4"),  # field 5
+        ("u6",   "<u2"),
+        ("u7",   "<u2"),
+        ("u8",   "u1"),
+        ("u9",   "u1"),
+        ("u10",  "u1"),
+        ("u11",  "<u2"),
+        ("u12",  "u1"),
+        ("u13",  "u1"),
+        ("f14",  "<f4"),
+        ("u15",  "<u2"),
+    ])
 
-        file.seek(0,2)
-        file_size = file.tell()
-        record_count = (file_size - size_of_header) / record_size
-        
-    
-        assert record_count.is_integer()
+    file_size = os.path.getsize(sdc_file)
+    payload_size = file_size - size_of_header
+    record_size = record_dtype.itemsize
 
-        record_count = int(record_count)
+    if payload_size % record_size != 0:
+        raise ValueError(
+            f"Invalid SDC size: payload={payload_size} not divisible by record size={record_size}"
+        )
 
-        file.seek(size_of_header)
-        records = np.empty((int(record_count), 4))
+    record_count = payload_size // record_size
 
-        for i in range(int(record_count)):
-            record_bytes = file.read(record_size)
-            record = np.array(struct.unpack(record_format, record_bytes))
-            records[i] = record[[0,3,4,5]]
+    # Preallocate final output directly
+    records = np.empty((record_count, 4), dtype=np.float64)
 
-        return records
+    write_pos = 0
+
+    with open(sdc_file, "rb") as f:
+        f.seek(size_of_header)
+
+        with tqdm(
+            total=record_count,
+            desc=f"Reading SDC {sdc_file.name}",
+            unit="pts",
+            mininterval=0.5,
+        ) as pbar:
+            while write_pos < record_count:
+                data = np.fromfile(f, dtype=record_dtype, count=chunk_records)
+                n = len(data)
+                if n == 0:
+                    break
+
+                records[write_pos:write_pos+n, 0] = data["t"]
+                records[write_pos:write_pos+n, 1] = data["x"]
+                records[write_pos:write_pos+n, 2] = data["y"]
+                records[write_pos:write_pos+n, 3] = data["z"]
+
+                write_pos += n
+                pbar.update(n)
+
+    if write_pos != record_count:
+        records = records[:write_pos]
+
+    return records
 
 
 def _georef_chunk(las_chunk, t_chunk, ecef_chunk, q_chunk, R_sensor2body, lever_arm, ltp_origin=None, lasvec_to_body=False):
@@ -92,6 +141,7 @@ def _georef_chunk(las_chunk, t_chunk, ecef_chunk, q_chunk, R_sensor2body, lever_
     return out
 
 
+
 def get_R_sensor2body(cfg):
     mount_cfg = cfg['mount']
 
@@ -115,21 +165,19 @@ def get_R_sensor2body(cfg):
 
 
 def georefLidar(lasvec, trj, cfg):
-    """Georeference LiDAR data in chunks after trajectory interpolation."""
+    """
+    Chunk-level georeferencing with a small Pool.
+    Keeps multiprocessing, but only on the current chunk.
+    """
+    import multiprocessing
+    from multiprocessing import Pool
+    import numpy as np
 
     R_sensor2body = get_R_sensor2body(cfg)
-    
-    lever_arm = np.array(cfg['mount']['lever_arm'])
+    lever_arm = np.array(cfg['mount']['lever_arm'], dtype=np.float64)
 
     t_interp, ecef_interp, q_interp = trj.interp(lasvec[:, 0], updateSelf=False)
 
-
-    las_chunks  = np.array_split(lasvec, cpu_count)
-    t_chunks    = np.array_split(t_interp, cpu_count)
-    ecef_chunks = np.array_split(ecef_interp, cpu_count)
-    q_chunks    = np.array_split(q_interp, cpu_count)
-
-    
     if 'ltp_origin' in cfg and cfg['ltp_origin'] is not None:
         ltp_origin = np.array(cfg['ltp_origin'])
     else:
@@ -137,15 +185,37 @@ def georefLidar(lasvec, trj, cfg):
 
     lasvec_to_body = cfg['output']['lasvec_to_body']
 
+    # -----------------------------
+    # compromise: small fixed Pool
+    # -----------------------------
+    n = len(lasvec)
+
+    # for small chunks, avoid Pool overhead
+    if n < 80000:
+        return _georef_chunk(
+            lasvec,
+            t_interp,
+            ecef_interp,
+            q_interp,
+            R_sensor2body,
+            lever_arm,
+            ltp_origin,
+            lasvec_to_body
+        )
+
+    n_workers = min(4, multiprocessing.cpu_count(), n)
+
+    las_chunks = np.array_split(lasvec, n_workers)
+    t_chunks = np.array_split(t_interp, n_workers)
+    ecef_chunks = np.array_split(ecef_interp, n_workers)
+    q_chunks = np.array_split(q_interp, n_workers)
+
     args = [
         (las_c, t_c, ecef_c, q_c, R_sensor2body, lever_arm, ltp_origin, lasvec_to_body)
         for las_c, t_c, ecef_c, q_c in zip(las_chunks, t_chunks, ecef_chunks, q_chunks)
     ]
 
-
-    with Pool(cpu_count) as pool:
+    with Pool(processes=n_workers) as pool:
         results = pool.starmap(_georef_chunk, args)
 
     return np.vstack(results)
-
-
