@@ -57,7 +57,7 @@ distance_filtering:
 paths:
   root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
   patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
-  limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B.yml"
+  limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B_3.yml"
   gps_input:    "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt"
 
 # ==============================================================
@@ -106,9 +106,9 @@ merge_correspondences:
 # ==============================================================
 chunk:
   source: "existing"
-  existing_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/scenario_combined/chunks_15m"
+  existing_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/scenario_combined_v2/chunks_15m"
   merged_input_root: null
-  merged_group: null #"ALL"
+  merged_group: null 
   reference_scanner: "HA"
   output_root: null
   length_m: 15.0
@@ -142,11 +142,11 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
-  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/limatch_500x500"
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/limatch_F2B_v2"
   neighbor_k: 1
   do_cross_scan: true
 
-  do_spatial_crossings: false
+  do_spatial_crossings: true
   crossings_output_root: null
   crossing_min_separation: 30
   crossing_overlap_margin_m: 1.2

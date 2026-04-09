@@ -12,7 +12,7 @@ Description:
 """
 import numpy as np
 from typing import List, Tuple, Optional
-from skimage.measure import find_contours, approximate_polygon
+from skimage.measure import find_contours, approximate_polygon, label as sk_label, regionprops
 from shapely.geometry import Polygon, LineString
 import warnings
 
@@ -21,7 +21,9 @@ from .patch_model import PatchParams, Patch
 
 class PatchGenerator:
     def __init__(
-        self, superpos_zones: List[np.ndarray], raster_mesh: Tuple[np.ndarray, np.ndarray], patch_params: Tuple[float, float, float]
+        self, superpos_zones: List[np.ndarray], raster_mesh: Tuple[np.ndarray, np.ndarray],
+        patch_params: Tuple[float, float, float],
+        n_lines: int = 1, line_offset: float = 0.0,
     ):
         """
         Initializes the PatchGenerator class.
@@ -30,7 +32,11 @@ class PatchGenerator:
             superpos_zones (List[np.ndarray]):           List of overlapping area masks.
             raster_mesh (Tuple[np.ndarray, np.ndarray]): (x_mesh, y_mesh) for spatial mapping.
             patch_params (Tuple[float, float, float]):   (length, width, sample_distance) of patches.
-            
+            n_lines (int):   Number of parallel centerlines. 1 = only the main centerline (default).
+                             Even values produce symmetric lines about the main axis; odd values
+                             include the main centerline itself.
+            line_offset (float): Perpendicular distance [m] between adjacent parallel centerlines.
+
         Output:
             None
         """
@@ -38,6 +44,8 @@ class PatchGenerator:
         self.superpos_zones_all = superpos_zones
         self.x_mesh, self.y_mesh = raster_mesh
         self.band_length, self.band_width, self.sample_distance = patch_params
+        self.n_lines = max(1, int(n_lines))
+        self.line_offset = float(line_offset)
 
         self.tol = 0.05  # tolerance parameter for the contour generation
         self.contour = None
@@ -53,6 +61,8 @@ class PatchGenerator:
         self.contours_list = []
         self.max_patch_len = []
         self.patches_poly_list = []
+        # Parallel shifted centerlines for each zone: List[List[np.ndarray]]
+        self.parallel_centerlines_list = []
 
         # Process all superposition zones
         self.process_zones()
@@ -69,17 +79,18 @@ class PatchGenerator:
 
         """
         for superpos_zone in self.superpos_zones_all:
-            self.get_contour(superpos_zone)  # Generate the contour for the current zone
-            self.get_centerline(superpos_zone)  # Generate the centerline for the current zone
-            patches = self.patches_along_centerline()  # Generate patches along the centerline
+            self.get_contour(superpos_zone)
+            self.get_centerline(superpos_zone)
+            patches, par_lines = self.patches_along_centerline()
             self.patches_list.append(patches)
+            self.parallel_centerlines_list.append(par_lines)
 
     def get_contour(self, superpos_zone: np.ndarray) -> None:
         """
-        Extract a polygonal contour from a superposition zone using skimage library. 
-
-        Converts pixel indices to Swiss coordinate reference using mesh grids and stores
-        the result in self.contours_list.
+        Extract a polygonal contour from the *largest connected component* of a
+        superposition zone. Isolating the largest component prevents small isolated
+        pixels from being picked as the reference region, which would produce an
+        incorrect centerline and patches.
 
         Input:
             superpos_zone (np.ndarray): Single boolean mask of overlapping area
@@ -91,7 +102,13 @@ class PatchGenerator:
             self.contours_list.append(np.zeros((0, 2)))
             return
 
-        contour_bulk = find_contours(superpos_zone.astype(int))[0]
+        # UPDATE: keep largest comnponent 
+        labeled = sk_label(superpos_zone.astype(int))
+        props = regionprops(labeled)
+        largest = max(props, key=lambda r: r.area)
+        superpos_largest = (labeled == largest.label)
+
+        contour_bulk = find_contours(superpos_largest.astype(int))[0]
         coords = approximate_polygon(contour_bulk, tolerance=self.tol)
 
         contour_x = coords[:, 1].astype(int)  # Column indices
@@ -135,79 +152,84 @@ class PatchGenerator:
 
         self.centerlines_list.append(centerline)
 
-    def patches_along_centerline(self) -> List[np.ndarray]:
+    def patches_along_centerline(self) -> Tuple[List, List]:
         """
-        Generates rectangular patches at regular intervals along the PCA centerline.
+        Generates rectangular patches at regular intervals along one or more parallel
+        centerlines.
 
-        Patches are defined based on configured band length/width and spacing.
-        A patch is only retained if fully within the previously computed contour polygon.
+        The starting distance along the centerline is determined once using the main
+        (offset=0) line so that patches on all parallel lines are perfectly aligned
+        (same longitudinal positions, only shifted perpendicularly).
 
         Returns:
-            List[np.ndarray]: List of valid Patch objects
+            Tuple[List[Patch], List[np.ndarray]]:
+                - all_patches: every valid Patch across all parallel lines
+                - par_lines:   array of shape (N, 100, 2) with coordinates of each
+                               shifted centerline, for visualisation
         """
-        patches = []
+        all_patches = []
+        par_lines   = []
 
-        # Convert last contour stored and centerline to Shapely polygon and LineString
-        contour = self.contours_list[-1]
+        contour    = self.contours_list[-1]
         centerline = self.centerlines_list[-1]
 
-        contour_polygon = Polygon(contour)
-        centerline_line = LineString(centerline)
+        contour_polygon  = Polygon(contour)
+        centerline_line  = LineString(centerline)
 
         if len(centerline) < 2:
             raise ValueError("Centerline must have at least two points")
 
-        direction = centerline[-1] - centerline[0]
-        direction = direction / np.linalg.norm(direction)  # Normalize
-
-        # perpendicular direction = cst since line (A VOIR SI ON CHANGE)
+        direction      = centerline[-1] - centerline[0]
+        direction      = direction / np.linalg.norm(direction)
         perp_direction = np.array([-direction[1], direction[0]])
 
-        # Find valid starting point
-        valid_start_found = False
-        valid_end_found = False
+        # Perpendicular offsets — symmetric about the main axis
+        if self.n_lines == 1:
+            offsets = [0.0]
+        else:
+            half_span = (self.n_lines - 1) / 2.0
+            offsets = [(i - half_span) * self.line_offset for i in range(self.n_lines)]
 
-        start_dist = 0
+        # ── Step 1: find start_dist once on the *main* centerline (offset 0) ──
+        shared_start_dist = None
+        for start_candidate in np.arange(0, centerline_line.length, 100):
+            base_pt     = np.array(centerline_line.interpolate(start_candidate).coords[0])
+            params      = PatchParams(base_pt, direction, perp_direction, self.band_length, self.band_width)
+            patch       = self.create_patch(params)
+            if patch.shapely_polygon.within(contour_polygon):
+                shared_start_dist = float(start_candidate)
+                break
 
-        while not valid_start_found and start_dist < centerline_line.length:
+        if shared_start_dist is None:
+            return [], []   # no room for any patch in this zone
 
-            # Get point at current distance along the centerline
-            start_point = np.array(centerline_line.interpolate(start_dist).coords[0])
-            params = PatchParams(start_point, direction, perp_direction, self.band_length, self.band_width)
-            patch = self.create_patch(params)
-            patch_poly = patch.shapely_polygon  # in the Patch class
+        # ── Step 2: generate patches on every parallel line using the shared start ──
+        for perp_offset in offsets:
+            shift      = perp_offset * perp_direction
+            line_pts   = np.array([
+                np.array(centerline_line.interpolate(d).coords[0]) + shift
+                for d in np.linspace(0, centerline_line.length, 100)
+            ])
+            par_lines.append(line_pts)
 
-            if patch_poly.within(contour_polygon):
-                valid_start_found = True
-            else:
-                start_dist += 100  # changer incrémentation plus grande nécessaire sinon effet de bord trop importants
+            line_patches = []
+            current_dist = shared_start_dist
+            while current_dist < centerline_line.length:
+                base_pt       = np.array(centerline_line.interpolate(current_dist).coords[0])
+                current_point = base_pt + shift
+                params        = PatchParams(current_point, direction, perp_direction, self.band_length, self.band_width)
+                patch         = self.create_patch(params)
+                line_patches.append(patch)
+                self.patch_id += 1
+                current_dist += self.sample_distance
 
-        patches.append(patch)
-        self.patch_id += 1
+            # Trim trailing patches that fall outside the contour
+            while line_patches and not line_patches[-1].shapely_polygon.within(contour_polygon):
+                line_patches.pop()
 
-        if not valid_start_found:
-            return []
+            all_patches.extend(line_patches)
 
-        # Generate subsequent patches
-        current_dist = start_dist + self.sample_distance
-        while current_dist < centerline_line.length:
-            current_point = np.array(centerline_line.interpolate(current_dist).coords[0])
-            params = PatchParams(current_point, direction, perp_direction, self.band_length, self.band_width)
-            patch = self.create_patch(params)
-            patches.append(patch)
-            self.patch_id += 1
-            current_dist += self.sample_distance
-
-        # check for last patch not to intersect the contour, remove it if it does
-        while not valid_end_found:
-            last_patch = patches[-1]
-            last_patch_poly = last_patch.shapely_polygon
-            if not last_patch_poly.within(contour_polygon):
-                patches.pop()
-            else:
-                valid_end_found = True
-
-        return patches
+        return all_patches, par_lines
 
     def create_patch(self, params: PatchParams) -> np.ndarray:
         """
