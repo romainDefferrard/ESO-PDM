@@ -52,7 +52,7 @@ distance_filtering:
 paths:
   root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
   patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
-  limatch_cfg:  "Patcher/submodules/limatch/configs/MLS.yml"
+  limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B_2.yml"
   gps_input:    "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt"
 
 # ==============================================================
@@ -62,7 +62,7 @@ steps:
   georef:           false
   merge:            false
   vux_puck_merge:   false
-  chunk:            false
+  chunk:            true
   limatch:          true
   gps_outage_file:  false
 
@@ -101,7 +101,7 @@ merge_correspondences:
 # ==============================================================
 chunk:
   source: "existing"
-  existing_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/scenario_combined/chunks_15m"
+  existing_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/scenario_combined_v2/chunks_15m"
   merged_input_root: null
   merged_group: null # "ALL"
   reference_scanner: "HA"
@@ -125,7 +125,7 @@ chunk_variant:
 
   outage_window:
     enabled: true
-    output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/scenario_combined"
+    output_root: null
     outages:
       - [305645.0, 475.0]       # [t_start, duration]
     pre_s: 10.0
@@ -137,12 +137,12 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
-  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/limatch_crossings"
-  neighbor_k: 0
-  do_cross_scan: false
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/limatch_F2B_v2"
+  neighbor_k: 1
+  do_cross_scan: true
 
   do_spatial_crossings: true
-  crossings_output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/limatch_crossings"
+  crossings_output_root: null
   crossing_min_separation: 30
   crossing_overlap_margin_m: 1.2
 

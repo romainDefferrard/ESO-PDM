@@ -45,6 +45,7 @@ class PlotWindow(QWidget):
         self.superpositions = self.parent().superpositions
         self.patches = self.parent().patches
         self.centerlines = self.parent().centerlines
+        self.parallel_centerlines = self.parent().parallel_centerlines
         self.patch_params = self.parent().patch_params
         self.raster_mesh = self.parent().raster_mesh
         self.x_mesh, self.y_mesh = self.raster_mesh
@@ -73,12 +74,22 @@ class PlotWindow(QWidget):
         centerline = self.centerlines[index]
         contour = self.contours[index]
         patches = self.patches_arrays[index]
+        par_lines = self.parallel_centerlines[index] if index < len(self.parallel_centerlines) else []
 
         superpos = self.superpositions[index]
         self.ax.pcolormesh(self.x_mesh, self.y_mesh, np.where(superpos, self.raster, np.nan), cmap="Reds", shading="auto")
 
+        # Main PCA centerline (blue)
         self.ax.plot(centerline[:, 0], centerline[:, 1], "-", color="blue", label="PCA Centerline", linewidth=1.5)
         self.ax.plot(contour[:, 0], contour[:, 1], "--", color="black", label="Contour")
+
+        plotted_par = False
+        for line_pts in par_lines:
+            self.ax.plot(line_pts[:, 0], line_pts[:, 1], "--", color="red",
+                         linewidth=1.2, alpha=0.85,
+                         label="Parallel centerlines" if not plotted_par else "_nolegend_")
+            plotted_par = True
+
         for patch in patches:
             self.ax.plot(patch[:, 0], patch[:, 1], "g-", alpha=0.7)
         self.ax.plot([], [], "g-", alpha=0.7, label="Patches")
@@ -119,6 +130,9 @@ class ControlPanel(QWidget):
         self.flight_pairs = self.parent().flight_pairs
         self.output_dir = self.parent().output_dir
 
+        self.n_lines = 1
+        self.line_offset = 0.0
+
         self.new_patches_poly = []
 
         # Useful in the case of single band along centerline
@@ -147,6 +161,12 @@ class ControlPanel(QWidget):
 
         self.distance_label = QLabel("Sample Distance:")
         self.distance_input = QLineEdit(f"{self.patch_params[2]}")
+
+        self.nlines_label = QLabel("Number of centerlines (N):")
+        self.nlines_input = QLineEdit("1")
+
+        self.offset_label = QLabel("Line offset [m]:")
+        self.offset_input = QLineEdit("0")
 
         # Update Button
         self.update_button = QPushButton("Update Fields")
@@ -181,6 +201,10 @@ class ControlPanel(QWidget):
         layout.addWidget(self.width_input)
         layout.addWidget(self.distance_label)
         layout.addWidget(self.distance_input)
+        layout.addWidget(self.nlines_label)
+        layout.addWidget(self.nlines_input)
+        layout.addWidget(self.offset_label)
+        layout.addWidget(self.offset_input)
         layout.addWidget(self.checkBox)
         layout.addWidget(self.limatch_checkbox)
 
@@ -247,7 +271,12 @@ class ControlPanel(QWidget):
         self.patch_width = int(self.width_input.text())
         self.sample_dist = int(self.distance_input.text())
         self.patch_params = (self.patch_length, self.patch_width, self.sample_dist)
-        logging.info(f"GUI Updated Values - Length: {self.patch_length}, Width: {self.patch_width}, Distance: {self.sample_dist}")
+        self.n_lines = max(1, int(self.nlines_input.text()))
+        self.line_offset = float(self.offset_input.text())
+        logging.info(
+            f"GUI Updated Values - Length: {self.patch_length}, Width: {self.patch_width}, "
+            f"Distance: {self.sample_dist}, N_lines: {self.n_lines}, Offset: {self.line_offset}"
+        )
         self.update_all_patches()
 
     def update_flight_label(self):
@@ -260,16 +289,20 @@ class ControlPanel(QWidget):
                 superpos_zones=self.plot_window.superpositions,
                 raster_mesh=self.plot_window.raster_mesh,
                 patch_params=self.patch_params,
+                n_lines=self.n_lines,
+                line_offset=self.line_offset,
             )
             patches_instance = new_patch_gen.patches_list
+            self.plot_window.parallel_centerlines = new_patch_gen.parallel_centerlines_list
         else:
             patches_instance = []
+            self.plot_window.parallel_centerlines = [[] for _ in range(self.plot_window.num_plots)]
             for i in range(self.plot_window.num_plots):
                 start_point, max_length = self.patch_generator.compute_max_patch_length(i)
                 patch = self.patch_generator.create_single_patch(i, start_point, max_length, self.patch_width)
                 patches_instance.append(patch)
 
-        patches_arrays = [[patch.patch_array for patch in group] for group in patches_instance]  # np.arrays patches
+        patches_arrays = [[patch.patch_array for patch in group] for group in patches_instance]
         self.plot_window.patches_arrays = patches_arrays
         self.plot_window.update_plot()
         self.new_patches_instance = patches_instance
@@ -295,7 +328,7 @@ class ControlPanel(QWidget):
 
 
 class GUIMainWindow(QMainWindow):
-    def __init__(self, superpositions, patches: Patch, centerlines, patch_params, raster_mesh, raster, contours, extraction_state, flight_pairs, output_dir):
+    def __init__(self, superpositions, patches: Patch, centerlines, parallel_centerlines, patch_params, raster_mesh, raster, contours, extraction_state, flight_pairs, output_dir):
         super().__init__()
 
         self.setWindowTitle("ALS Patch Plotter UI")
@@ -304,6 +337,7 @@ class GUIMainWindow(QMainWindow):
         self.superpositions = superpositions
         self.patches = patches
         self.centerlines = centerlines
+        self.parallel_centerlines = parallel_centerlines
         self.patch_params = patch_params
         self.raster_mesh = raster_mesh
         self.raster = raster

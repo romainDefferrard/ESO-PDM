@@ -169,7 +169,7 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
-  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch_25m"
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/Patcher/limatch_100m_v2"
   neighbor_k: 1
   do_cross_scan: false
 

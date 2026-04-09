@@ -3,7 +3,7 @@ scanner_name: "HA"
 lasvec:
   type: 'SDC'
   cols: [0,3,4,5]
-  path: '/media/b085164/Elements/CALIB_26_02_25/VUX_SDC/HA/'
+  path: '/media/b085164/Elements/ECCR/VUX_SDC/HA/single'
 
 leapsec: 18
 

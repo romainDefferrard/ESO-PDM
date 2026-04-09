@@ -122,27 +122,27 @@ class PatcherPipeline():
     def launch_gui(self):
         """
         Launch the PyQt6 GUI for patch visualization and selection.
-
+ 
         Output:
             None
         """
-
+ 
         mode = self.config["SCAN_MODE"]
         app = QApplication(sys.argv)
         
         if mode == "ALS":
             window = GUIMainWindow(
-                superpositions=  self.footprint.superpos_masks,
-                patches=         self.pg.patches_list,
-                centerlines=     self.pg.centerlines_list,
-                patch_params=    self.config["PATCH_DIMS"],
-                raster_mesh=     self.raster_mesh,
-                raster=          self.raster,
-                contours=        self.pg.contours_list,
-                extraction_state=False,
-                flight_pairs=    self.footprint.superpos_flight_pairs,
-                output_dir=      self.config["OUTPUT_DIR"],
-
+                superpositions=         self.footprint.superpos_masks,
+                patches=                self.pg.patches_list,
+                centerlines=            self.pg.centerlines_list,
+                parallel_centerlines=   self.pg.parallel_centerlines_list,
+                patch_params=           self.config["PATCH_DIMS"],
+                raster_mesh=            self.raster_mesh,
+                raster=                 self.raster,
+                contours=               self.pg.contours_list,
+                extraction_state=       False,
+                flight_pairs=           self.footprint.superpos_flight_pairs,
+                output_dir=             self.config["OUTPUT_DIR"],
             )
         elif mode == "MLS":
             crs = self.config.get("CRS", None)
@@ -162,7 +162,7 @@ class PatcherPipeline():
         self.extraction_state = window.control_panel.extraction_state
         self.output_dir = window.control_panel.output_dir 
         self.execute_limatch = window.control_panel.execute_limatch
-
+ 
         if mode == "ALS":
             self.patch_list = window.control_panel.new_patches_instance
 
@@ -187,7 +187,7 @@ class PatcherPipeline():
                 os.makedirs(pair_dir, exist_ok=True)
                 
                 self.process_flight(
-                    flight_id, patch_group, self.output_dir,
+                    flight_id, patch_group,
                     pair_dir, self.footprint.superpos_flight_pairs, self.pg.contours_list
                 )
 
