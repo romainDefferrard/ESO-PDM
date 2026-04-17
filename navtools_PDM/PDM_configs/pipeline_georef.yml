@@ -18,7 +18,7 @@
 # ==============================================================
 # WORKFLOW MODE
 # ==============================================================
-mode: "chunk"
+mode: "georef_only"
 
 # Possible values:
 #   chunk
@@ -31,7 +31,7 @@ mode: "chunk"
 # SCENARIO NAME
 # ==============================================================
 # Used to name output folders and generated config files
-scenario_name: "georef_ALL_traj_outage_1"
+scenario_name: "georef_HA_test_intensity"
 
 # ==============================================================
 # SCANNER CONFIGURATIONS
@@ -39,8 +39,8 @@ scenario_name: "georef_ALL_traj_outage_1"
 # Paths to scanner-specific configuration files
 # These define mounting matrices, lever arms etc.
 scanners:
-  ha_cfg: "navtools_PDM/PDM_configs/scanner_HA.yml"
-  #lr_cfg: "navtools_PDM/PDM_configs/scanner_LR.yml"
+  #ha_cfg: "navtools_PDM/PDM_configs/scanner_HA.yml"
+  lr_cfg: "navtools_PDM/PDM_configs/scanner_LR.yml"
   #puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK.yml"
 
 merge_groups:
@@ -54,8 +54,9 @@ trajectory:
 
   type: "SBET"
   #path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/reference.out" # JV
-  #path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out" # ODyN ref 
-  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/outage_chunks/ref_full_GNSS_INS/out/ODyN_GNSS_outage.out" # ODyN outage Chunks
+  #path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/out/ODyN_GNSS_INS.out" # ODyN ref CALIB
+  #path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/outage_chunks/ref_full_GNSS_INS/out/ODyN_GNSS_outage.out" # ODyN outage Chunks
+  path: "/media/b085164/Elements/ECCR/ODyN/base/out/ODyN_GNSS_INS.out" # ODyN ref ECCR
   cfg:
     type: "SBET"
 
@@ -75,7 +76,7 @@ distance_filtering:
 # ==============================================================
 paths:
   # Root directory for all outputs produced by the pipeline
-  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
+  root_out_dir: "/media/b085164/Elements/ECCR"
   # Path to Patcher configuration file
   patcher_cfg: "Patcher/config/MLS_Epalinges_config.yml"
   # LiMatch configuration
@@ -92,7 +93,7 @@ paths:
 
 steps:
   georef: true
-  merge: true
+  merge: false
   chunk: false
   limatch: false
   gps_outage_file: false

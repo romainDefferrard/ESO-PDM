@@ -5,14 +5,14 @@
 # ==============================================================
  
 mode: "georef_only"
-scenario_name: "georef_ALL_test_S2S"
+scenario_name: "georef_VUX_zone_3_outage/traj_FIXED"
  
 # ==============================================================
 # SCANNER CONFIGURATIONS
 # ==============================================================
 scanners:
   ha_cfg:   "navtools_PDM/PDM_configs/scanner_HA.yml"
-  lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR.yml"
+  #lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR.yml"
   #puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK.yml"
  
 merge_groups:
@@ -24,7 +24,7 @@ merge_groups:
 # ==============================================================
 trajectory:
   type: "SBET"
-  path: "/media/b085164/Elements/ECCR/ODyN/single line test/s2s/out/traj_S2S.out"
+  path: "/media/b085164/LaCie/2026spring_RD/ECCR/ODyN/base/reference.out" # traj IE
   cfg:
     type: "SBET"
  
@@ -33,9 +33,12 @@ trajectory:
 # Only georef points inside [305120 - 60, 305120 + 480 + 60] = [305060, 305660]
 # ==============================================================
 georef_time_window:
-  enable: false
-  outage: [305120.0, 580.0]
-  margin_s: 60.0
+  enable: true
+  margin_s: 10.0
+  outages:
+    - [315642.0, 20]    # 317263 -> 317327
+  #  - [317553.0, 30.0]    # 317553 -> 317583
+  #   - [317291, 40]
  
 # ==============================================================
 # DISTANCE FILTERING
@@ -50,9 +53,9 @@ distance_filtering:
 # PATHS
 # ==============================================================
 paths:
-  root_out_dir: "/media/b085164/Elements/ECCR"
+  root_out_dir: "/media/b085164/LaCie/2026spring_RD/ECCR"
   patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
-  limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B.yml"
+  limatch_cfg:  "Patcher/submodules/limatch/configs/MLS.yml"
   gps_input:    "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt"
  
 # ==============================================================
@@ -100,14 +103,14 @@ merge_correspondences:
 # CHUNKING
 # ==============================================================
 chunk:
-  source: "existing"
-  existing_root: "/media/b085164/Elements/ECCR/georef_ALL_test/chunks"
-  merged_input_root: "/media/b085164/Elements/ECCR/georef_ALL_test/merged/HA_LR"
+  source: "generate"
+  existing_root: null #"/media/b085164/Elements/ECCR/georef_ALL_test/chunks"
+  merged_input_root: "/media/b085164/LaCie/2026spring_RD/ECCR/georef_VUX_zone_3_outage/merged/HA_LR"
   merged_group: null
   reference_scanner: "HA"
   output_root: null
-  length_m: 15.0
-  min_last_chunk_m: 10.0
+  length_m: 5.0
+  min_last_chunk_m: 9.0
   min_points: 2000
   epsg_out: "EPSG:2056"
   delimiter: ","
@@ -115,7 +118,7 @@ chunk:
   cloud_fmt: "las"
   time_field: "gps_time"
   manifest_name: "merged_manifest.csv"
-  use_manifest: true
+  use_manifest: false
  
 # ==============================================================
 # CHUNK VARIANT — outage window around outage 1
@@ -127,7 +130,7 @@ chunk_variant:
     enabled: true
     output_root: null           # null = root_out_dir/scenario_name/chunks
     outages:
-      - [305120.0, 580.0]       # [t_start, duration]
+      - [315642.0, 569]       # [t_start, duration]
     pre_s: 10.0
     post_s: 10.0
  
@@ -138,12 +141,12 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
-  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_500x500"           # null = root_out_dir/scenario_name/limatch
+  output_root: "/media/b085164/LaCie/2026spring_RD/ECCR/georef_VUX_zone_3_outage/limatch_F2B"           # null = root_out_dir/scenario_name/limatch
   neighbor_k: 1                 # k+1: each chunk matched with next
   do_cross_scan: true
  
   # Spatial crossings — saved independently in crossings_output_root
-  do_spatial_crossings: false
+  do_spatial_crossings: true
   crossings_output_root: null   # null = limatch_output_root + "_crossings"
   crossing_min_separation: 30
   crossing_overlap_margin_m: 1.2

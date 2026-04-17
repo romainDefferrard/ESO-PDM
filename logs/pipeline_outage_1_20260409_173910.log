@@ -1,0 +1,192 @@
+17:39:11 | INFO | 
+17:39:11 | INFO | ============================================================
+17:39:11 | INFO |                  PIPELINE CONFIGURATION
+17:39:11 | INFO | ============================================================
+17:39:11 | INFO | Mode: chunk
+17:39:11 | INFO | Scenario name: georef_ALL_traj_outage_1
+17:39:11 | INFO | 
+17:39:11 | INFO | Trajectory:
+17:39:11 | INFO |    Path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+17:39:11 | INFO |    Type: SBET
+17:39:11 | INFO | 
+17:39:11 | INFO | Distance filtering:
+17:39:11 | INFO |    enable: True
+17:39:11 | INFO |    max_distance_m: 30
+17:39:11 | INFO |    map_epsg: EPSG:2056
+17:39:11 | INFO |    filter_trj: None
+17:39:11 | INFO | 
+17:39:11 | INFO | Scanners:
+17:39:11 | INFO |    ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml  (scanner_name=HA)
+17:39:11 | INFO |    lr_cfg: navtools_PDM/PDM_configs/scanner_LR.yml  (scanner_name=LR)
+17:39:11 | INFO |    puck_cfg: navtools_PDM/PDM_configs/scanner_PUCK.yml  (scanner_name=PUCK)
+17:39:11 | INFO | 
+17:39:11 | INFO | Paths:
+17:39:11 | INFO |    root_out_dir: /media/b085164/Elements/CALIB_26_02_25
+17:39:11 | INFO |    patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+17:39:11 | INFO |    limatch_cfg: Patcher/submodules/limatch/configs/MLS_F2B_1.yml
+17:39:11 | INFO |    gps_input: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt
+17:39:11 | INFO | 
+17:39:11 | INFO | Steps:
+17:39:11 | INFO |    georef: False
+17:39:11 | INFO |    merge: False
+17:39:11 | INFO |    vux_puck_merge: False
+17:39:11 | INFO |    chunk: True
+17:39:11 | INFO |    limatch: True
+17:39:11 | INFO |    gps_outage_file: False
+17:39:11 | INFO | 
+17:39:11 | INFO | Merge:
+17:39:11 | INFO |    out_prefix: merged_
+17:39:11 | INFO |    out_suffix: _HA_LR
+17:39:11 | INFO | 
+17:39:11 | INFO | VUX+PUCK merge:
+17:39:11 | INFO |    enabled: True
+17:39:11 | INFO |    name: ALL
+17:39:11 | INFO |    vux_group: HA_LR
+17:39:11 | INFO |    puck_scanner: puck_cfg
+17:39:11 | INFO |    vux_input_dir: None
+17:39:11 | INFO |    output_dir: None
+17:39:11 | INFO |    manifest_path: None
+17:39:11 | INFO |    output_suffix: _VUX_PUCK
+17:39:11 | INFO |    scanner_src_vux: 2
+17:39:11 | INFO |    scanner_src_puck: 1
+17:39:11 | INFO |    chunk_size: 10000000
+17:39:11 | INFO | 
+17:39:11 | INFO | Chunk:
+17:39:11 | INFO |    source: existing
+17:39:11 | INFO |    existing_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m
+17:39:11 | INFO |    merged_input_root: None
+17:39:11 | INFO |    merged_group: None
+17:39:11 | INFO |    reference_scanner: HA
+17:39:11 | INFO |    output_root: None
+17:39:11 | INFO |    length_m: 15.0
+17:39:11 | INFO |    min_last_chunk_m: 10.0
+17:39:11 | INFO |    min_points: 2000
+17:39:11 | INFO |    epsg_out: EPSG:2056
+17:39:11 | INFO |    delimiter: ,
+17:39:11 | INFO |    skiprows: 0
+17:39:11 | INFO |    cloud_fmt: las
+17:39:11 | INFO |    time_field: gps_time
+17:39:11 | INFO |    manifest_name: merged_manifest.csv
+17:39:11 | INFO |    use_manifest: True
+17:39:11 | INFO | 
+17:39:11 | INFO | Chunk variant:
+17:39:11 | INFO |    type: outage_window
+17:39:11 | INFO |    outage_window.enabled: True
+17:39:11 | INFO |    outage_window.output_root: None
+17:39:11 | INFO |    outage_window.outages: [[305120.0, 580.0]]
+17:39:11 | INFO |    outage_window.pre_s: 10.0
+17:39:11 | INFO |    outage_window.post_s: 10.0
+17:39:11 | INFO | 
+17:39:11 | INFO | LiMatch:
+17:39:11 | INFO |    run: True
+17:39:11 | INFO |    output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_F2B_v2
+17:39:11 | INFO |    neighbor_k: 1
+17:39:11 | INFO |    do_cross_scan: True
+17:39:11 | INFO |    do_spatial_crossings: True
+17:39:11 | INFO |    crossings_output_root: None
+17:39:11 | INFO |    crossing_min_separation: 30
+17:39:11 | INFO |    crossing_overlap_margin_m: 1.2
+17:39:11 | INFO | 
+17:39:11 | INFO | Merge correspondences:
+17:39:11 | INFO |    enabled: True
+17:39:11 | INFO |    output_file: None
+17:39:11 | INFO | 
+17:39:11 | INFO | Patcher:
+17:39:11 | INFO |    run: False
+17:39:11 | INFO |    source: existing
+17:39:11 | INFO |    output_root: None
+17:39:11 | INFO |    gps_outage_file:
+17:39:11 | INFO |       enabled: False
+17:39:11 | INFO |       output_root: None
+17:39:11 | INFO |       outages: []
+17:39:11 | INFO | ============================================================
+17:39:11 | INFO | 
+17:39:11 | INFO | [pipeline] Generating temporary georef configs...
+17:39:11 | INFO |    scanner=HA | source=navtools_PDM/PDM_configs/scanner_HA.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+17:39:11 | INFO |    scanner=LR | source=navtools_PDM/PDM_configs/scanner_LR.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_LR.generated.yml
+17:39:11 | INFO |    scanner=PUCK | source=navtools_PDM/PDM_configs/scanner_PUCK.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_PUCK.generated.yml
+17:39:11 | INFO | [pipeline] Temporary config generation done.
+17:39:12 | INFO | Loading faiss with AVX2 support.
+17:39:12 | INFO | Successfully loaded faiss with AVX2 support.
+[17:39:12] INFO | Starting LiMatch pipeline...
+17:39:12 | INFO | Starting LiMatch pipeline...
+[17:39:12] INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_F2B_v2/merged_3000_VUX_PUCK/chunk_3000__chunk_3001/
+17:39:12 | INFO |   └─ Will save data at: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_F2B_v2/merged_3000_VUX_PUCK/chunk_3000__chunk_3001/
+[17:39:12] INFO | Visualization set to False
+17:39:12 | INFO | Visualization set to False
+[17:39:12] INFO | [0/7] Model setup
+17:39:12 | INFO | [0/7] Model setup
+[17:39:12] INFO |   └─ Using CUDA for descriptor inference.
+17:39:12 | INFO |   └─ Using CUDA for descriptor inference.
+[17:39:12] INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+17:39:12 | INFO |   └─ Loading from: /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/weights/model.pth
+[17:39:12] INFO |   └─ Loaded nested checkpoint with key 'model'.
+17:39:12 | INFO |   └─ Loaded nested checkpoint with key 'model'.
+[17:39:12] INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+17:39:12 | INFO |   └─ Descriptor model successfully loaded and set to eval() mode.
+[17:39:12] INFO | [1/7] Preprocessing
+17:39:12 | INFO | [1/7] Preprocessing
+[17:39:12] INFO |   └─ Loading point clouds...
+17:39:12 | INFO |   └─ Loading point clouds...
+[17:39:12] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_3000_VUX_PUCK/chunk_3000.las
+17:39:12 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_3000_VUX_PUCK/chunk_3000.las
+[17:39:13] INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_3000_VUX_PUCK/chunk_3001.las
+17:39:13 | INFO |   └─ Loaded laser vectors from LAS extra bytes: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m/merged_3000_VUX_PUCK/chunk_3001.las
+[17:39:13] INFO |   └─ Tiling with size 500x500...
+17:39:13 | INFO |   └─ Tiling with size 500x500...
+[17:39:14] INFO |   └─ Shifting point clouds toward origin...
+17:39:14 | INFO |   └─ Shifting point clouds toward origin...
+[17:39:14] INFO |       └─ [2546294.   1158629.54     874.28] m...
+17:39:14 | INFO |       └─ [2546294.   1158629.54     874.28] m...
+[17:39:14] INFO |       └─ (Coordinates shifted back at export)
+17:39:14 | INFO |       └─ (Coordinates shifted back at export)
+[17:39:14] INFO |   └─ Generated 1 valid tiles.
+17:39:14 | INFO |   └─ Generated 1 valid tiles.
+[17:39:14] INFO |   └─ Applying voxelization with size 0.025 m...
+17:39:14 | INFO |   └─ Applying voxelization with size 0.025 m...
+[17:39:15] INFO |       └─ voxelized from 2062998 to 913510 pts (44.28%)
+17:39:15 | INFO |       └─ voxelized from 2062998 to 913510 pts (44.28%)
+[17:39:16] INFO |       └─ voxelized from 1649912 to 767023 pts (46.49%)
+17:39:16 | INFO |       └─ voxelized from 1649912 to 767023 pts (46.49%)
+[17:39:17] INFO | [2/7] Keypoint detection
+17:39:17 | INFO | [2/7] Keypoint detection
+[17:39:18] INFO |   └─ Downsampling keypoints to max 20000 points...
+17:39:18 | INFO |   └─ Downsampling keypoints to max 20000 points...
+[17:39:18] INFO |   └─ Pre-downsample keypoints number: 13822
+17:39:18 | INFO |   └─ Pre-downsample keypoints number: 13822
+[17:39:18] INFO |   └─ Filtering keypoints to 20000 per tile...
+17:39:18 | INFO |   └─ Filtering keypoints to 20000 per tile...
+[17:39:18] INFO |   └─ Pre-downsample keypoints number: 11863
+17:39:18 | INFO |   └─ Pre-downsample keypoints number: 11863
+[17:39:18] INFO |   └─ Filtering keypoints to 20000 per tile...
+17:39:18 | INFO |   └─ Filtering keypoints to 20000 per tile...
+[17:39:18] INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+17:39:18 | INFO |   └─ Deleting kpts without candidate in radius 2*1.5m...
+[17:39:18] INFO |       └─ 9898 keypoints kept (71.61%) 
+17:39:18 | INFO |       └─ 9898 keypoints kept (71.61%) 
+[17:39:18] INFO |       └─ 8618 keypoints kept (72.65%) 
+17:39:18 | INFO |       └─ 8618 keypoints kept (72.65%) 
+[17:39:18] INFO | [3/7] Description
+17:39:18 | INFO | [3/7] Description
+[17:39:18] INFO |   └─ Computing descriptors for Tile A...
+17:39:18 | INFO |   └─ Computing descriptors for Tile A...
+[17:39:18] INFO |       └─ batch 1/1...
+17:39:18 | INFO |       └─ batch 1/1...
+[17:39:21] INFO |   └─ Computing descriptors for Tile B...
+17:39:21 | INFO |   └─ Computing descriptors for Tile B...
+[17:39:21] INFO |       └─ batch 1/1...
+17:39:21 | INFO |       └─ batch 1/1...
+[17:39:24] INFO | [4/7] Matching
+17:39:24 | INFO | [4/7] Matching
+[17:39:24] INFO |   └─ Applying reciprocity test...
+17:39:24 | INFO |   └─ Applying reciprocity test...
+[17:39:24] INFO |   └─ Keeping 26.16% reciprocal matches
+17:39:24 | INFO |   └─ Keeping 26.16% reciprocal matches
+[17:39:24] INFO | [5/7] RANSAC filtering
+17:39:24 | INFO | [5/7] RANSAC filtering
+[17:39:24] INFO |   └─ Tile 1: keeping 64.43%
+17:39:24 | INFO |   └─ Tile 1: keeping 64.43%
+[17:39:24] INFO | [6/7] ICP refinement
+17:39:24 | INFO | [6/7] ICP refinement
+[17:39:24] INFO |   └─ ICP refining tile 1 with 1668 correspondences...
+17:39:24 | INFO |   └─ ICP refining tile 1 with 1668 correspondences...

@@ -267,6 +267,7 @@ def process_pair(
     time_field: str = "gps_time",
     limatch_cfg_path: Optional[Path] = None,
     repo_root: Optional[Path] = None,
+    min_time_sep: float = 0.0,
 ):
     print(f"\n{'='*60}")
     print(f"[pair] fwd: {fwd_path.name}")
@@ -274,14 +275,24 @@ def process_pair(
     print(f"[pair] out: {out_dir}")
     print(f"{'='*60}")
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-
     # ------------------------------------------------------------------
-    # 1. Clip trajectory to forward pass time range
+    # 1. Read time bounds + temporal separation filter
     # ------------------------------------------------------------------
     print("[pair] Reading fwd time bounds...")
     t0_fwd, t1_fwd = las_time_bounds(fwd_path, time_field)
     print(f"  fwd: [{t0_fwd:.3f}, {t1_fwd:.3f}]")
+
+    if min_time_sep > 0.0:
+        t0_bwd, t1_bwd = las_time_bounds(bwd_path, time_field)
+        t_mean_fwd = 0.5 * (t0_fwd + t1_fwd)
+        t_mean_bwd = 0.5 * (t0_bwd + t1_bwd)
+        dt = abs(t_mean_fwd - t_mean_bwd)
+        if dt < min_time_sep:
+            print(f"[pair] SKIPPED — time sep {dt:.1f}s < min_time_sep {min_time_sep:.1f}s")
+            return
+        print(f"[pair] time sep: {dt:.1f}s >= {min_time_sep:.1f}s  OK")
+
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     _, x_f, y_f = trajectory_slice_for_time(t_trj, x_trj, y_trj, t0_fwd, t1_fwd)
 
@@ -362,6 +373,85 @@ def process_pair(
 
 
 # ---------------------------------------------------------------------------
+# Resume: run LiMatch on already-chunked directories
+# ---------------------------------------------------------------------------
+
+def resume_limatch_from_chunks(
+    chunk_pair_dir: Path,
+    limatch_cfg_path: Path,
+    repo_root: Path,
+):
+    """
+    Given a directory that already contains fwd/ and bwd/ sub-folders with
+    chunk_XXXX.las files, run LiMatch on every matching pair that has not
+    been processed yet (i.e. whose limatch/chunk_XXXX/ output folder does
+    not already exist or is empty).
+    """
+    fwd_dir = chunk_pair_dir / "fwd"
+    bwd_dir = chunk_pair_dir / "bwd"
+
+    if not fwd_dir.is_dir() or not bwd_dir.is_dir():
+        print(f"  [resume] SKIP — missing fwd/ or bwd/ in {chunk_pair_dir}")
+        return
+
+    CHUNK_RE = re.compile(r"chunk_(\d{4})\.las$", re.IGNORECASE)
+
+    def index_set(d: Path) -> set:
+        return {int(CHUNK_RE.match(f.name).group(1))
+                for f in d.glob("chunk_*.las") if CHUNK_RE.match(f.name)}
+
+    kept_fwd = index_set(fwd_dir)
+    kept_bwd = index_set(bwd_dir)
+    common   = sorted(kept_fwd & kept_bwd)
+
+    print(f"\n{'='*60}")
+    print(f"[resume] {chunk_pair_dir.name}")
+    print(f"  fwd chunks: {len(kept_fwd)}  bwd chunks: {len(kept_bwd)}  common: {len(common)}")
+    print(f"{'='*60}")
+
+    if not common:
+        print("  [resume] No common chunks — nothing to do.")
+        return
+
+    import yaml
+
+    limatch_parent = repo_root / "Patcher" / "submodules"
+    if str(limatch_parent) not in sys.path:
+        sys.path.insert(0, str(limatch_parent))
+    from limatch.main import match_clouds
+
+    lim_cfg_base = yaml.safe_load(open(str(limatch_cfg_path), "r"))
+
+    skipped = 0
+    for k in common:
+        lm_out = chunk_pair_dir / "limatch" / f"chunk_{k:04d}"
+        # Skip if output folder already exists and is non-empty
+        if lm_out.exists() and any(lm_out.iterdir()):
+            skipped += 1
+            continue
+
+        c_fwd = fwd_dir / f"chunk_{k:04d}.las"
+        c_bwd = bwd_dir / f"chunk_{k:04d}.las"
+
+        lm_out.mkdir(parents=True, exist_ok=True)
+        (lm_out / "plots").mkdir(exist_ok=True)
+        (lm_out / "tiles").mkdir(exist_ok=True)
+        (lm_out / "cor_outputs").mkdir(exist_ok=True)
+
+        cfg = copy.deepcopy(lim_cfg_base)
+        cfg["prj_folder"] = str(lm_out) + os.sep
+
+        print(f"  [limatch] chunk_{k:04d}: {c_fwd.name} ↔ {c_bwd.name}")
+        try:
+            match_clouds(str(c_fwd), str(c_bwd), cfg)
+        except Exception as e:
+            print(f"  [limatch] chunk_{k:04d} FAILED: {e}")
+
+    if skipped:
+        print(f"  [resume] {skipped}/{len(common)} chunks already done — skipped.")
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
@@ -369,55 +459,100 @@ def main():
     parser = argparse.ArgumentParser(
         description="S2S spatial chunking + LiMatch for forward/backward pass pairs"
     )
-    parser.add_argument("--pairs_dirs", nargs="+", required=True)
-    parser.add_argument("--sbet",        required=True)
+    # --- normal chunking + matching mode ---
+    parser.add_argument("--pairs_dirs", nargs="+", default=[],
+                        help="Source directories containing Patch_from_scan_*_with_*.las pairs")
+    parser.add_argument("--sbet",     default=None,
+                        help="SBET trajectory file (required with --pairs_dirs)")
+    parser.add_argument("--out_root", default=None,
+                        help="Root output directory (required with --pairs_dirs)")
+
+    # --- resume mode ---
+    parser.add_argument(
+        "--resume_dirs", nargs="+", default=[],
+        help=(
+            "One or more already-chunked pair directories (each must contain fwd/ and bwd/). "
+            "LiMatch is run directly on the existing chunks; chunks whose "
+            "limatch/chunk_XXXX/ folder already exists and is non-empty are skipped."
+        ),
+    )
+
+    # --- shared options ---
     parser.add_argument("--limatch_cfg", default=None)
-    parser.add_argument("--out_root",    required=True)
     parser.add_argument("--L",           type=float, default=20.0, help="Chunk length in metres")
     parser.add_argument("--min_last_m",  type=float, default=10.0)
     parser.add_argument("--min_points",  type=int,   default=500)
     parser.add_argument("--epsg",        default="EPSG:2056")
     parser.add_argument("--time_field",  default="gps_time")
+    parser.add_argument("--min_time_sep", type=float, default=0.0,
+                        help="Minimum temporal separation (s) between fwd and bwd scan means. Pairs below this threshold are skipped.")
     parser.add_argument("--repo_root",   default=None)
     args = parser.parse_args()
 
-    print(f"[main] Loading trajectory: {args.sbet}")
-    t_trj, x_trj, y_trj = load_sbet(Path(args.sbet), epsg_out=args.epsg)
-    print(f"[main] {len(t_trj)} poses, t=[{t_trj[0]:.1f}, {t_trj[-1]:.1f}]")
+    if not args.pairs_dirs and not args.resume_dirs:
+        parser.error("Provide at least --pairs_dirs or --resume_dirs")
 
     limatch_cfg_path = Path(args.limatch_cfg) if args.limatch_cfg else None
     repo_root = Path(args.repo_root) if args.repo_root else Path(__file__).resolve().parents[1]
-    out_root  = Path(args.out_root)
 
-    for pairs_dir_str in args.pairs_dirs:
-        pairs_dir = Path(pairs_dir_str)
-        print(f"\n[main] Scanning: {pairs_dir}")
-        pairs = find_pairs(pairs_dir)
-        if not pairs:
-            print(f"  [warn] No pairs found in {pairs_dir}")
-            continue
-        print(f"  Found {len(pairs)} pair(s)")
-
-        for fwd_path, bwd_path in pairs:
-            rel       = fwd_path.parent.relative_to(pairs_dir.parent) \
-                        if fwd_path.parent != pairs_dir else Path(pairs_dir.name)
-            pair_name = f"{fwd_path.stem}_vs_{bwd_path.stem}"
-            out_dir   = out_root / rel / pair_name
-
-            process_pair(
-                fwd_path=fwd_path,
-                bwd_path=bwd_path,
-                out_dir=out_dir,
-                t_trj=t_trj,
-                x_trj=x_trj,
-                y_trj=y_trj,
-                L=args.L,
-                min_last_chunk_m=args.min_last_m,
-                min_points=args.min_points,
-                time_field=args.time_field,
+    # ------------------------------------------------------------------
+    # RESUME mode — skip chunking, go straight to LiMatch
+    # ------------------------------------------------------------------
+    if args.resume_dirs:
+        if limatch_cfg_path is None:
+            parser.error("--limatch_cfg is required with --resume_dirs")
+        for rd_str in args.resume_dirs:
+            resume_limatch_from_chunks(
+                chunk_pair_dir=Path(rd_str),
                 limatch_cfg_path=limatch_cfg_path,
                 repo_root=repo_root,
             )
+
+    # ------------------------------------------------------------------
+    # NORMAL mode — chunk then LiMatch
+    # ------------------------------------------------------------------
+    if args.pairs_dirs:
+        if args.sbet is None:
+            parser.error("--sbet is required with --pairs_dirs")
+        if args.out_root is None:
+            parser.error("--out_root is required with --pairs_dirs")
+
+        print(f"[main] Loading trajectory: {args.sbet}")
+        t_trj, x_trj, y_trj = load_sbet(Path(args.sbet), epsg_out=args.epsg)
+        print(f"[main] {len(t_trj)} poses, t=[{t_trj[0]:.1f}, {t_trj[-1]:.1f}]")
+
+        out_root = Path(args.out_root)
+
+        for pairs_dir_str in args.pairs_dirs:
+            pairs_dir = Path(pairs_dir_str)
+            print(f"\n[main] Scanning: {pairs_dir}")
+            pairs = find_pairs(pairs_dir)
+            if not pairs:
+                print(f"  [warn] No pairs found in {pairs_dir}")
+                continue
+            print(f"  Found {len(pairs)} pair(s)")
+
+            for fwd_path, bwd_path in pairs:
+                rel       = fwd_path.parent.relative_to(pairs_dir.parent) \
+                            if fwd_path.parent != pairs_dir else Path(pairs_dir.name)
+                pair_name = f"{fwd_path.stem}_vs_{bwd_path.stem}"
+                out_dir   = out_root / rel / pair_name
+
+                process_pair(
+                    fwd_path=fwd_path,
+                    bwd_path=bwd_path,
+                    out_dir=out_dir,
+                    t_trj=t_trj,
+                    x_trj=x_trj,
+                    y_trj=y_trj,
+                    L=args.L,
+                    min_last_chunk_m=args.min_last_m,
+                    min_points=args.min_points,
+                    time_field=args.time_field,
+                    limatch_cfg_path=limatch_cfg_path,
+                    repo_root=repo_root,
+                    min_time_sep=args.min_time_sep,
+                )
 
     print("\n[main] Done.")
 

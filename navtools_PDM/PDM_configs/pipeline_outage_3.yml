@@ -9,7 +9,7 @@
 #   Excluded  : 306405 -> 306560  (155 s, sigma GPS too high)
 # ==============================================================
 
-mode: "chunk"
+mode: "patcher"
 scenario_name: "georef_ALL_traj_outage_3"
 
 # ==============================================================
@@ -67,8 +67,8 @@ steps:
   georef:           false
   merge:            false
   vux_puck_merge:   false
-  chunk:            true
-  limatch:          true
+  chunk:            false
+  limatch:          false
   gps_outage_file:  false
 
 # ==============================================================
@@ -106,7 +106,7 @@ merge_correspondences:
 # ==============================================================
 chunk:
   source: "existing"
-  existing_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/scenario_combined_v2/chunks_15m"
+  existing_root: null #"/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/scenario_combined/chunks_15m"
   merged_input_root: null
   merged_group: null 
   reference_scanner: "HA"
@@ -142,7 +142,7 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
-  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/limatch_F2B_v2"
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/Patcher"
   neighbor_k: 1
   do_cross_scan: true
 
@@ -155,9 +155,9 @@ limatch:
 # PATCHER (unused here)
 # ==============================================================
 patcher:
-  run: false
-  source: "existing"
-  output_root: null
+  run: true
+  source: "run"
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/Patcher"
   gps_outage_file:
     enabled: false
     output_root: null

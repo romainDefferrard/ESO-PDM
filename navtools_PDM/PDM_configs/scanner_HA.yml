@@ -3,7 +3,7 @@ scanner_name: "HA"
 lasvec:
   type: 'SDC'
   cols: [0,3,4,5]
-  path: '/media/b085164/Elements/ECCR/VUX_SDC/HA/single'
+  path: '/media/b085164/LaCie/2026spring_RD/ECCR/VUX_SDC/HA'
 
 leapsec: 18
 
@@ -25,5 +25,5 @@ output_defaults:
   lasvec: True
   lasvec_to_body: True
 
-manifest_path: "/media/b085164/Elements/CALIB_26_02_25/manifests/manifest_HA.csv"
+manifest_path: "/media/b085164/LaCie/2026spring_RD/ECCR/manifests/manifest_HA.csv"
 

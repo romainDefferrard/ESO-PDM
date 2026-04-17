@@ -62,8 +62,8 @@ steps:
   georef:           false
   merge:            false
   vux_puck_merge:   false
-  chunk:            true
-  limatch:          true
+  chunk:            false
+  limatch:          false
   gps_outage_file:  false
 
 # ==============================================================
@@ -101,7 +101,7 @@ merge_correspondences:
 # ==============================================================
 chunk:
   source: "existing"
-  existing_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/scenario_combined_v2/chunks_15m"
+  existing_root: null #"/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/scenario_combined/chunks_15m"
   merged_input_root: null
   merged_group: null # "ALL"
   reference_scanner: "HA"
