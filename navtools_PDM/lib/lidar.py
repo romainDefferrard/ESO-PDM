@@ -39,7 +39,7 @@ def loadLasVecSDC(sdc_file, chunk_records=2_000_000):
       record[[0, 3, 4, 5]]
 
     Returns:
-        ndarray (N, 4): [time, x, y, z]
+        ndarray (N, 5): [time, x, y, z, u6]
     """
     sdc_file = Path(sdc_file)
 
@@ -78,9 +78,10 @@ def loadLasVecSDC(sdc_file, chunk_records=2_000_000):
     record_count = payload_size // record_size
 
     # Preallocate final output directly
-    records = np.empty((record_count, 4), dtype=np.float64)
+    records = np.empty((record_count, 5), dtype=np.float64)
 
     write_pos = 0
+    total_invalid = 0
 
     with open(sdc_file, "rb") as f:
         f.seek(size_of_header)
@@ -91,22 +92,52 @@ def loadLasVecSDC(sdc_file, chunk_records=2_000_000):
             unit="pts",
             mininterval=0.5,
         ) as pbar:
-            while write_pos < record_count:
+            while True:
                 data = np.fromfile(f, dtype=record_dtype, count=chunk_records)
-                n = len(data)
-                if n == 0:
+                n0 = len(data)
+                if n0 == 0:
                     break
 
-                records[write_pos:write_pos+n, 0] = data["t"]
-                records[write_pos:write_pos+n, 1] = data["x"]
-                records[write_pos:write_pos+n, 2] = data["y"]
-                records[write_pos:write_pos+n, 3] = data["z"]
+                valid = (
+                    np.isfinite(data["t"]) &
+                    np.isfinite(data["x"]) &
+                    np.isfinite(data["y"]) &
+                    np.isfinite(data["z"])
+                )
 
-                write_pos += n
-                pbar.update(n)
+                n_bad = int(n0 - np.count_nonzero(valid))
+                if n_bad > 0:
+                    total_invalid += n_bad
+
+                data = data[valid]
+                n = len(data)
+
+                if n > 0:
+                    records[write_pos:write_pos+n, 0] = data["t"]
+                    records[write_pos:write_pos+n, 1] = data["x"]
+                    records[write_pos:write_pos+n, 2] = data["y"]
+                    records[write_pos:write_pos+n, 3] = data["z"]
+                    records[write_pos:write_pos+n, 4] = data["u6"]
+                    write_pos += n
+
+                # on garde la progression sur le nombre brut de records lus
+                pbar.update(n0)
+
+    if total_invalid > 0:
+        print(f"[SDC] Dropped {total_invalid} raw records with non-finite t/x/y/z")
 
     if write_pos != record_count:
         records = records[:write_pos]
+
+    while True:
+        dt = np.diff(records[:, 0])
+        bad = np.where(dt < 0)[0]
+        if len(bad) == 0:
+            break
+        i = bad[0]  # corriger toujours le premier saut
+        jump = dt[i]
+        print(f"[SDC] Saut négatif à idx={i} ({i/len(records)*100:.1f}%) : Δt={jump:.4f}s — correction appliquée")
+        records[i+1:, 0] -= jump
 
     return records
 
@@ -131,8 +162,14 @@ def _georef_chunk(las_chunk, t_chunk, ecef_chunk, q_chunk, R_sensor2body, lever_
     else:
         ecef2ch1903Transformer = Transformer.from_crs("EPSG:4978", "EPSG:2056")
         xyz_georef = np.array(ecef2ch1903Transformer.transform(xyz_ecef[0, :], xyz_ecef[1, :], xyz_ecef[2, :])).T
-
-    out = np.column_stack((t_chunk, xyz_georef))
+    
+    # corrections to intensities
+    range_m = np.linalg.norm(las_chunk[:, 1:4], axis=1) 
+    intensity_raw = las_chunk[:, 4]
+    range_clamped = np.clip(range_m, 3.0, np.inf)
+    intensity_corrected = las_chunk[:, 4] * range_clamped**(0.5)
+    #intensity_corrected = intensity_raw * range_m #**2
+    out = np.column_stack((t_chunk, xyz_georef, intensity_corrected))
 
     if lasvec_to_body:
         v_body = (R_sensor2body @ las_chunk[:, 1:4].T + lever_arm[:, np.newaxis]).T  # lasvec in bodyframe (N, 3)

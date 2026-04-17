@@ -1,0 +1,25 @@
+outage_id: outage_1
+
+ref_dir:      /media/b085164/Elements/CALIB_26_02_25/georef_errors/outage_1/cropped/ref_ODyN
+ref_manifest: /media/b085164/Elements/CALIB_26_02_25/georef_errors/outage_1/cropped/ref_ODyN/merged_manifest.csv
+
+output_dir: /media/b085164/Elements/CALIB_26_02_25/georef_errors/outage_1
+
+methods:
+  - name: outage_traj
+    dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL
+    manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL/merged_manifest.csv
+
+  - name: F2B
+    dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/georef_F2B/merged/ALL
+    manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/georef_F2B/merged/ALL/merged_manifest.csv
+
+  - name: COMBINED
+    dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/georef_COMBINED/merged/ALL
+    manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/georef_COMBINED/merged/ALL/merged_manifest.csv
+
+time:
+  buffer: 2.0
+
+las:
+  scale: 0.001

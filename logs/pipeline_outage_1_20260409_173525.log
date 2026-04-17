@@ -1,0 +1,135 @@
+17:35:25 | INFO | 
+17:35:25 | INFO | ============================================================
+17:35:25 | INFO |                  PIPELINE CONFIGURATION
+17:35:25 | INFO | ============================================================
+17:35:25 | INFO | Mode: chunk
+17:35:25 | INFO | Scenario name: georef_ALL_traj_outage_1
+17:35:25 | INFO | 
+17:35:25 | INFO | Trajectory:
+17:35:25 | INFO |    Path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out
+17:35:25 | INFO |    Type: SBET
+17:35:25 | INFO | 
+17:35:25 | INFO | Distance filtering:
+17:35:25 | INFO |    enable: True
+17:35:25 | INFO |    max_distance_m: 30
+17:35:25 | INFO |    map_epsg: EPSG:2056
+17:35:25 | INFO |    filter_trj: None
+17:35:25 | INFO | 
+17:35:25 | INFO | Scanners:
+17:35:25 | INFO |    ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml  (scanner_name=HA)
+17:35:25 | INFO |    lr_cfg: navtools_PDM/PDM_configs/scanner_LR.yml  (scanner_name=LR)
+17:35:25 | INFO |    puck_cfg: navtools_PDM/PDM_configs/scanner_PUCK.yml  (scanner_name=PUCK)
+17:35:25 | INFO | 
+17:35:25 | INFO | Paths:
+17:35:25 | INFO |    root_out_dir: /media/b085164/Elements/CALIB_26_02_25
+17:35:25 | INFO |    patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+17:35:25 | INFO |    limatch_cfg: Patcher/submodules/limatch/configs/MLS_F2B_1.yml
+17:35:25 | INFO |    gps_input: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt
+17:35:25 | INFO | 
+17:35:25 | INFO | Steps:
+17:35:25 | INFO |    georef: False
+17:35:25 | INFO |    merge: False
+17:35:25 | INFO |    vux_puck_merge: False
+17:35:25 | INFO |    chunk: True
+17:35:25 | INFO |    limatch: True
+17:35:25 | INFO |    gps_outage_file: False
+17:35:25 | INFO | 
+17:35:25 | INFO | Merge:
+17:35:25 | INFO |    out_prefix: merged_
+17:35:25 | INFO |    out_suffix: _HA_LR
+17:35:25 | INFO | 
+17:35:25 | INFO | VUX+PUCK merge:
+17:35:25 | INFO |    enabled: True
+17:35:25 | INFO |    name: ALL
+17:35:25 | INFO |    vux_group: HA_LR
+17:35:25 | INFO |    puck_scanner: puck_cfg
+17:35:25 | INFO |    vux_input_dir: None
+17:35:25 | INFO |    output_dir: None
+17:35:25 | INFO |    manifest_path: None
+17:35:25 | INFO |    output_suffix: _VUX_PUCK
+17:35:25 | INFO |    scanner_src_vux: 2
+17:35:25 | INFO |    scanner_src_puck: 1
+17:35:25 | INFO |    chunk_size: 10000000
+17:35:25 | INFO | 
+17:35:25 | INFO | Chunk:
+17:35:25 | INFO |    source: existing
+17:35:25 | INFO |    existing_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined_v2/chunks_15m
+17:35:25 | INFO |    merged_input_root: None
+17:35:25 | INFO |    merged_group: None
+17:35:25 | INFO |    reference_scanner: HA
+17:35:25 | INFO |    output_root: None
+17:35:25 | INFO |    length_m: 15.0
+17:35:25 | INFO |    min_last_chunk_m: 10.0
+17:35:25 | INFO |    min_points: 2000
+17:35:25 | INFO |    epsg_out: EPSG:2056
+17:35:25 | INFO |    delimiter: ,
+17:35:25 | INFO |    skiprows: 0
+17:35:25 | INFO |    cloud_fmt: las
+17:35:25 | INFO |    time_field: gps_time
+17:35:25 | INFO |    manifest_name: merged_manifest.csv
+17:35:25 | INFO |    use_manifest: True
+17:35:25 | INFO | 
+17:35:25 | INFO | Chunk variant:
+17:35:25 | INFO |    type: outage_window
+17:35:25 | INFO |    outage_window.enabled: True
+17:35:25 | INFO |    outage_window.output_root: None
+17:35:25 | INFO |    outage_window.outages: [[305120.0, 580.0]]
+17:35:25 | INFO |    outage_window.pre_s: 10.0
+17:35:25 | INFO |    outage_window.post_s: 10.0
+17:35:25 | INFO | 
+17:35:25 | INFO | LiMatch:
+17:35:25 | INFO |    run: True
+17:35:25 | INFO |    output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_F2B_v2
+17:35:25 | INFO |    neighbor_k: 1
+17:35:25 | INFO |    do_cross_scan: True
+17:35:25 | INFO |    do_spatial_crossings: True
+17:35:25 | INFO |    crossings_output_root: None
+17:35:25 | INFO |    crossing_min_separation: 30
+17:35:25 | INFO |    crossing_overlap_margin_m: 1.2
+17:35:25 | INFO | 
+17:35:25 | INFO | Merge correspondences:
+17:35:25 | INFO |    enabled: True
+17:35:25 | INFO |    output_file: None
+17:35:25 | INFO | 
+17:35:25 | INFO | Patcher:
+17:35:25 | INFO |    run: False
+17:35:25 | INFO |    source: existing
+17:35:25 | INFO |    output_root: None
+17:35:25 | INFO |    gps_outage_file:
+17:35:25 | INFO |       enabled: False
+17:35:25 | INFO |       output_root: None
+17:35:25 | INFO |       outages: []
+17:35:25 | INFO | ============================================================
+17:35:25 | INFO | 
+17:35:25 | INFO | [pipeline] Generating temporary georef configs...
+17:35:25 | INFO |    scanner=HA | source=navtools_PDM/PDM_configs/scanner_HA.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+17:35:25 | INFO |    scanner=LR | source=navtools_PDM/PDM_configs/scanner_LR.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_LR.generated.yml
+17:35:25 | INFO |    scanner=PUCK | source=navtools_PDM/PDM_configs/scanner_PUCK.yml | generated=/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_PUCK.generated.yml
+17:35:25 | INFO | [pipeline] Temporary config generation done.
+Traceback (most recent call last):
+  File "/home/b085164/miniconda3/envs/limatch/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/b085164/miniconda3/envs/limatch/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/navtools_PDM/pipeline.py", line 2459, in <module>
+    run_pipeline(pipe_cfg=pipe_cfg)
+  File "/home/b085164/PDM_Romain_Defferrard/ESO-PDM/navtools_PDM/pipeline.py", line 2103, in run_pipeline
+    raise FileNotFoundError(f"Existing chunks root does not exist: {chunks_root}")
+FileNotFoundError: Existing chunks root does not exist: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined_v2/chunks_15m
+
+======================================
+[pipeline] Starting pipeline
+[pipeline] mode:            chunk
+[pipeline] scenario:        georef_ALL_traj_outage_1
+[pipeline] root_out_dir:    /media/b085164/Elements/CALIB_26_02_25
+[pipeline] limatch_cfg:     /home/b085164/PDM_Romain_Defferrard/ESO-PDM/Patcher/submodules/limatch/configs/MLS_F2B_1.yml
+[pipeline] patcher_cfg:     Patcher/config/MLS_Epalinges_config.yml
+======================================
+
+
+======================================
+[pipeline] Resolved inputs
+[pipeline] merged_out:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged
+[pipeline] georef ref cfg:  /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/tmp/generated_configs/georef_HA.generated.yml
+======================================
+

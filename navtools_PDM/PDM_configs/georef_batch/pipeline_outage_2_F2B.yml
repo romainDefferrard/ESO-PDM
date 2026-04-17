@@ -1,0 +1,101 @@
+mode: chunk
+scenario_name: georef_F2B
+scanners:
+  ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml
+  lr_cfg: navtools_PDM/PDM_configs/scanner_LR.yml
+  puck_cfg: navtools_PDM/PDM_configs/scanner_PUCK.yml
+merge_groups:
+- name: HA_LR
+  scanners:
+  - ha_cfg
+  - lr_cfg
+trajectory:
+  type: SBET
+  path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_2_305645_306120/F2B/out/v2/traj_F2B_2.out
+  cfg:
+    type: SBET
+georef_time_window:
+  enable: true
+  outage:
+  - 305645.0
+  - 475.0
+  margin_s: 60.0
+distance_filtering:
+  enable: true
+  max_distance_m: 30
+  map_epsg: EPSG:2056
+  filter_trj: null
+paths:
+  root_out_dir: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2
+  patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+  limatch_cfg: Patcher/submodules/limatch/configs/MLS_F2B_2.yml
+  gps_input: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt
+steps:
+  georef: true
+  merge: true
+  vux_puck_merge: true
+  chunk: false
+  limatch: false
+  gps_outage_file: false
+merge:
+  out_prefix: merged_
+  out_suffix: _HA_LR
+vux_puck_merge:
+  enabled: true
+  name: ALL
+  vux_group: HA_LR
+  puck_scanner: puck_cfg
+  vux_input_dir: null
+  output_dir: null
+  manifest_path: null
+  output_suffix: _VUX_PUCK
+  scanner_src_vux: 2
+  scanner_src_puck: 1
+  chunk_size: 10000000
+merge_correspondences:
+  enabled: true
+  output_file: null
+chunk:
+  source: existing
+  existing_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/scenario_combined/chunks_15m
+  merged_input_root: null
+  merged_group: null
+  reference_scanner: HA
+  output_root: null
+  length_m: 15.0
+  min_last_chunk_m: 10.0
+  min_points: 2000
+  epsg_out: EPSG:2056
+  delimiter: ','
+  skiprows: 0
+  cloud_fmt: las
+  time_field: gps_time
+  manifest_name: merged_manifest.csv
+  use_manifest: true
+chunk_variant:
+  type: outage_window
+  outage_window:
+    enabled: true
+    output_root: null
+    outages:
+    - - 305645.0
+      - 475.0
+    pre_s: 10.0
+    post_s: 10.0
+limatch:
+  run: true
+  output_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/limatch_F2B_v2
+  neighbor_k: 1
+  do_cross_scan: true
+  do_spatial_crossings: true
+  crossings_output_root: null
+  crossing_min_separation: 30
+  crossing_overlap_margin_m: 1.2
+patcher:
+  run: false
+  source: existing
+  output_root: null
+  gps_outage_file:
+    enabled: false
+    output_root: null
+    outages: []

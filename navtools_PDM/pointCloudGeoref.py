@@ -108,10 +108,14 @@ def filter_sdc_paths_by_manifest(
         print(f"[manifest] Loaded but georef_time_window disabled — all SDC files kept.")
         return paths
  
-    outage   = tw_cfg["outage"]
     margin_s = float(tw_cfg.get("margin_s", 60.0))
-    t_lo     = float(outage[0]) - margin_s
-    t_hi     = float(outage[0]) + float(outage[1]) + margin_s
+    if "outages" in tw_cfg and tw_cfg["outages"]:
+        outages = tw_cfg["outages"]
+    else:
+        outages = [tw_cfg["outage"]]
+
+    t_lo = min(float(o[0]) - margin_s for o in outages)
+    t_hi = max(float(o[0]) + float(o[1]) + margin_s for o in outages)
  
     print(f"[manifest] Reading {manifest_path}")
     df = pd.read_csv(manifest_path)
@@ -150,42 +154,45 @@ def filter_sdc_paths_by_manifest(
  
 def apply_time_window_filter(lasvec: np.ndarray, tw_cfg: Optional[Dict[str, Any]]) -> np.ndarray:
     """
-    Keep only LiDAR rows whose timestamp falls within:
-        [t_start - margin_s,  t_start + duration + margin_s]
- 
+    Keep only LiDAR rows whose timestamp falls within one or more windows.
+
     Config keys (from pipeline.yml  georef_time_window):
         enable   : bool
-        outage   : [t_start, duration]   (GPS seconds, same format as chunk/patcher outages)
+        outage   : [t_start, duration]        # single window (legacy)
+        outages  : [[t_start, duration], ...] # multiple windows
         margin_s : float  — extra seconds added on both sides
     """
     if tw_cfg is None or not tw_cfg.get("enable", False):
         return lasvec
- 
-    outage   = tw_cfg["outage"]          # [t_start, duration]
+
     margin_s = float(tw_cfg.get("margin_s", 60.0))
- 
-    t_start  = float(outage[0])
-    duration = float(outage[1])
- 
-    t_lo = t_start - margin_s
-    t_hi = t_start + duration + margin_s
- 
-    print(
-        f"[time_window] keeping t in [{t_lo:.3f}, {t_hi:.3f}]  "
-        f"(outage [{t_start}, {t_start + duration}] +/- {margin_s} s)"
-    )
- 
-    mask = (lasvec[:, 0] >= t_lo) & (lasvec[:, 0] <= t_hi)
+
+    # Support both single outage and list of outages
+    if "outages" in tw_cfg and tw_cfg["outages"]:
+        outages = tw_cfg["outages"]
+    else:
+        outages = [tw_cfg["outage"]]
+
+    mask = np.zeros(len(lasvec), dtype=bool)
+    for outage in outages:
+        t_lo = float(outage[0]) - margin_s
+        t_hi = float(outage[0]) + float(outage[1]) + margin_s
+        print(
+            f"[time_window] window [{t_lo:.3f}, {t_hi:.3f}]  "
+            f"(outage [{float(outage[0])}, {float(outage[0]) + float(outage[1])}] +/- {margin_s} s)"
+        )
+        mask |= (lasvec[:, 0] >= t_lo) & (lasvec[:, 0] <= t_hi)
+
     n_before = len(lasvec)
     lasvec = lasvec[mask]
     print(f"[time_window] {mask.sum()}/{n_before} points kept")
- 
+
     if len(lasvec) == 0:
         raise ValueError(
-            f"[time_window] No LiDAR points remain after time-window filter "
-            f"[{t_lo:.3f}, {t_hi:.3f}]. Check outage/margin_s or disable the filter."
+            f"[time_window] No LiDAR points remain after time-window filter. "
+            f"Check outage/margin_s or disable the filter."
         )
- 
+
     return lasvec
  
  
@@ -268,31 +275,27 @@ def trajectory_positions_mapping(trj, epsg_out: str = "EPSG:2056") -> np.ndarray
 # FILTER DISTANCE VEHICULE
 # ============================================================
  
-def filter_pcd_by_vehicle_distance(
-    pcd: np.ndarray,
-    trj,
-    max_dist_m: float,
-    epsg_out: str,
-) -> np.ndarray:
- 
+def filter_pcd_by_vehicle_distance(pcd, trj, max_dist_m, epsg_out, return_mask=False):
     t_pts = pcd[:, 0]
-    P = trajectory_positions_mapping(trj, epsg_out = epsg_out)
+    P = trajectory_positions_mapping(trj, epsg_out=epsg_out)
     t_trj = trj.time
- 
+
     x_car = np.interp(t_pts, t_trj, P[:, 0])
     y_car = np.interp(t_pts, t_trj, P[:, 1])
- 
+
     dx = pcd[:, 1] - x_car
     dy = pcd[:, 2] - y_car
- 
     dist = np.sqrt(dx**2 + dy**2)
- 
+
     mask = dist <= max_dist_m
- 
+
     print(
         f"Distance filter kept {int(mask.sum())}/{len(pcd)} points "
         f"(<= {max_dist_m} m) | Duration: {float(t_pts.max() - t_pts.min()):.2f} s"
     )
+
+    if return_mask:
+        return pcd[mask], mask
     return pcd[mask]
  
  
@@ -304,203 +307,284 @@ def georef_one_file(cfg, trj, path):
     import numpy as np
     import laspy
     from laspy import ExtraBytesParams
- 
+
     print(f"\n[Georef] Processing file: {path}")
-    
+
     # ==================================================
-    # BEGINNING KEPT AS-IS
+    # LOAD LASVEC
     # ==================================================
-    # Load lasvec
     if cfg["lasvec"]["type"] == "SDC":
         lasvec = loadLasVecSDC(path)
     else:
         lasvec = loadLasVecAscii(cfg["lasvec"], cfg["limatch_output"])
- 
-    # Remove rows with invalid or absurd LiDAR timestamps before time sync
-    mask_valid_time = np.isfinite(lasvec[:, 0]) & (np.abs(lasvec[:, 0]) < 1e7)
-    n_bad_time = (~mask_valid_time).sum()
- 
-    if n_bad_time > 0:
-        print(f"[Georef] Removing {n_bad_time} rows with invalid/absurd LiDAR timestamps")
-        lasvec = lasvec[mask_valid_time]
- 
+
+    # --------------------------------------------------
+    # 1) Raw sanity filter ONLY (before sync)
+    #    -> ne surtout pas comparer à trj.time ici
+    # --------------------------------------------------
+    mask_valid_raw = (
+        np.isfinite(lasvec[:, 0]) &
+        np.isfinite(lasvec[:, 1]) &
+        np.isfinite(lasvec[:, 2]) &
+        np.isfinite(lasvec[:, 3]) &
+        (np.abs(lasvec[:, 0]) < 1e8) &
+        (np.abs(lasvec[:, 1]) < 1e4) &
+        (np.abs(lasvec[:, 2]) < 1e4) &
+        (np.abs(lasvec[:, 3]) < 1e4)
+    )
+
+    n_bad_raw = int((~mask_valid_raw).sum())
+    if n_bad_raw > 0:
+        print(f"[Georef] Removing {n_bad_raw} raw rows with invalid values")
+        lasvec = lasvec[mask_valid_raw]
+
     if len(lasvec) == 0:
-        raise ValueError(f"No valid LiDAR timestamps remain after filtering for file: {path}")
- 
-    # Time corrections
+        raise ValueError(f"No valid raw LiDAR rows remain after sanity filtering for file: {path}")
+
+    # --------------------------------------------------
+    # 2) Sync time to trajectory day + leap seconds
+    # --------------------------------------------------
     lasvec[:, 0] = sync_times_day_shift(lasvec[:, 0], trj.time)
     lasvec[:, 0] = apply_leapsec(lasvec[:, 0], cfg.get("leapsec"))
+
+    tmin_trj = float(np.nanmin(trj.time))
+    tmax_trj = float(np.nanmax(trj.time))
+
     print(f"[debug] lasvec time min/max: {np.nanmin(lasvec[:,0]):.4f} / {np.nanmax(lasvec[:,0]):.4f}")
-    print(f"[debug] trj time min/max:    {np.nanmin(trj.time):.4f} / {np.nanmax(trj.time):.4f}")
- 
-    # Time-window filter (applied after time corrections so timestamps are in GPS seconds)
+    print(f"[debug] trj time min/max:    {tmin_trj:.4f} / {tmax_trj:.4f}")
+
+    # --------------------------------------------------
+    # 3) Broad plausibility filter AFTER sync
+    #    -> utile pour enlever les gros outliers de temps
+    # --------------------------------------------------
+    mask_postsync = (
+        np.isfinite(lasvec[:, 0]) &
+        (lasvec[:, 0] >= tmin_trj - 600.0) &
+        (lasvec[:, 0] <= tmax_trj + 600.0)
+    )
+
+    n_bad_post = int((~mask_postsync).sum())
+    if n_bad_post > 0:
+        print(f"[Georef] Removing {n_bad_post} rows outside plausible synced time range")
+        lasvec = lasvec[mask_postsync]
+
+    if len(lasvec) == 0:
+        raise ValueError(
+            f"No LiDAR rows remain after synced-time plausibility filtering for file: {path}"
+        )
+
+    # --------------------------------------------------
+    # 4) User time window filter
+    # --------------------------------------------------
     lasvec = apply_time_window_filter(lasvec, cfg.get("georef_time_window"))
+
+    if len(lasvec) == 0:
+        raise ValueError(
+            f"No LiDAR rows remain after user time-window filtering for file: {path}"
+        )
+
+    # --------------------------------------------------
+    # 5) Exact trajectory interpolation range
+    #    -> indispensable pour éviter le crash Slerp
+    # --------------------------------------------------
+    mask_interp_safe = (
+        np.isfinite(lasvec[:, 0]) &
+        (lasvec[:, 0] >= tmin_trj) &
+        (lasvec[:, 0] <= tmax_trj)
+    )
+
+    n_bad_interp = int((~mask_interp_safe).sum())
+    if n_bad_interp > 0:
+        print(f"[Georef] Removing {n_bad_interp} rows outside exact trajectory interpolation range")
+        lasvec = lasvec[mask_interp_safe]
+
+    if len(lasvec) == 0:
+        raise ValueError(
+            f"No LiDAR rows remain inside exact trajectory interpolation range for file: {path}"
+        )
+
     # ==================================================
-    # END KEPT AS-IS
+    # OUTPUT PREP
     # ==================================================
- 
     base_name = os.path.splitext(os.path.basename(path))[0]
     output_dir = cfg["output"]["path"]
     os.makedirs(output_dir, exist_ok=True)
- 
+
     output_type = cfg["output"]["type"]
     include_lasvec = cfg["output"]["lasvec"]
     lasvec_to_body = cfg["output"].get("lasvec_to_body", False)
     dist_cfg = cfg["distance_filtering"]
- 
-    subchunk_size = 10000000
+
+    subchunk_size = 10_000_000
     n_total = len(lasvec)
- 
-    # --------------------------------------------------
-    # Prepare output
-    # --------------------------------------------------
+
     if output_type == "ASCII":
         out_path = os.path.join(output_dir, base_name + "_pcd.txt")
         if os.path.exists(out_path):
             os.remove(out_path)
- 
+
         def append_ascii(arr):
-            if arr.shape[1] == 7:
-                fmt = "%.9f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f"
+            if arr.shape[1] == 8:
+                fmt = "%.9f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.0f"
+            elif arr.shape[1] == 5:
+                fmt = "%.9f, %.3f, %.3f, %.3f, %.0f"
             elif arr.shape[1] == 4:
                 fmt = "%.9f, %.3f, %.3f, %.3f"
             else:
                 raise ValueError(f"Unexpected ASCII output shape: {arr.shape}")
- 
             with open(out_path, "ab") as f:
                 np.savetxt(f, arr, fmt=fmt, delimiter=",")
- 
+
         append_output = append_ascii
         las_writer = None
         las_header = None
- 
+
     elif output_type == "LAS":
         out_path = os.path.join(output_dir, base_name + "_pcd.las")
         if os.path.exists(out_path):
             os.remove(out_path)
- 
+
         las_writer = None
         las_header = None
- 
+
         def append_las(arr):
             nonlocal las_writer, las_header
- 
+
             if las_writer is None:
                 las_header = laspy.LasHeader(point_format=1, version="1.4")
                 las_header.scales = np.array([0.001, 0.001, 0.001])
- 
                 las_header.offsets = np.array([
                     np.floor(arr[:, 1].min()),
                     np.floor(arr[:, 2].min()),
                     np.floor(arr[:, 3].min()),
                 ], dtype=np.float64)
- 
+
                 if include_lasvec:
                     las_header.add_extra_dim(ExtraBytesParams(name="lasvec_x", type=np.float32))
                     las_header.add_extra_dim(ExtraBytesParams(name="lasvec_y", type=np.float32))
                     las_header.add_extra_dim(ExtraBytesParams(name="lasvec_z", type=np.float32))
- 
+
                 las_writer = laspy.open(out_path, mode="w", header=las_header)
- 
                 print(f"[LAS] header offsets set to {las_header.offsets}")
                 print(f"[LAS] header scales  set to {las_header.scales}")
- 
+
             las = laspy.LasData(las_header)
             las.gps_time = arr[:, 0].astype(np.float64)
             las.x = arr[:, 1]
             las.y = arr[:, 2]
             las.z = arr[:, 3]
- 
+
             if include_lasvec:
-                if arr.shape[1] < 7:
+                if arr.shape[1] < 8:
                     raise ValueError(f"include_lasvec=True but arr has shape {arr.shape}")
                 las["lasvec_x"] = arr[:, 4].astype(np.float32)
                 las["lasvec_y"] = arr[:, 5].astype(np.float32)
                 las["lasvec_z"] = arr[:, 6].astype(np.float32)
- 
+                i_raw = arr[:, 7]
+            else:
+                i_raw = arr[:, 4]
+
+            p2, p98 = np.percentile(i_raw, [5, 95])
+            if p98 > p2:
+                i_norm = np.clip((i_raw - p2) / (p98 - p2) * 65535, 0, 65535)
+            else:
+                i_norm = np.zeros_like(i_raw)
+            las.intensity = i_norm.astype(np.uint16)
+
             las_writer.write_points(las.points)
- 
+
         append_output = append_las
- 
+
     else:
         raise ValueError(f"Unsupported output type: {output_type}")
- 
-    # --------------------------------------------------
-    # Process by subchunks
-    # --------------------------------------------------
+
+    # ==================================================
+    # PROCESS BY SUBCHUNKS
+    # ==================================================
     total_out = 0
- 
+
     try:
         for i0 in range(0, n_total, subchunk_size):
             i1 = min(i0 + subchunk_size, n_total)
             lasvec_chunk = lasvec[i0:i1]
- 
+
             print(f"\n[Georef] subchunk {i0}:{i1} / {n_total}")
- 
-            # Georef only this chunk
+
+            # sécurité supplémentaire, au cas où
+            mask_chunk_interp_safe = (
+                np.isfinite(lasvec_chunk[:, 0]) &
+                (lasvec_chunk[:, 0] >= tmin_trj) &
+                (lasvec_chunk[:, 0] <= tmax_trj)
+            )
+            if not np.all(mask_chunk_interp_safe):
+                n_bad_chunk = int((~mask_chunk_interp_safe).sum())
+                print(f"[Georef] subchunk removing {n_bad_chunk} rows outside interpolation range")
+                lasvec_chunk = lasvec_chunk[mask_chunk_interp_safe]
+
+            if len(lasvec_chunk) == 0:
+                continue
+
+            # pcd_chunk : [t, x, y, z, intensity] (+ vx,vy,vz if lasvec_to_body)
             pcd_chunk = georefLidar(lasvec_chunk, trj, cfg)
- 
-            # Distance filtering
+
             if dist_cfg["enable"]:
-                pcd_chunk = filter_pcd_by_vehicle_distance(
+                pcd_chunk, mask_keep = filter_pcd_by_vehicle_distance(
                     pcd_chunk,
                     trj,
                     max_dist_m=float(dist_cfg["max_distance_m"]),
                     epsg_out=dist_cfg["map_epsg"],
+                    return_mask=True,
                 )
- 
-            if len(pcd_chunk) == 0:
-                del lasvec_chunk
-                del pcd_chunk
-                continue
- 
-            # Build output array
-            # pcd_chunk is expected to be:
-            #   [t, x, y, z]                  if lasvec_to_body == False
-            #   [t, x, y, z, vx, vy, vz]      if lasvec_to_body == True
-            if include_lasvec:
-                if lasvec_to_body:
-                    if pcd_chunk.shape[1] < 7:
-                        raise ValueError(
-                            f"lasvec_to_body=True but pcd_chunk has shape {pcd_chunk.shape}"
-                        )
-                    arr = pcd_chunk
-                else:
-                    # write lasvec in sensor frame from original lasvec_chunk
-                    if dist_cfg["enable"]:
-                        times_kept = pcd_chunk[:, 0]
-                        idx = np.isin(lasvec_chunk[:, 0], times_kept)
-                        lasvec_kept = lasvec_chunk[idx]
- 
-                        if len(lasvec_kept) != len(pcd_chunk):
-                            print("[warning] lasvec/pcd mismatch after filtering, fallback by truncation")
-                            nmin = min(len(lasvec_kept), len(pcd_chunk))
-                            pcd_chunk = pcd_chunk[:nmin]
-                            lasvec_kept = lasvec_kept[:nmin]
- 
-                        arr = np.column_stack((pcd_chunk[:, :4], lasvec_kept[:, 1:4]))
-                    else:
-                        arr = np.column_stack((pcd_chunk[:, :4], lasvec_chunk[:, 1:4]))
             else:
-                arr = pcd_chunk[:, :4]
- 
+                mask_keep = None
+
+            if len(pcd_chunk) == 0:
+                del lasvec_chunk, pcd_chunk
+                continue
+
+            if include_lasvec:
+                if dist_cfg["enable"]:
+                    lasvec_kept = lasvec_chunk[mask_keep]
+                    if len(lasvec_kept) != len(pcd_chunk):
+                        raise RuntimeError(
+                            f"Internal mismatch after distance filtering: "
+                            f"len(lasvec_kept)={len(lasvec_kept)} vs len(pcd_chunk)={len(pcd_chunk)}"
+                        )
+                else:
+                    lasvec_kept = lasvec_chunk
+
+                if lasvec_to_body:
+                    # pcd_chunk = [t, x, y, z, intensity, vx, vy, vz]
+                    # arr       = [t, x, y, z, vx, vy, vz, intensity]
+                    arr = np.column_stack((
+                        pcd_chunk[:, :4],
+                        pcd_chunk[:, 5:8],
+                        pcd_chunk[:, 4],
+                    ))
+                else:
+                    # arr = [t, x, y, z, lx, ly, lz, intensity]
+                    arr = np.column_stack((
+                        pcd_chunk[:, :4],
+                        lasvec_kept[:, 1:4],
+                        pcd_chunk[:, 4],
+                    ))
+            else:
+                arr = pcd_chunk[:, :5]
+
             append_output(arr)
             total_out += len(arr)
- 
             print(f"[Georef] written {len(arr)} rows")
- 
-            del lasvec_chunk
-            del pcd_chunk
-            del arr
- 
+
+            del lasvec_chunk, pcd_chunk, arr
+
     finally:
         if las_writer is not None:
             las_writer.close()
- 
+
     print(f"Saved {out_path}")
     print(f"[Georef] total input rows : {n_total}")
     print(f"[Georef] total output rows: {total_out}")
- 
+
     return out_path
  
  

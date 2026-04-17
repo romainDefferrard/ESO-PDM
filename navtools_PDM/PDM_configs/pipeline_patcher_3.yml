@@ -31,7 +31,7 @@ mode: "patcher"
 # SCENARIO NAME
 # ==============================================================
 # Used to name output folders and generated config files
-scenario_name: "georef_ALL_traj_outage_1"
+scenario_name: "georef_ALL_traj_outage_3"
 
 # ==============================================================
 # SCANNER CONFIGURATIONS

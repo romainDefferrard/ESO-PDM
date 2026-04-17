@@ -20,6 +20,110 @@ def setup_logger():
     )
 
 
+# ---------------------------------------------------------------------------
+# LAS / LAZ reader  (loads full file, sorts by gps_time, yields groups)
+# ---------------------------------------------------------------------------
+
+class GroupedLasReader:
+    """
+    Read a .las/.laz cloud and yield groups of identical gps_time.
+    Reads in chunks to avoid loading the full file into RAM.
+    Updates tqdm pbar progressively as chunks are read.
+    """
+
+    CHUNK_SIZE = 2_000_000
+
+    def __init__(self, path: Path, tmin: float, tmax: float, pbar=None):
+        self.path = Path(path)
+        self.tmin = tmin
+        self.tmax = tmax
+
+        file_size = os.path.getsize(path)
+        logging.info("Loading LAS/LAZ (chunked): %s  (%.1f GB)",
+                     path.name, file_size / 1e9)
+
+        t_chunks, x_chunks, y_chunks, z_chunks = [], [], [], []
+        bytes_read = 0
+
+        with laspy.open(path) as reader:
+            total_pts  = reader.header.point_count
+            pts_read   = 0
+
+            for points in reader.chunk_iterator(self.CHUNK_SIZE):
+                n = len(points)
+                pts_read  += n
+
+                # Estimate bytes consumed proportionally to point count
+                chunk_bytes = int(file_size * n / max(total_pts, 1))
+                bytes_read += chunk_bytes
+                if pbar is not None:
+                    pbar.update(chunk_bytes)
+
+                t = np.asarray(points.gps_time, dtype=np.float64)
+
+                # Early exit — LAS files are sorted by time
+                if n > 0 and t[0] > tmax:
+                    # Account for remaining bytes in pbar
+                    if pbar is not None:
+                        pbar.update(file_size - bytes_read)
+                    break
+
+                mask = (t >= tmin) & (t <= tmax)
+                if not np.any(mask):
+                    continue
+
+                t_chunks.append(t[mask])
+                x_chunks.append(np.asarray(points.x, dtype=np.float64)[mask])
+                y_chunks.append(np.asarray(points.y, dtype=np.float64)[mask])
+                z_chunks.append(np.asarray(points.z, dtype=np.float64)[mask])
+
+        if not t_chunks:
+            self._t   = np.empty(0, dtype=np.float64)
+            self._xyz = np.empty((0, 3), dtype=np.float64)
+            self._idx  = 0
+            self._done = True
+            logging.info("  -> 0 points in window [%.3f, %.3f]", tmin, tmax)
+            return
+
+        t   = np.concatenate(t_chunks)
+        x   = np.concatenate(x_chunks)
+        y   = np.concatenate(y_chunks)
+        z   = np.concatenate(z_chunks)
+
+        order      = np.argsort(t, kind="stable")
+        self._t    = t[order]
+        self._xyz  = np.column_stack([x[order], y[order], z[order]])
+        self._idx  = 0
+        self._done = len(self._t) == 0
+
+        logging.info("  -> %d points in window [%.3f, %.3f]", len(self._t), tmin, tmax)
+
+    def close(self):
+        pass  # nothing to close
+
+    def next_group(self):
+        if self._done or self._idx >= len(self._t):
+            return None
+
+        t0  = self._t[self._idx]
+        end = self._idx
+
+        while end < len(self._t) and self._t[end] == t0:
+            end += 1
+
+        pts = self._xyz[self._idx:end]
+        self._idx = end
+
+        if self._idx >= len(self._t):
+            self._done = True
+
+        return t0, pts
+
+
+# ---------------------------------------------------------------------------
+# TXT reader (original streaming reader, unchanged)
+# ---------------------------------------------------------------------------
+
 class GroupedTxtReader:
     """
     Read a sorted txt cloud and yield groups of identical gps_time.
@@ -116,6 +220,22 @@ class GroupedTxtReader:
         return t0, np.vstack(pts)
 
 
+# ---------------------------------------------------------------------------
+# Factory: pick the right reader based on file extension
+# ---------------------------------------------------------------------------
+
+def make_reader(path: Path, delim: str, tmin: float, tmax: float, pbar=None):
+    suffix = path.suffix.lower()
+    if suffix in (".las", ".laz"):
+        return GroupedLasReader(path, tmin, tmax, pbar=pbar)
+    else:
+        return GroupedTxtReader(path, delim, tmin, tmax, pbar=pbar)
+
+
+# ---------------------------------------------------------------------------
+# LAS output helpers (unchanged)
+# ---------------------------------------------------------------------------
+
 def create_las_writer(out_las: Path, scale: float, offset_xyz: np.ndarray):
     hdr = laspy.LasHeader(point_format=6, version="1.4")
     hdr.scales = np.array([scale, scale, scale], dtype=np.float64)
@@ -136,6 +256,10 @@ def write_las_chunk(writer, t: np.ndarray, xyz: np.ndarray, e3d: np.ndarray):
     las["e3d"] = e3d.astype(np.float32)
     writer.write_points(las)
 
+
+# ---------------------------------------------------------------------------
+# Statistics
+# ---------------------------------------------------------------------------
 
 def compute_summary_from_temp_e3d(temp_path: Path, accum: Dict[str, float]) -> Dict[str, float]:
     e3d = np.fromfile(temp_path, dtype=np.float32)
@@ -202,10 +326,15 @@ def format_summary(rows: List[Dict[str, object]]) -> str:
         lines.append(" ".join([fnum(r.get(name), w) for name, w in cols]))
     return "\n".join(lines)
 
+
+# ---------------------------------------------------------------------------
+# Core processing (now format-agnostic via make_reader)
+# ---------------------------------------------------------------------------
+
 def process_pair_streaming(
     ref_path: Path,
     tgt_path: Path,
-    out_las: Path,
+    out_las: Optional[Path],
     delim: str,
     tmin: float,
     tmax: float,
@@ -214,8 +343,8 @@ def process_pair_streaming(
     total_size = os.path.getsize(ref_path) + os.path.getsize(tgt_path)
 
     with tqdm(total=total_size, unit="B", unit_scale=True, desc=f"Streaming {tgt_path.name}") as pbar:
-        ref_reader = GroupedTxtReader(ref_path, delim, tmin, tmax, pbar=pbar)
-        tgt_reader = GroupedTxtReader(tgt_path, delim, tmin, tmax, pbar=pbar)
+        ref_reader = make_reader(ref_path, delim, tmin, tmax, pbar=pbar)
+        tgt_reader = make_reader(tgt_path, delim, tmin, tmax, pbar=pbar)
 
         writer = None
 
@@ -276,8 +405,8 @@ def process_pair_streaming(
                     dxyz = xyzT[0] - xyzR[0]
                     e3d = np.linalg.norm(dxyz)
 
-                    # Initialize LAS writer at first matched point
-                    if writer is None:
+                    # Initialize LAS writer at first matched point (only if output requested)
+                    if out_las is not None and writer is None:
                         offset_xyz = xyzR[0].copy()
                         writer = create_las_writer(out_las, scale, offset_xyz)
 
@@ -300,12 +429,13 @@ def process_pair_streaming(
 
                     np.asarray([e3d], dtype=np.float32).tofile(ftmp)
 
-                    write_las_chunk(
-                        writer,
-                        np.asarray([tR], dtype=np.float64),
-                        xyzR.reshape(1, 3),
-                        np.asarray([e3d], dtype=np.float32),
-                    )
+                    if writer is not None:
+                        write_las_chunk(
+                            writer,
+                            np.asarray([tR], dtype=np.float64),
+                            xyzR.reshape(1, 3),
+                            np.asarray([e3d], dtype=np.float32),
+                        )
 
                     gR = ref_reader.next_group()
                     gT = tgt_reader.next_group()
@@ -336,6 +466,11 @@ def process_pair_streaming(
     metrics.update(counts)
     return metrics
 
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 def main():
     setup_logger()
 
@@ -345,10 +480,10 @@ def main():
 
     cfg = yaml.safe_load(Path(args.config).read_text())
 
-    ref_txt = Path(cfg["reference"]["path"])
-    targets = cfg["targets"]
+    ref_path = Path(cfg["reference"]["path"])
+    targets  = cfg["targets"]
 
-    t0 = float(cfg["time"]["outage_start"])
+    t0  = float(cfg["time"]["outage_start"])
     dur = float(cfg["time"]["outage_duration"])
     buf = float(cfg["time"]["buffer"])
     tmin = t0 - buf
@@ -357,21 +492,24 @@ def main():
     delim = cfg.get("io", {}).get("delim", ",")
     scale = float(cfg.get("las", {}).get("scale", 0.001))
 
-    logging.info("Reference: %s", ref_txt)
+    logging.info("Reference: %s", ref_path)
     logging.info("Window: [%.3f , %.3f] (start=%.3f dur=%.1f buffer=%.1f)", tmin, tmax, t0, dur, buf)
 
     summary_rows = []
 
     for i, tgt in enumerate(targets, start=1):
         tgt_path = Path(tgt["path"])
-        out_las = Path(tgt["outfile"]).with_suffix(".las")
+        out_las  = Path(tgt["outfile"]).with_suffix(".las") if tgt.get("outfile") else None
 
         logging.info("")
         logging.info("Target %d/%d: %s", i, len(targets), tgt_path)
-        logging.info("Output LAS: %s", out_las)
+        if out_las:
+            logging.info("Output LAS: %s", out_las)
+        else:
+            logging.info("Output LAS: (disabled)")
 
         metrics = process_pair_streaming(
-            ref_path=ref_txt,
+            ref_path=ref_path,
             tgt_path=tgt_path,
             out_las=out_las,
             delim=delim,
