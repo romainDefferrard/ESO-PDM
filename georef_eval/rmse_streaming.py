@@ -27,33 +27,30 @@ def setup_logger():
 class GroupedLasReader:
     """
     Read a .las/.laz cloud and yield groups of identical gps_time.
-    Reads in chunks to avoid loading the full file into RAM.
-    Updates tqdm pbar progressively as chunks are read.
+    Reads in chunks (memory efficient) with optional decimation.
+    decimate=N keeps 1 point every N within the time window.
     """
 
     CHUNK_SIZE = 2_000_000
 
-    def __init__(self, path: Path, tmin: float, tmax: float, pbar=None):
+    def __init__(self, path: Path, tmin: float, tmax: float, pbar=None, decimate: int = 1):
         self.path = Path(path)
         self.tmin = tmin
         self.tmax = tmax
+        self._decimate = max(1, int(decimate))
 
         file_size = os.path.getsize(path)
-        logging.info("Loading LAS/LAZ (chunked): %s  (%.1f GB)",
-                     path.name, file_size / 1e9)
+        logging.info("Loading LAS/LAZ (chunked, decimate=%d): %s  (%.1f GB)",
+                     self._decimate, path.name, file_size / 1e9)
 
         t_chunks, x_chunks, y_chunks, z_chunks = [], [], [], []
         bytes_read = 0
 
         with laspy.open(path) as reader:
-            total_pts  = reader.header.point_count
-            pts_read   = 0
+            total_pts = reader.header.point_count
 
             for points in reader.chunk_iterator(self.CHUNK_SIZE):
                 n = len(points)
-                pts_read  += n
-
-                # Estimate bytes consumed proportionally to point count
                 chunk_bytes = int(file_size * n / max(total_pts, 1))
                 bytes_read += chunk_bytes
                 if pbar is not None:
@@ -61,9 +58,7 @@ class GroupedLasReader:
 
                 t = np.asarray(points.gps_time, dtype=np.float64)
 
-                # Early exit — LAS files are sorted by time
                 if n > 0 and t[0] > tmax:
-                    # Account for remaining bytes in pbar
                     if pbar is not None:
                         pbar.update(file_size - bytes_read)
                     break
@@ -72,10 +67,16 @@ class GroupedLasReader:
                 if not np.any(mask):
                     continue
 
-                t_chunks.append(t[mask])
-                x_chunks.append(np.asarray(points.x, dtype=np.float64)[mask])
-                y_chunks.append(np.asarray(points.y, dtype=np.float64)[mask])
-                z_chunks.append(np.asarray(points.z, dtype=np.float64)[mask])
+                idx = np.where(mask)[0]
+                if self._decimate > 1:
+                    idx = idx[::self._decimate]
+                if len(idx) == 0:
+                    continue
+
+                t_chunks.append(t[idx])
+                x_chunks.append(np.asarray(points.x, dtype=np.float64)[idx])
+                y_chunks.append(np.asarray(points.y, dtype=np.float64)[idx])
+                z_chunks.append(np.asarray(points.z, dtype=np.float64)[idx])
 
         if not t_chunks:
             self._t   = np.empty(0, dtype=np.float64)
@@ -99,7 +100,7 @@ class GroupedLasReader:
         logging.info("  -> %d points in window [%.3f, %.3f]", len(self._t), tmin, tmax)
 
     def close(self):
-        pass  # nothing to close
+        pass
 
     def next_group(self):
         if self._done or self._idx >= len(self._t):
@@ -119,10 +120,6 @@ class GroupedLasReader:
 
         return t0, pts
 
-
-# ---------------------------------------------------------------------------
-# TXT reader (original streaming reader, unchanged)
-# ---------------------------------------------------------------------------
 
 class GroupedTxtReader:
     """
@@ -224,10 +221,10 @@ class GroupedTxtReader:
 # Factory: pick the right reader based on file extension
 # ---------------------------------------------------------------------------
 
-def make_reader(path: Path, delim: str, tmin: float, tmax: float, pbar=None):
+def make_reader(path: Path, delim: str, tmin: float, tmax: float, pbar=None, decimate: int = 1):
     suffix = path.suffix.lower()
     if suffix in (".las", ".laz"):
-        return GroupedLasReader(path, tmin, tmax, pbar=pbar)
+        return GroupedLasReader(path, tmin, tmax, pbar=pbar, decimate=decimate)
     else:
         return GroupedTxtReader(path, delim, tmin, tmax, pbar=pbar)
 
@@ -330,7 +327,6 @@ def format_summary(rows: List[Dict[str, object]]) -> str:
 # ---------------------------------------------------------------------------
 # Core processing (now format-agnostic via make_reader)
 # ---------------------------------------------------------------------------
-
 def process_pair_streaming(
     ref_path: Path,
     tgt_path: Path,
@@ -339,12 +335,15 @@ def process_pair_streaming(
     tmin: float,
     tmax: float,
     scale: float,
+    decimate: int = 1,
 ) -> Dict[str, float]:
+
     total_size = os.path.getsize(ref_path) + os.path.getsize(tgt_path)
 
     with tqdm(total=total_size, unit="B", unit_scale=True, desc=f"Streaming {tgt_path.name}") as pbar:
-        ref_reader = make_reader(ref_path, delim, tmin, tmax, pbar=pbar)
-        tgt_reader = make_reader(tgt_path, delim, tmin, tmax, pbar=pbar)
+        # 🔥 décimate uniquement sur REF
+        ref_reader = make_reader(ref_path, delim, tmin, tmax, pbar=pbar, decimate=decimate)
+        tgt_reader = make_reader(tgt_path, delim, tmin, tmax, pbar=pbar, decimate=1)
 
         writer = None
 
@@ -383,31 +382,33 @@ def process_pair_streaming(
 
         with open(tmp_path, "ab") as ftmp:
             while gR is not None and gT is not None:
+
                 tR, xyzR = gR
                 tT, xyzT = gT
 
                 counts["N_ref_raw"] += len(xyzR)
                 counts["N_tgt_raw"] += len(xyzT)
 
-                # Skip duplicated timestamps in ref
+                # 🔥 gérer multi-retours SANS supprimer les timestamps
                 if len(xyzR) > 1:
-                    counts["ref_dup_skip"] += len(xyzR)
-                    gR = ref_reader.next_group()
-                    continue
+                    xyzR = xyzR.mean(axis=0)
+                else:
+                    xyzR = xyzR[0]
 
-                # Skip duplicated timestamps in tgt
                 if len(xyzT) > 1:
-                    counts["tgt_dup_skip"] += len(xyzT)
-                    gT = tgt_reader.next_group()
-                    continue
+                    xyzT = xyzT.mean(axis=0)
+                else:
+                    xyzT = xyzT[0]
 
+                # 🔥 matching strict
                 if tR == tT:
-                    dxyz = xyzT[0] - xyzR[0]
+
+                    dxyz = xyzT - xyzR
                     e3d = np.linalg.norm(dxyz)
 
-                    # Initialize LAS writer at first matched point (only if output requested)
+                    # init writer
                     if out_las is not None and writer is None:
-                        offset_xyz = xyzR[0].copy()
+                        offset_xyz = xyzR.copy()
                         writer = create_las_writer(out_las, scale, offset_xyz)
 
                     counts["N_match"] += 1
@@ -489,8 +490,9 @@ def main():
     tmin = t0 - buf
     tmax = t0 + dur + buf
 
-    delim = cfg.get("io", {}).get("delim", ",")
-    scale = float(cfg.get("las", {}).get("scale", 0.001))
+    delim    = cfg.get("io", {}).get("delim", ",")
+    scale    = float(cfg.get("las", {}).get("scale", 0.001))
+    decimate = int(cfg.get("decimate", 1))
 
     logging.info("Reference: %s", ref_path)
     logging.info("Window: [%.3f , %.3f] (start=%.3f dur=%.1f buffer=%.1f)", tmin, tmax, t0, dur, buf)
@@ -514,6 +516,7 @@ def main():
             out_las=out_las,
             delim=delim,
             tmin=tmin,
+            decimate=decimate,
             tmax=tmax,
             scale=scale,
         )

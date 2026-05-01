@@ -173,30 +173,22 @@ def _get_las_time(points, time_field="gps_time"):
     except Exception:
         return np.asarray(getattr(points, time_field), dtype=np.float64)
 
-def file_time_bounds_fast_las(
-    las_path,
-    time_field: str = "gps_time",
-    chunk_size: int = 2_000_000,
-):
+def file_time_bounds_fast_las(las_path, time_field="gps_time", chunk_size=2_000_000):
     las_path = Path(las_path)
-    t_first = None
-    t_last = None
+    t_min, t_max = np.inf, -np.inf
 
     with laspy.open(las_path) as reader:
         for points in reader.chunk_iterator(chunk_size):
-            if len(points) == 0:
-                continue
             t = _get_las_time(points, time_field=time_field)
             if t.size == 0:
                 continue
-            if t_first is None:
-                t_first = float(t[0])
-            t_last = float(t[-1])
+            t_min = min(t_min, float(t.min()))
+            t_max = max(t_max, float(t.max()))
 
-    if t_first is None or t_last is None:
+    if t_min == np.inf:
         raise RuntimeError(f"No valid {time_field} found in {las_path}")
 
-    return t_first, t_last
+    return t_min, t_max
 
 # ============================
 # Chunker: distance-based 

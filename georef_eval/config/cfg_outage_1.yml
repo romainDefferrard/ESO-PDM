@@ -5,6 +5,8 @@ ref_manifest: /media/b085164/Elements/CALIB_26_02_25/georef_errors/outage_1/crop
 
 output_dir: /media/b085164/Elements/CALIB_26_02_25/georef_errors/outage_1
 
+decimate: 10
+
 methods:
   - name: outage_traj
     dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL

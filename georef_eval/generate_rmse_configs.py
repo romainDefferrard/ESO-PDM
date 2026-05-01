@@ -72,6 +72,7 @@ def generate_configs_for_method(
     outage_id: str,
     buffer: float,
     scale: float,
+    decimate: int = 1,
 ) -> Path:
 
     out_dir_method = output_dir / method_name
@@ -121,6 +122,7 @@ def generate_configs_for_method(
             },
             "io":  {"delim": ","},
             "las": {"scale": scale},
+            "decimate": decimate,
         }
 
         yaml_path.write_text(yaml.dump(rmse_cfg, default_flow_style=False, sort_keys=False))
@@ -169,6 +171,7 @@ def main():
     output_dir   = Path(cfg["output_dir"])
     buffer       = float(cfg.get("time", {}).get("buffer", 2.0))
     scale        = float(cfg.get("las",  {}).get("scale",  0.001))
+    decimate     = int(cfg.get("decimate", 1))
 
     logging.info("Outage : %s", outage_id)
     logging.info("Ref    : %s  (%d scans)", ref_dir, len(ref_manifest))
@@ -194,6 +197,7 @@ def main():
             outage_id=outage_id,
             buffer=buffer,
             scale=scale,
+            decimate=decimate,
         )
 
     logging.info("")
@@ -206,3 +210,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

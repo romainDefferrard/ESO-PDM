@@ -80,75 +80,58 @@ def apply_leapsec(t: np.ndarray, leapsec: Optional[float]) -> np.ndarray:
     return t + float(leapsec)
  
  
-def filter_sdc_paths_by_manifest(
+def filter_lasvec_paths_by_manifest(
     paths: list,
     manifest_path: Optional[str],
     tw_cfg: Optional[Dict[str, Any]],
 ) -> list:
     """
-    Given a list of SDC file paths, return only those whose time range
-    (read from the manifest CSV) overlaps the georef_time_window.
- 
-    If manifest_path is None or tw_cfg is disabled, all paths are returned as-is.
- 
-    Manifest CSV format (produced by build_sdc_manifest.ipynb):
-        filename, t_min, t_max, n_records
- 
-    Overlap condition:
-        file_t_max >= window_t_lo  AND  file_t_min <= window_t_hi
+    Filtre une liste de fichiers lasvec (.sdc ou .csv) par overlap
+    avec la georef_time_window, en utilisant un manifest CSV.
     """
     import pandas as pd
- 
+
     if manifest_path is None:
         return paths
- 
-    if tw_cfg is None or not tw_cfg.get("enable", False):
-        # Manifest present but no time window: still use manifest to validate paths,
-        # but don't drop anything based on time.
-        print(f"[manifest] Loaded but georef_time_window disabled — all SDC files kept.")
-        return paths
- 
-    margin_s = float(tw_cfg.get("margin_s", 60.0))
-    if "outages" in tw_cfg and tw_cfg["outages"]:
-        outages = tw_cfg["outages"]
-    else:
-        outages = [tw_cfg["outage"]]
 
+    if tw_cfg is None or not tw_cfg.get("enable", False):
+        print(f"[manifest] Loaded but georef_time_window disabled — all files kept.")
+        return paths
+
+    margin_s = float(tw_cfg.get("margin_s", 60.0))
+    outages  = tw_cfg["outages"] if tw_cfg.get("outages") else [tw_cfg["outage"]]
     t_lo = min(float(o[0]) - margin_s for o in outages)
     t_hi = max(float(o[0]) + float(o[1]) + margin_s for o in outages)
- 
+
     print(f"[manifest] Reading {manifest_path}")
     df = pd.read_csv(manifest_path)
- 
+
     if not {"filename", "t_min", "t_max"}.issubset(df.columns):
         raise ValueError(
-            f"Manifest {manifest_path} is missing required columns. "
-            f"Expected at least: filename, t_min, t_max. Got: {list(df.columns)}"
+            f"Manifest {manifest_path} missing required columns. "
+            f"Expected: filename, t_min, t_max. Got: {list(df.columns)}"
         )
- 
-    # Build a set of filenames that overlap the window
-    mask = (df["t_max"] >= t_lo) & (df["t_min"] <= t_hi)
+
+    mask        = (df["t_max"] >= t_lo) & (df["t_min"] <= t_hi)
     valid_names = set(df.loc[mask, "filename"].values)
- 
+
     print(
         f"[manifest] Window [{t_lo:.3f}, {t_hi:.3f}] — "
         f"{mask.sum()}/{len(df)} files overlap"
     )
- 
+
     filtered = [p for p in paths if os.path.basename(p) in valid_names]
- 
-    skipped = len(paths) - len(filtered)
+    skipped  = len(paths) - len(filtered)
     if skipped:
-        print(f"[manifest] Skipped {skipped} SDC files outside the time window.")
- 
+        print(f"[manifest] Skipped {skipped} files outside the time window.")
+
     if not filtered:
         print(
-            f"[manifest] WARNING: No SDC files remain after manifest filtering!\n"
+            f"[manifest] WARNING: No files remain after manifest filtering!\n"
             f"  Window: [{t_lo:.3f}, {t_hi:.3f}]\n"
-            f"  Check that the manifest filenames match your SDC directory,\n"
-            f"  or disable georef_time_window."
+            f"  Check manifest filenames or disable georef_time_window."
         )
- 
+
     return filtered
  
  
@@ -313,11 +296,18 @@ def georef_one_file(cfg, trj, path):
     # ==================================================
     # LOAD LASVEC
     # ==================================================
-    if cfg["lasvec"]["type"] == "SDC":
+    ext = Path(path).suffix.lower()
+    if ext == ".sdc":
         lasvec = loadLasVecSDC(path)
-    else:
-        lasvec = loadLasVecAscii(cfg["lasvec"], cfg["limatch_output"])
+        lasvec[:, 0] = sync_times_day_shift(lasvec[:, 0], trj.time)
+        lasvec[:, 0] = apply_leapsec(lasvec[:, 0], cfg.get("leapsec"))
+    elif ext == ".csv":
+        lasvec = loadLasVecAscii(path, cfg["lasvec"])
+        lasvec[:, 0] = apply_leapsec(lasvec[:, 0], cfg.get("leapsec"))
 
+        # GPS SOW direct — pas de day-shift ni leapsec
+    else:
+        raise ValueError(f"Unsupported lasvec extension: {ext}")
     # --------------------------------------------------
     # 1) Raw sanity filter ONLY (before sync)
     #    -> ne surtout pas comparer à trj.time ici
@@ -340,12 +330,6 @@ def georef_one_file(cfg, trj, path):
 
     if len(lasvec) == 0:
         raise ValueError(f"No valid raw LiDAR rows remain after sanity filtering for file: {path}")
-
-    # --------------------------------------------------
-    # 2) Sync time to trajectory day + leap seconds
-    # --------------------------------------------------
-    lasvec[:, 0] = sync_times_day_shift(lasvec[:, 0], trj.time)
-    lasvec[:, 0] = apply_leapsec(lasvec[:, 0], cfg.get("leapsec"))
 
     tmin_trj = float(np.nanmin(trj.time))
     tmax_trj = float(np.nanmax(trj.time))
@@ -593,7 +577,8 @@ def run(cfg: Dict[str, Any]):
     trj = load_and_prepare_trajectory(cfg)
  
     if os.path.isdir(cfg["lasvec"]["path"]):
-        paths = glob.glob(os.path.join(cfg["lasvec"]["path"], "*.sdc"))
+        paths  = glob.glob(os.path.join(cfg["lasvec"]["path"], "*.sdc"))
+        paths += glob.glob(os.path.join(cfg["lasvec"]["path"], "*.csv"))
         paths.sort()
     else:
         paths = [cfg["lasvec"]["path"]]
@@ -601,7 +586,7 @@ def run(cfg: Dict[str, Any]):
     # Filter SDC files by manifest + time window before loading anything
     # manifest_path can live under cfg["lasvec"] (scanner YAML) or at top level
     manifest_path = cfg["lasvec"].get("manifest_path") or cfg.get("manifest_path")
-    paths = filter_sdc_paths_by_manifest(
+    paths = filter_lasvec_paths_by_manifest(
         paths,
         manifest_path=manifest_path,
         tw_cfg=cfg.get("georef_time_window"),

@@ -9,16 +9,16 @@
 #   Excluded  : 306405 -> 306560  (155 s, sigma GPS too high)
 # ==============================================================
 
-mode: "patcher"
-scenario_name: "georef_ALL_traj_outage_3"
+mode: "chunk"
+scenario_name: "georef_ALL_traj_outage_3/APX/georef_F2B"
 
 # ==============================================================
 # SCANNER CONFIGURATIONS
 # ==============================================================
 scanners:
-  ha_cfg:   "navtools_PDM/PDM_configs/scanner_HA.yml"
-  lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR.yml"
-  puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK.yml"
+  ha_cfg:   "navtools_PDM/PDM_configs/scanner_HA_CALIB.yml"
+  lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR_CALIB.yml"
+  puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK_CALIB.yml"
 
 merge_groups:
   - name: "HA_LR"
@@ -29,7 +29,7 @@ merge_groups:
 # ==============================================================
 trajectory:
   type: "SBET"
-  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_3_306295_306640/traj_outage/outage_3.out"
+  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/APX/outage_3/F2B_z3/out/F2B_out3_apx.out"
   cfg:
     type: "SBET"
 
@@ -40,7 +40,7 @@ trajectory:
 georef_time_window:
   enable: true
   outage: [306290.0, 350.0]
-  margin_s: 60.0
+  margin_s: 30.0
 
 # ==============================================================
 # DISTANCE FILTERING
@@ -55,7 +55,7 @@ distance_filtering:
 # PATHS
 # ==============================================================
 paths:
-  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
+  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25/"
   patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
   limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B_3.yml"
   gps_input:    "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt"
@@ -68,7 +68,7 @@ steps:
   merge:            false
   vux_puck_merge:   false
   chunk:            false
-  limatch:          false
+  limatch:          true
   gps_outage_file:  false
 
 # ==============================================================
@@ -105,14 +105,14 @@ merge_correspondences:
 # CHUNKING
 # ==============================================================
 chunk:
-  source: "existing"
-  existing_root: null #"/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/scenario_combined/chunks_15m"
-  merged_input_root: null
+  source: "generate"
+  existing_root: null #"/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/APX/scenario_combined/chunks_10m"
+  merged_input_root: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/APX/merged/ALL
   merged_group: null 
   reference_scanner: "HA"
   output_root: null
-  length_m: 15.0
-  min_last_chunk_m: 10.0
+  length_m: 10.0
+  min_last_chunk_m: 6.0
   min_points: 2000
   epsg_out: "EPSG:2056"
   delimiter: ","
@@ -142,14 +142,14 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
-  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/Patcher"
-  neighbor_k: 1
-  do_cross_scan: true
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/APX/georef_F2B/limatch_F2B_traj_F2B_v3"
+  neighbor_k: 0
+  do_cross_scan: false
 
   do_spatial_crossings: true
   crossings_output_root: null
   crossing_min_separation: 30
-  crossing_overlap_margin_m: 1.2
+  crossing_overlap_margin_m: 5.0  # 30 avec la traj outage et 5 avec la traj F2B
 
 # ==============================================================
 # PATCHER (unused here)
@@ -157,7 +157,7 @@ limatch:
 patcher:
   run: true
   source: "run"
-  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/Patcher"
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_3/APX/Patcher"
   gps_outage_file:
     enabled: false
     output_root: null

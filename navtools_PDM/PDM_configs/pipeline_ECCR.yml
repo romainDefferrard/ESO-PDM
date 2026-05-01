@@ -4,16 +4,16 @@
 # Scenario      : georef_ALL_traj_outage_1
 # ==============================================================
  
-mode: "georef_only"
-scenario_name: "georef_VUX_zone_3_outage/traj_FIXED"
+mode: "chunk"
+scenario_name: "georef_ALL_zone_3_outage/APX/georef_F2B"
  
 # ==============================================================
 # SCANNER CONFIGURATIONS
 # ==============================================================
 scanners:
-  ha_cfg:   "navtools_PDM/PDM_configs/scanner_HA.yml"
-  #lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR.yml"
-  #puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK.yml"
+  ha_cfg:   "navtools_PDM/PDM_configs/scanner_HA_ECCR.yml"
+  lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR_ECCR.yml"
+  puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK_ECCR.yml"
  
 merge_groups:
   - name: "HA_LR"
@@ -24,7 +24,7 @@ merge_groups:
 # ==============================================================
 trajectory:
   type: "SBET"
-  path: "/media/b085164/LaCie/2026spring_RD/ECCR/ODyN/base/reference.out" # traj IE
+  path: "/media/b085164/LaCie/2026spring_RD/ECCR/ODyN/zone_3_final/APX/F2B/out/F2B_3_APX.out" # traj ODyN
   cfg:
     type: "SBET"
  
@@ -36,7 +36,8 @@ georef_time_window:
   enable: true
   margin_s: 10.0
   outages:
-    - [315642.0, 20]    # 317263 -> 317327
+  #  - [315642.0, 20]
+    - [315642.0, 428]    # 317263 -> 317327
   #  - [317553.0, 30.0]    # 317553 -> 317583
   #   - [317291, 40]
  
@@ -56,17 +57,17 @@ paths:
   root_out_dir: "/media/b085164/LaCie/2026spring_RD/ECCR"
   patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
   limatch_cfg:  "Patcher/submodules/limatch/configs/MLS.yml"
-  gps_input:    "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt"
+  gps_input:    "/media/b085164/LaCie/2026spring_RD/ECCR/ODyN/base/GPS.txt"
  
 # ==============================================================
 # STEPS
 # ==============================================================
 steps:
-  georef:           true
+  georef:           false
   merge:            false
   vux_puck_merge:   false
   chunk:            false
-  limatch:          false
+  limatch:          true
   gps_outage_file:  false
  
 # ==============================================================
@@ -103,14 +104,14 @@ merge_correspondences:
 # CHUNKING
 # ==============================================================
 chunk:
-  source: "generate"
-  existing_root: null #"/media/b085164/Elements/ECCR/georef_ALL_test/chunks"
-  merged_input_root: "/media/b085164/LaCie/2026spring_RD/ECCR/georef_VUX_zone_3_outage/merged/HA_LR"
+  source: "existing" # "generate" or "existing"
+  existing_root: "/media/b085164/LaCie/2026spring_RD/ECCR/georef_ALL_zone_3_outage/APX/georef_F2B/scenario_combined/chunks_20m" # if "existing"
+  merged_input_root: "/media/b085164/LaCie/2026spring_RD/ECCR/georef_ALL_zone_3_outage/APX/georef_F2B/merged/ALL" # In case of "generate"
   merged_group: null
   reference_scanner: "HA"
   output_root: null
-  length_m: 5.0
-  min_last_chunk_m: 9.0
+  length_m: 20.0
+  min_last_chunk_m: 15.0
   min_points: 2000
   epsg_out: "EPSG:2056"
   delimiter: ","
@@ -118,7 +119,7 @@ chunk:
   cloud_fmt: "las"
   time_field: "gps_time"
   manifest_name: "merged_manifest.csv"
-  use_manifest: false
+  use_manifest: true
  
 # ==============================================================
 # CHUNK VARIANT — outage window around outage 1
@@ -130,7 +131,7 @@ chunk_variant:
     enabled: true
     output_root: null           # null = root_out_dir/scenario_name/chunks
     outages:
-      - [315642.0, 569]       # [t_start, duration]
+      - [315642.0, 428]       # [t_start, duration]
     pre_s: 10.0
     post_s: 10.0
  
@@ -141,15 +142,15 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
-  output_root: "/media/b085164/LaCie/2026spring_RD/ECCR/georef_VUX_zone_3_outage/limatch_F2B"           # null = root_out_dir/scenario_name/limatch
-  neighbor_k: 1                 # k+1: each chunk matched with next
-  do_cross_scan: true
+  output_root: "/media/b085164/LaCie/2026spring_RD/ECCR/georef_ALL_zone_3_outage/APX/georef_F2B/limatch"           # null = root_out_dir/scenario_name/limatch
+  neighbor_k: 0                 # k+1: each chunk matched with next
+  do_cross_scan: false
  
   # Spatial crossings — saved independently in crossings_output_root
   do_spatial_crossings: true
   crossings_output_root: null   # null = limatch_output_root + "_crossings"
-  crossing_min_separation: 30
-  crossing_overlap_margin_m: 1.2
+  crossing_min_separation: 10
+  crossing_overlap_margin_m: 50
  
 # ==============================================================
 # PATCHER (unused here)

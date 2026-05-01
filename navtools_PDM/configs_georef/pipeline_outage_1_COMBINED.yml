@@ -11,7 +11,7 @@ merge_groups:
   - lr_cfg
 trajectory:
   type: SBET
-  path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/COMBINED/out/traj_COMBINED_1.out
+  path: /media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_2_305645_306120/COMBINED/out/v2/traj_COMBINED_2.out
   cfg:
     type: SBET
 georef_time_window:

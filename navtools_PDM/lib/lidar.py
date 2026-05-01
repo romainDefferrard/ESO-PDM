@@ -13,131 +13,140 @@ import os
 
 cpu_count = multiprocessing.cpu_count()
 
-def loadLasVecAscii(cfg,limatch_output=False):
-    """Load lasver vector from ascii file."""
+def loadLasVecAscii(path, cfg):
+    """Load laser vectors from CSV file.
+    Expected column order: X, Y, Z (SOCS), GPS_time
+    Returns ndarray (N, 4): [t_gps, x, y, z]
+    """
+    import pandas as pd
+    from tqdm import tqdm
+
+    delimiter = cfg.get("sep", ",")
+    skiprows  = cfg.get("skiprows", 1)
+    chunksize = 10_000_000
+
+    chunks = []
     try:
-        with open(cfg['path'], "r") as f:
-            print(f"Loading file {cfg['path']}")
-            if 'sep' in cfg and cfg['sep'] is not None:
-                data = np.loadtxt(f, delimiter=cfg['sep'])
-            else:
-                data = np.loadtxt(f)
+        reader = pd.read_csv(
+            path,
+            delimiter=delimiter,
+            header=None,
+            skiprows=skiprows,
+            chunksize=chunksize,
+            dtype=np.float64,
+        )
+        file_size = Path(path).stat().st_size
+        with tqdm(total=file_size, unit="B", unit_scale=True,
+                  desc=f"Loading {Path(path).name}") as pbar:
+            prev = 0
+            for chunk in reader:
+                chunks.append(chunk.values)
+                # approximation de la progression par taille lue
+                cur = reader.handles.handle.tell() if hasattr(reader, 'handles') else 0
+                pbar.update(cur - prev)
+                prev = cur
+        pbar.n = file_size
+        pbar.refresh()
     except Exception as e:
-        errmsg = f" Cannot open file! {str(e)}"
-        raise ValueError(errmsg)
-    if limatch_output:
-        lasvec_A = data[:,[1,5,6,7]]
-        lasvec_B = data[:,[0,2,3,4]]
-        return np.hstack((lasvec_B, lasvec_A))
-    else:
-        return data[:, cfg['cols']]
+        raise ValueError(f"Cannot open file {path}: {e}")
+
+    data = np.vstack(chunks)
+    return data[:, [3, 0, 1, 2, 4]]
 
 def loadLasVecSDC(sdc_file, chunk_records=2_000_000):
     """
-    Fast SDC reader with tqdm progress bar.
-    Matches legacy mapping exactly:
-      record[[0, 3, 4, 5]]
-
+    SDC reader with auto-detection of record size.
     Returns:
         ndarray (N, 5): [time, x, y, z, u6]
     """
     sdc_file = Path(sdc_file)
 
     with open(sdc_file, "rb") as f:
-        header_info = f.read(8)
-        size_of_header = struct.unpack("<I", header_info[:4])[0]
-
-    record_dtype = np.dtype([
-        ("t",    "<f8"),  # field 0
-        ("f1",   "<f4"),  # field 1
-        ("f2",   "<f4"),  # field 2
-        ("x",    "<f4"),  # field 3
-        ("y",    "<f4"),  # field 4
-        ("z",    "<f4"),  # field 5
-        ("u6",   "<u2"),
-        ("u7",   "<u2"),
-        ("u8",   "u1"),
-        ("u9",   "u1"),
-        ("u10",  "u1"),
-        ("u11",  "<u2"),
-        ("u12",  "u1"),
-        ("u13",  "u1"),
-        ("f14",  "<f4"),
-        ("u15",  "<u2"),
-    ])
+        size_of_header = struct.unpack("<I", f.read(4))[0]
 
     file_size = os.path.getsize(sdc_file)
     payload_size = file_size - size_of_header
-    record_size = record_dtype.itemsize
 
-    if payload_size % record_size != 0:
-        raise ValueError(
-            f"Invalid SDC size: payload={payload_size} not divisible by record size={record_size}"
-        )
+    # --- détection automatique du record size ---
+    with open(sdc_file, "rb") as f:
+        f.seek(size_of_header)
+        probe = f.read(60 * 30)
+
+    record_size = None
+    for rs in range(30, 60):
+        timestamps = []
+        for i in range(20):
+            offset = i * rs
+            if offset + 8 > len(probe):
+                break
+            t = struct.unpack("<d", probe[offset:offset+8])[0]
+            timestamps.append(t)
+        valid = [t for t in timestamps if 40000 < t < 700000]
+        if len(valid) >= 18 and payload_size % rs == 0:
+            record_size = rs
+            break
+
+    if record_size is None:
+        # fallback: trouver rs qui donne le plus de timestamps valides même sans divisibilité exacte
+        best, best_rs = 0, 40
+        for rs in range(30, 60):
+            timestamps = [struct.unpack("<d", probe[i*rs:i*rs+8])[0] for i in range(20) if i*rs+8 <= len(probe)]
+            valid = sum(1 for t in timestamps if 40000 < t < 700000)
+            if valid > best:
+                best, best_rs = valid, rs
+        record_size = best_rs
+        print(f"[SDC] Warning: aucun record_size exact trouvé, utilisation de {record_size} bytes (fallback)")
+
+    print(f"[SDC] record_size détecté = {record_size} bytes")
+
+    record_dtype = np.dtype([
+        ("t",   "<f8"),
+        ("f1",  "<f4"),
+        ("f2",  "<f4"),
+        ("x",   "<f4"),
+        ("y",   "<f4"),
+        ("z",   "<f4"),
+        ("u6",  "<u2"),
+        ("pad", f"V{record_size - 30}"),
+    ])
+
+    assert record_dtype.itemsize == record_size
 
     record_count = payload_size // record_size
-
-    # Preallocate final output directly
     records = np.empty((record_count, 5), dtype=np.float64)
-
     write_pos = 0
     total_invalid = 0
 
     with open(sdc_file, "rb") as f:
         f.seek(size_of_header)
-
-        with tqdm(
-            total=record_count,
-            desc=f"Reading SDC {sdc_file.name}",
-            unit="pts",
-            mininterval=0.5,
-        ) as pbar:
+        with tqdm(total=record_count, desc=f"Reading SDC {sdc_file.name}", unit="pts", mininterval=0.5) as pbar:
             while True:
                 data = np.fromfile(f, dtype=record_dtype, count=chunk_records)
                 n0 = len(data)
                 if n0 == 0:
                     break
-
                 valid = (
-                    np.isfinite(data["t"]) &
-                    np.isfinite(data["x"]) &
-                    np.isfinite(data["y"]) &
-                    np.isfinite(data["z"])
+                    np.isfinite(data["t"]) & np.isfinite(data["x"]) &
+                    np.isfinite(data["y"]) & np.isfinite(data["z"])
                 )
-
                 n_bad = int(n0 - np.count_nonzero(valid))
                 if n_bad > 0:
                     total_invalid += n_bad
-
                 data = data[valid]
                 n = len(data)
-
                 if n > 0:
                     records[write_pos:write_pos+n, 0] = data["t"]
                     records[write_pos:write_pos+n, 1] = data["x"]
                     records[write_pos:write_pos+n, 2] = data["y"]
                     records[write_pos:write_pos+n, 3] = data["z"]
-                    records[write_pos:write_pos+n, 4] = data["u6"]
+                    records[write_pos:write_pos+n, 4] = data["u6"].astype(np.float64)
                     write_pos += n
-
-                # on garde la progression sur le nombre brut de records lus
                 pbar.update(n0)
 
     if total_invalid > 0:
-        print(f"[SDC] Dropped {total_invalid} raw records with non-finite t/x/y/z")
+        print(f"[SDC] Dropped {total_invalid} records with non-finite values")
 
-    if write_pos != record_count:
-        records = records[:write_pos]
-
-    while True:
-        dt = np.diff(records[:, 0])
-        bad = np.where(dt < 0)[0]
-        if len(bad) == 0:
-            break
-        i = bad[0]  # corriger toujours le premier saut
-        jump = dt[i]
-        print(f"[SDC] Saut négatif à idx={i} ({i/len(records)*100:.1f}%) : Δt={jump:.4f}s — correction appliquée")
-        records[i+1:, 0] -= jump
+    records = records[:write_pos]
 
     return records
 
