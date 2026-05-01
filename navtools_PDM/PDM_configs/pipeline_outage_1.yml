@@ -4,16 +4,16 @@
 # Scenario      : georef_ALL_traj_outage_1
 # ==============================================================
  
-mode: "chunk"
-scenario_name: "georef_ALL_traj_outage_1"
+mode: "georef_only"
+scenario_name: "georef_ALL_traj_outage_1/georef_S2S/"
  
 # ==============================================================
 # SCANNER CONFIGURATIONS
 # ==============================================================
 scanners:
-  ha_cfg:   "navtools_PDM/PDM_configs/scanner_HA.yml"
-  lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR.yml"
-  puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK.yml"
+  ha_cfg:   "navtools_PDM/PDM_configs/scanner_HA_CALIB.yml"
+  lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR_CALIB.yml"
+  puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK_CALIB.yml"
  
 merge_groups:
   - name: "HA_LR"
@@ -24,7 +24,7 @@ merge_groups:
 # ==============================================================
 trajectory:
   type: "SBET"
-  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/traj_outage/outage_1.out"
+  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_1_305120_305700/S2S/out/traj_S2S_1.out"
   cfg:
     type: "SBET"
  
@@ -59,9 +59,9 @@ paths:
 # STEPS
 # ==============================================================
 steps:
-  georef:           false
-  merge:            false
-  vux_puck_merge:   false
+  georef:           true
+  merge:            true
+  vux_puck_merge:   true
   chunk:            false
   limatch:          false
   gps_outage_file:  false
@@ -101,8 +101,8 @@ merge_correspondences:
 # ==============================================================
 chunk:
   source: "existing"
-  existing_root: null
-  merged_input_root: null
+  existing_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/scenario_combined/chunks_15m"
+  merged_input_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/merged/ALL"
   merged_group: null
   reference_scanner: "HA"
   output_root: null
@@ -138,15 +138,15 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
-  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_F2B_v2"           # null = root_out_dir/scenario_name/limatch
-  neighbor_k: 1                 # k+1: each chunk matched with next
-  do_cross_scan: true
+  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/limatch_F2B_v3"           # null = root_out_dir/scenario_name/limatch
+  neighbor_k: 0                 # k+1: each chunk matched with next
+  do_cross_scan: false
  
   # Spatial crossings — saved independently in crossings_output_root
   do_spatial_crossings: true
   crossings_output_root: null   # null = limatch_output_root + "_crossings"
   crossing_min_separation: 30
-  crossing_overlap_margin_m: 1.2
+  crossing_overlap_margin_m: 3
  
 # ==============================================================
 # PATCHER (unused here)

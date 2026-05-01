@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 import laspy
 import argparse
+from shapely.geometry import Polygon
 
 from .pointCloudGeoref import run_from_yaml
 from .singleBeamMerging import merge_txt_pairs
@@ -1015,14 +1016,6 @@ def chunk_pairs_neighbors(
 
     return pairs
 
-def compute_bbox_from_traj(t_start, t_end, t_trj, x_trj, y_trj, n=20):
-    t_query = np.linspace(t_start, t_end, n)
-    t_query = np.clip(t_query, t_trj[0], t_trj[-1])
-
-    x = np.interp(t_query, t_trj, x_trj)
-    y = np.interp(t_query, t_trj, y_trj)
-
-    return float(x.min()), float(x.max()), float(y.min()), float(y.max())
 
 def load_sbet_xy(sbet_path: Path, epsg_out: str):
     data = np.fromfile(sbet_path, dtype=np.float64).reshape(-1, 17)
@@ -1326,21 +1319,16 @@ def combined_multi_outage_scenario(
                 t_end   = float(t_all.max())
 
                 x_min, x_max, y_min, y_max = compute_bbox_from_traj(
-                    t_start,
-                    t_end,
-                    _t_trj,
-                    _x_trj,
-                    _y_trj,
+                    t_start, t_end, _t_trj, _x_trj, _y_trj,
                 )
-
                 bbox_rows.append({
                     "chunk_file": las_path.name,
                     "t_start": t_start,
-                    "t_end": t_end,
-                    "x_min": x_min,
-                    "x_max": x_max,
-                    "y_min": y_min,
-                    "y_max": y_max,
+                    "t_end":   t_end,
+                    "x_min":   x_min,
+                    "x_max":   x_max,
+                    "y_min":   y_min,
+                    "y_max":   y_max,
                 })
 
             except Exception as e:
@@ -1379,9 +1367,14 @@ def run_limatch_api(
     cloud1: Union[str, Path],
     cloud2: Union[str, Path],
     out_dir: Union[str, Path],
+    cfg_overrides: dict = None,
 ):
     match_clouds = get_limatch_match_clouds(repo_root)
     cfg = yaml.safe_load(open(str(limatch_cfg_path), "r"))
+
+    if cfg_overrides:
+        cfg.update(cfg_overrides)
+        print(f"[limatch-api] overrides: {cfg_overrides}")
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -1403,6 +1396,7 @@ def run_limatch_on_chunks_per_scan(
     out_root: Union[str, Path],
     do_cross_scan: bool = True,
     neighbor_k: int = 2,
+    cfg_overrides: dict = None,
 ) -> None:
     """
     chunks_root:
@@ -1500,6 +1494,7 @@ def run_limatch_on_chunks_per_scan(
                     cloud1=a,
                     cloud2=b,
                     out_dir=pair_out,
+                    cfg_overrides=cfg_overrides,
                 )
             except Exception as e:
                 print(
@@ -1507,6 +1502,7 @@ def run_limatch_on_chunks_per_scan(
                     f"{type(e).__name__}: {e}"
                 )
                 continue
+
 
 def find_spatial_crossing_pairs(
     chunks_root: Path,
@@ -1517,28 +1513,22 @@ def find_spatial_crossing_pairs(
     """
     Trouve toutes les paires (chunk_i, chunk_j) qui se croisent
     spatialement avec |id_i - id_j| > min_chunk_separation.
-
     Lit les chunk_bbox.csv dans chaque sous-dossier merged_*.
     Retourne [(path_a, path_b, merged_parent_name), ...]
     """
-
-    # Charge tous les bbox de tous les scans
     all_chunks = []
     scan_dirs = sorted(
         [p for p in chunks_root.iterdir() if p.is_dir()],
         key=extract_scan_id
     )
-
     for scan_dir in scan_dirs:
         bbox_path = scan_dir / "chunk_bbox.csv"
         if not bbox_path.exists():
             print(f"[crossings] No chunk_bbox.csv in {scan_dir.name} — skip")
             continue
         df = pd.read_csv(bbox_path)
-        df["scan_dir"]  = str(scan_dir)
-        df["chunk_path"] = df["chunk_file"].apply(
-            lambda f: str(scan_dir / f)
-        )
+        df["scan_dir"]   = str(scan_dir)
+        df["chunk_path"] = df["chunk_file"].apply(lambda f: str(scan_dir / f))
         all_chunks.append(df)
 
     if not all_chunks:
@@ -1546,41 +1536,27 @@ def find_spatial_crossing_pairs(
         return []
 
     df_all = pd.concat(all_chunks, ignore_index=True)
-
-    # Extrait les chunk_id numériques pour calculer la séparation
-    def get_chunk_id(fname):
-        m = re.search(r"chunk_(\d+)", fname)
-        return int(m.group(1)) if m else -1
-
     df_all = df_all.sort_values("t_start").reset_index(drop=True)
     df_all["seq_idx"] = df_all.index
 
-    # Détecte les croisements par overlap de bounding box avec marge
     pairs = []
     rows = df_all.to_dict("records")
     n = len(rows)
-
     print(f"[crossings] Checking {n} chunks for spatial overlaps "
           f"(min_separation={min_chunk_separation}, margin={overlap_margin_m}m)...")
 
     for i in range(n):
         for j in range(i + 1, n):
             a, b = rows[i], rows[j]
-
-            # Filtre séparation temporelle minimale
             if abs(a["seq_idx"] - b["seq_idx"]) <= min_chunk_separation:
                 continue
-
-            # Test overlap bounding box avec marge
             x_overlap = (a["x_min"] - overlap_margin_m <= b["x_max"] and
                          b["x_min"] - overlap_margin_m <= a["x_max"])
             y_overlap = (a["y_min"] - overlap_margin_m <= b["y_max"] and
                          b["y_min"] - overlap_margin_m <= a["y_max"])
-
             if x_overlap and y_overlap:
                 path_a = Path(a["chunk_path"])
                 path_b = Path(b["chunk_path"])
-                # Le merged_parent est celui du chunk le plus ancien (a)
                 merged_parent = Path(a["scan_dir"]).name
                 pairs.append((path_a, path_b, merged_parent))
 
@@ -1594,6 +1570,7 @@ def run_limatch_on_spatial_crossings(
     out_root: Union[str, Path],
     min_chunk_separation: int = 10,
     overlap_margin_m: float = 3.0,
+    cfg_overrides: dict = None,
 ) -> None:
     """
     Lance LiMatch sur toutes les paires de chunks qui se croisent
@@ -1636,6 +1613,7 @@ def run_limatch_on_spatial_crossings(
                 cloud1=a,
                 cloud2=b,
                 out_dir=pair_out,
+                cfg_overrides=cfg_overrides,
             )
         except Exception as e:
             print(f"  [FAIL] {pair_name}: {type(e).__name__}: {e}")
@@ -2090,6 +2068,7 @@ def run_pipeline(pipe_cfg: dict) -> None:
     # ------------------------------------------------------------
     # CHUNK WORKFLOW
     # ------------------------------------------------------------
+
     if mode == "chunk":
 
         chunk_source = chunk_cfg.get("source", "generate")
@@ -2106,7 +2085,7 @@ def run_pipeline(pipe_cfg: dict) -> None:
             print("[chunk] Reusing existing chunks")
             print(f"[chunk] chunks_root: {chunks_root}")
             print("======================================\n")
-
+            
         elif chunk_source == "generate":
 
             if chunk_variant_type == "standard":
@@ -2174,21 +2153,21 @@ def run_pipeline(pipe_cfg: dict) -> None:
                     out_root=limatch_out,
                     do_cross_scan=lim_cfg.get("do_cross_scan", True),
                     neighbor_k=lim_cfg.get("neighbor_k", 1),
+                    cfg_overrides=lim_cfg.get("cfg_overrides_f2b", {}),
                 )
 
-            # 2b) Paires croisements spatiaux (optionnel)
+            # 2b) Crossings spatiaux
             if lim_cfg.get("do_spatial_crossings", False):
                 crossings_out = lim_cfg.get("crossings_output_root", None)
                 if crossings_out is None:
                     crossings_out = Path(str(limatch_out) + "_crossings")
-                print(f"[debug] crossing_min_separation = {lim_cfg.get('crossing_min_separation')}")
-                print(f"[debug] crossing_overlap_margin_m = {lim_cfg.get('crossing_overlap_margin_m')}")
                 run_limatch_on_spatial_crossings(
                     chunks_root=chunks_root,
                     limatch_cfg=limatch_cfg,
                     out_root=crossings_out,
                     min_chunk_separation=lim_cfg.get("crossing_min_separation", 10),
                     overlap_margin_m=lim_cfg.get("crossing_overlap_margin_m", 3.0),
+                    cfg_overrides=lim_cfg.get("cfg_overrides_crossings", {}),
                 )
 
         # 3) Optional merge correspondences

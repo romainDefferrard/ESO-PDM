@@ -21,8 +21,8 @@ from pyproj import Transformer
 # CONFIG — adapter si nécessaire
 # ==============================================================================
 
-CHUNKS_ROOT = Path("/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/scenario_combined/chunks_15m")
-SBET_PATH   = Path("/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_2_305645_306120/traj_outage/outage_2.out")
+CHUNKS_ROOT = Path("/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/APX/georef_F2B/scenario_combined/chunks_15m")
+SBET_PATH   = Path("/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/APX/outage_2/F2B_z2/out/F2B_out2_apx.out")
 EPSG_OUT    = "EPSG:2056"   # LV95
 TIME_FIELD  = "gps_time"
 

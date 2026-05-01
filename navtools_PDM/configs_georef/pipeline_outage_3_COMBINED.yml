@@ -1,4 +1,4 @@
-mode: patcher
+mode: georef_only
 scenario_name: georef_COMBINED
 scanners:
   ha_cfg: navtools_PDM/PDM_configs/scanner_HA.yml
@@ -19,7 +19,7 @@ georef_time_window:
   outage:
   - 306290.0
   - 350.0
-  margin_s: 60.0
+  margin_s: 0.0
 distance_filtering:
   enable: true
   max_distance_m: 30
