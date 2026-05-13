@@ -10,16 +10,11 @@ conda activate "$CONDA_ENV"
 
 
 echo "============================================================"
-echo "[2/1] pipeline_outage_1_apx.yml"
+echo "[1/2] pipeline_outage_1_apx.yml"
 echo "============================================================"
+
+
 python -m navtools_PDM.pipeline -c "navtools_PDM/PDM_configs/pipeline_outage_1_apx.yml"
 
-
-echo "============================================================"
-echo "[1/2] pipeline_outage_1.yml"
-echo "============================================================"
-python -m navtools_PDM.pipeline -c "navtools_PDM/PDM_configs/pipeline_outage_1.yml"
-
-python -m navtools_PDM.pipeline -c "navtools_PDM/PDM_configs/pipeline_outage_2.yml"
 
 echo "Done."

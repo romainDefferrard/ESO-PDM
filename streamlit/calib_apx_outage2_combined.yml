@@ -1,0 +1,160 @@
+# ==============================================================
+# TEMPLATE — CALIB APX | Outage 2 | Combined (F2B + crossings)
+# Outage : 305645 → 306120 (475 s)
+# Dataset : CALIB_26_02_25  |  IMU : APX15 (low-cost)
+# Strategy : Combined — F2B consécutifs + spatial crossings
+#
+# Différences clés vs AIRINS :
+#   - uncertainty_r plus élevé (drift APX >> AIRINS)
+#   - overrides distincts pour F2B vs crossings
+# ==============================================================
+
+mode: "georef_only"
+scenario_name: "georef_ALL_traj_outage_2/APX/georef_Combined"
+
+# --------------------------------------------------------------
+# Scanners
+# --------------------------------------------------------------
+scanners:
+  ha_cfg:   "navtools_PDM/PDM_configs/scanner_HA_CALIB.yml"
+  lr_cfg:   "navtools_PDM/PDM_configs/scanner_LR_CALIB.yml"
+  puck_cfg: "navtools_PDM/PDM_configs/scanner_PUCK_CALIB.yml"
+
+merge_groups:
+  - name: "HA_LR"
+    scanners: ["ha_cfg", "lr_cfg"]
+
+# --------------------------------------------------------------
+# Trajectoire ODyN F2B APX
+# --------------------------------------------------------------
+trajectory:
+  type: "SBET"
+  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/APX/outage_2/F2B_z2/out/F2B_out2_apx.out"
+  cfg:
+    type: "SBET"
+
+# --------------------------------------------------------------
+# Fenêtre temporelle : [305645-60, 305645+475+60]
+# --------------------------------------------------------------
+georef_time_window:
+  enable: true
+  outage: [305645.0, 475.0]
+  margin_s: 60.0
+
+# --------------------------------------------------------------
+# Filtrage distance
+# --------------------------------------------------------------
+distance_filtering:
+  enable: true
+  max_distance_m: 30
+  map_epsg: "EPSG:2056"
+  filter_trj: null
+
+# --------------------------------------------------------------
+# Chemins
+# --------------------------------------------------------------
+paths:
+  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
+  patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
+  limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B_1_APX.yml"
+  gps_input:    "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt"
+
+# --------------------------------------------------------------
+# Étapes
+# --------------------------------------------------------------
+steps:
+  georef:          true
+  merge:           true
+  chunk:           false
+  limatch:         false
+  gps_outage_file: false
+
+# --------------------------------------------------------------
+# Merge
+# --------------------------------------------------------------
+merge:
+  preset: "all"
+  vux_scanners: ["ha_cfg", "lr_cfg"]
+  puck_scanner: "puck_cfg"
+  out_prefix: "merged_"
+  out_suffix: "_HA_LR"
+  output_suffix: "_VUX_PUCK"
+  scanner_src_vux:  2
+  scanner_src_puck: 1
+  chunk_size: 10000000
+  cleanup:
+    enabled: true
+    scanner_dirs: true
+
+# --------------------------------------------------------------
+# Merge correspondances
+# --------------------------------------------------------------
+merge_correspondences:
+  enabled: true
+  output_file: null
+
+# --------------------------------------------------------------
+# Chunking
+# --------------------------------------------------------------
+chunk:
+  source: "generate"
+  existing_root: null
+  merged_input_root: null
+  merged_group: null
+  reference_scanner: "HA"
+  output_root: null
+  length_m: 15.0
+  min_last_chunk_m: 10.0
+  min_points: 2000
+  epsg_out: "EPSG:2056"
+  delimiter: ","
+  skiprows: 0
+  cloud_fmt: "las"
+  time_field: "gps_time"
+  manifest_name: "merged_manifest.csv"
+  use_manifest: true
+
+chunk_variant:
+  type: "outage_window"
+  outage_window:
+    enabled: true
+    output_root: null
+    outages:
+      - [305645.0, 475.0]
+    pre_s: 10.0
+    post_s: 10.0
+
+# --------------------------------------------------------------
+# LiMatch — overrides par type de paire (APX : drift élevé)
+# --------------------------------------------------------------
+limatch:
+  run: true
+  output_root: null
+  neighbor_k: 0
+  do_cross_scan: false
+  do_spatial_crossings: true
+  crossings_output_root: null
+  crossing_min_separation: 30
+  crossing_overlap_margin_m: 5.0
+
+  # Incertitude élevée pour F2B (drift APX fort entre passes)
+  cfg_overrides_f2b:
+    uncertainty_r_min: 4.0
+    uncertainty_r_max: 6.0
+
+  # Incertitude réduite pour crossings (géométrie favorable)
+  cfg_overrides_crossings:
+    uncertainty_r_min: 0.0
+    uncertainty_r_max: 2.0
+
+# --------------------------------------------------------------
+# Patcher
+# --------------------------------------------------------------
+patcher:
+  run: false
+  source: "existing"
+  output_root: null
+  gps_outage_file:
+    enabled: false
+    output_root: null
+    outages: []

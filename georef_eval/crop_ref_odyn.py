@@ -26,7 +26,7 @@ logging.basicConfig(
 # CONFIGURATION
 # ---------------------------------------------------------------------------
 
-BASE_DIR = Path("/media/b085164/Elements/CALIB_26_02_25")
+BASE_DIR = Path("/media/b085164/LaCie/2026spring_RD/CALIB_26_02_25")
 OUT_ROOT = BASE_DIR / "georef_errors"
 
 CHUNK_SIZE = 2_000_000
@@ -41,37 +41,37 @@ OUTAGES = [
         "sources": [
             {
                 "name":     "ref_ODyN",
-                "dir":      BASE_DIR / "georef_ALL_traj_ODyN/merged",
-                "manifest": BASE_DIR / "georef_ALL_traj_ODyN/merged/merged_manifest.csv",
+                "dir":      Path("/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged"),
+                "manifest": Path("/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged/merged_manifest.csv"),
             },
         ],
     },
-    # {
-    #     "name":     "outage_2",
-    #     "t_start":  305645.0,
-    #     "duration": 475.0,
-    #     "buffer_s": 10.0,
-    #     "sources": [
-    #         {
-    #             "name":     "ref_ODyN",
-    #             "dir":      BASE_DIR / "georef_ALL_traj_ODyN/merged",
-    #             "manifest": BASE_DIR / "georef_ALL_traj_ODyN/merged/merged_manifest.csv",
-    #         },
-    #     ],
-    # },
-    # {
-    #     "name":     "outage_3",
-    #     "t_start":  306290.0,
-    #     "duration": 355.0,
-    #     "buffer_s": 10.0,
-    #     "sources": [
-    #         {
-    #             "name":     "ref_ODyN",
-    #             "dir":      BASE_DIR / "georef_ALL_traj_ODyN/merged",
-    #             "manifest": BASE_DIR / "georef_ALL_traj_ODyN/merged/merged_manifest.csv",
-    #         },
-    #     ],
-    # },
+    {
+        "name":     "outage_2",
+        "t_start":  305645.0,
+        "duration": 475.0,
+        "buffer_s": 10.0,
+        "sources": [
+            {
+                "name":     "ref_ODyN",
+                "dir":      Path("/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged"),
+                "manifest": Path("/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged/merged_manifest.csv"),
+            },
+        ],
+    },
+    {
+        "name":     "outage_3",
+        "t_start":  306290.0,
+        "duration": 355.0,
+        "buffer_s": 10.0,
+        "sources": [
+            {
+                "name":     "ref_ODyN",
+                "dir":      Path("/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged"),
+                "manifest": Path("/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_ODyN/merged/merged_manifest.csv"),
+            },
+        ],
+    },
 ]
 
 # ---------------------------------------------------------------------------
@@ -133,7 +133,6 @@ def crop_source(outage_name: str, source: dict, tmin: float, tmax: float):
     out_dir.mkdir(parents=True, exist_ok=True)
 
     logging.info("  [%s] reading manifest: %s", src_name, manifest_path)
-
     if not manifest_path.exists():
         logging.warning("  [%s] manifest not found — skipping", src_name)
         return

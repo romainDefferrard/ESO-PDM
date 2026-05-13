@@ -1,0 +1,34 @@
+scanner_name: PUCK
+lasvec:
+  type: SDC
+  cols:
+  - 0
+  - 3
+  - 4
+  - 5
+  path: /path/to/SDC/PUCK
+leapsec: 18
+mount:
+  R_mount:
+  - - 1.0
+    - 0.0
+    - 0.0
+  - - 0.0
+    - 1.0
+    - 0.0
+  - - 0.0
+    - 0.0
+    - 1.0
+  boresight:
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
+  lever_arm:
+  - 0.0
+  - 0.0
+  - 0.0
+output_defaults:
+  type: LAS
+  lasvec: true
+  lasvec_to_body: true
+manifest_path: /path/to/manifests/manifest_PUCK.csv

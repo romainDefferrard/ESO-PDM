@@ -1,0 +1,10 @@
+# MLS Pipeline Manager — dépendances Streamlit
+# Installation :
+#   pip install -r streamlit/requirements.txt --break-system-packages
+#
+# Ou dans un venv :
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -r streamlit/requirements.txt
+
+streamlit>=1.35.0
+pyyaml>=6.0
