@@ -1,0 +1,31 @@
+scanner_name: "PUCK"
+
+lasvec:
+  type: 'SDC'
+  cols: [0,3,4,5]
+  path: '/media/b085164/Elements/CALIB_26_02_25/PUCK_SDC'
+  
+
+leapsec: 18
+
+mount:
+  R_mount:
+    - [0.97236992  , 0.0, 0.233445364]
+    - [0.0         ,-1.0,         0.0]
+    - [0.233445364 , 0.0, -0.97236992]
+
+  boresight:
+    roll: 0.00555947
+    pitch: 0.00293948
+    yaw: -0.00591964
+
+
+  #lever_arm: [0.251, 0.008, -0.719]
+  lever_arm: [0.206, -0.014, -0.743]
+
+output_defaults:
+  type: 'LAS'
+  lasvec: True
+  lasvec_to_body: True
+
+manifest_path: "/media/b085164/Elements/CALIB_26_02_25/manifests/manifest_PUCK.csv"

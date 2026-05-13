@@ -4,8 +4,8 @@
 # Scenario      : georef_ALL_traj_outage_1
 # ==============================================================
  
-mode: "chunk"
-scenario_name: "georef_ALL_zone_3_outage/APX/georef_F2B"
+mode: "georef_only"
+scenario_name: "georef_ALL_zone_3_outage/APX/georef_COMBINED"
  
 # ==============================================================
 # SCANNER CONFIGURATIONS
@@ -24,7 +24,7 @@ merge_groups:
 # ==============================================================
 trajectory:
   type: "SBET"
-  path: "/media/b085164/LaCie/2026spring_RD/ECCR/ODyN/zone_3_final/APX/F2B/out/F2B_3_APX.out" # traj ODyN
+  path: "/media/b085164/LaCie/2026spring_RD/ECCR/ODyN/zone_3_final/APX/COMBINED/out/out_v5/combined_3_ECCR_apx.out" # traj ODyN
   cfg:
     type: "SBET"
  
@@ -36,10 +36,7 @@ georef_time_window:
   enable: true
   margin_s: 10.0
   outages:
-  #  - [315642.0, 20]
     - [315642.0, 428]    # 317263 -> 317327
-  #  - [317553.0, 30.0]    # 317553 -> 317583
-  #   - [317291, 40]
  
 # ==============================================================
 # DISTANCE FILTERING
@@ -63,35 +60,52 @@ paths:
 # STEPS
 # ==============================================================
 steps:
-  georef:           false
-  merge:            false
-  vux_puck_merge:   false
-  chunk:            false
-  limatch:          true
-  gps_outage_file:  false
- 
+  georef:          true
+  merge:           true
+  chunk:           false
+  limatch:         false
+  gps_outage_file: false
+
 # ==============================================================
-# MERGE HA+LR
+# MERGE
+#
+# preset options:
+#   "vux_only"        — merge HA + LR → merged/HA_LR/
+#   "all"             — merge HA + LR → merged/HA_LR/, then add PUCK → merged/ALL/
+#   "puck_on_existing"— skip VUX merge, add PUCK onto an existing merged/HA_LR/
+#                       (set vux_input_dir to override default location)
 # ==============================================================
 merge:
-  out_prefix: "merged_"
-  out_suffix: "_HA_LR"
- 
-# ==============================================================
-# VUX+PUCK MERGE
-# ==============================================================
-vux_puck_merge:
-  enabled: true
-  name: "ALL"
-  vux_group: "HA_LR"
+  preset: "all"
+
+  # Which scanners to merge as VUX group (in order)
+  vux_scanners: ["ha_cfg", "lr_cfg"]
+  # Which scanner is the PUCK (used for presets "all" and "puck_on_existing")
   puck_scanner: "puck_cfg"
-  vux_input_dir: null           # null = auto-resolved from scenario structure
-  output_dir: null              # null = root_out_dir/scenario_name/merged/ALL
-  manifest_path: null
-  output_suffix: "_VUX_PUCK"
-  scanner_src_vux: 2
+
+  # Output naming
+  out_prefix: "merged_"
+  out_suffix: "_HA_LR"        # suffix applied to VUX-only merged files
+  output_suffix: "_VUX_PUCK"  # suffix applied to final ALL merged files
+
+  # Source IDs written in scanner_src field
+  scanner_src_vux:  2
   scanner_src_puck: 1
+
+  # Processing
   chunk_size: 10000000
+
+  # Only for preset "puck_on_existing": path to existing VUX merged dir.
+  # If null, defaults to <root_out_dir>/<scenario_name>/merged/HA_LR
+  # vux_input_dir: null
+
+  # Cleanup intermediate dirs after a successful preset=all run.
+  # Has NO effect for presets "vux_only" or "puck_on_existing".
+  cleanup:
+    enabled: true          # set to false to keep all intermediate dirs for inspection
+    scanner_dirs: true     # also delete individual scanner georef dirs (HA/, LR/, PUCK/)
+                           # set to false to keep them and only delete merged/HA_LR/
+
  
 # ==============================================================
 # MERGE CORRESPONDENCES

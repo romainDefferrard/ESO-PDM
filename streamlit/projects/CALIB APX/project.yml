@@ -1,0 +1,9 @@
+name: CALIB APX
+description: ''
+root_out_dir: ''
+gps_input: ''
+patcher_cfg: Patcher/config/MLS_Epalinges_config.yml
+scanners:
+- HA
+- LR
+- PUCK

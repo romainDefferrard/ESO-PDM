@@ -100,6 +100,15 @@ def deep_update(dst, src):
             dst[k] = v
     return dst
 
+def compute_bbox_from_traj(t_start, t_end, t_trj, x_trj, y_trj, n=20):
+    t_query = np.linspace(t_start, t_end, n)
+    t_query = np.clip(t_query, t_trj[0], t_trj[-1])
+
+    x = np.interp(t_query, t_trj, x_trj)
+    y = np.interp(t_query, t_trj, y_trj)
+
+    return float(x.min()), float(x.max()), float(y.min()), float(y.max())
+
 def build_georef_cfg(scanner_cfg_path: Union[str, Path], pipe_cfg: dict) -> dict:
     scanner_cfg = yaml.safe_load(open(scanner_cfg_path, "r"))
 
@@ -810,114 +819,178 @@ def georef_and_merge(pipe_cfg: dict) -> dict:
     merged_groups = {}
 
     if pipe_cfg["steps"].get("merge", False):
-        merge_groups = pipe_cfg.get("merge_groups", [])
-        if not merge_groups:
-            print("[merge] No merge_groups defined in pipeline config. Skipping merge.")
-        else:
-            entry_map = {}
+        merge_cfg = pipe_cfg.get("merge", {})
+        preset     = merge_cfg.get("preset", "vux_only")
 
-            for e in scanner_entries:
-                candidates = [
-                    e.get("key"),
-                    e.get("scanner_name"),
-                    e.get("name"),
-                    e.get("scanner"),
-                ]
+        # ------------------------------------------------------------------
+        # Build entry_map: scanner key / scanner_name -> entry dict
+        # ------------------------------------------------------------------
+        entry_map = {}
+        for e in scanner_entries:
+            candidates = [
+                e.get("key"),
+                e.get("scanner_name"),
+                e.get("name"),
+                e.get("scanner"),
+            ]
+            candidates = [c for c in candidates if c is not None]
+            if not candidates:
+                raise ValueError(
+                    "[merge] scanner entry has no usable identifier "
+                    f"(expected one of: key, scanner_name, name, scanner). Entry: {e}"
+                )
+            if e.get("key") is None:
+                e["key"] = candidates[0]
+            for c in candidates:
+                entry_map[c] = e
 
-                candidates = [c for c in candidates if c is not None]
+        print("\n======================================")
+        print(f"[merge] preset: {preset}")
+        print("[merge] available scanner keys:")
+        for k in entry_map:
+            print(f"  - {k}")
+        print("======================================\n")
 
-                if not candidates:
+        # ------------------------------------------------------------------
+        # Shared VUX merge parameters
+        # ------------------------------------------------------------------
+        out_prefix      = merge_cfg.get("out_prefix", "merged_")
+        out_suffix_vux  = merge_cfg.get("out_suffix", "_HA_LR")
+        out_suffix_all  = merge_cfg.get("output_suffix", "_VUX_PUCK")
+        scanner_src_vux = int(merge_cfg.get("scanner_src_vux", 2))
+        scanner_src_puck= int(merge_cfg.get("scanner_src_puck", 1))
+        chunk_size      = int(merge_cfg.get("chunk_size", 10_000_000))
+        vux_keys        = merge_cfg.get("vux_scanners", ["ha_cfg", "lr_cfg"])
+        puck_key        = merge_cfg.get("puck_scanner", "puck_cfg")
+        vux_group_name  = "HA_LR"
+        final_group_name= merge_cfg.get("name", "ALL")
+
+        # ------------------------------------------------------------------
+        # Helper: merge VUX scanners into merged/HA_LR
+        # ------------------------------------------------------------------
+        def _merge_vux_scanners():
+            group_entries = []
+            for k in vux_keys:
+                if k not in entry_map:
                     raise ValueError(
-                        "[merge] scanner entry has no usable identifier "
-                        f"(expected one of: key, scanner_name, name, scanner). Entry: {e}"
+                        f"merge.vux_scanners references unknown key '{k}'. "
+                        f"Available: {list(entry_map.keys())}"
                     )
+                group_entries.append(entry_map[k])
 
-                # Keep a primary key for display/debug
-                if e.get("key") is None:
-                    e["key"] = candidates[0]
+            group_out_dir = scenario_root / "merged" / vux_group_name
+            merged_dir = merge_scanner_group(
+                group_name=vux_group_name,
+                group_entries=group_entries,
+                out_dir=group_out_dir,
+                delimiter=",",
+            )
+            merged_groups[vux_group_name] = merged_dir
+            return merged_dir
 
-                # Register ALL aliases
-                for c in candidates:
-                    entry_map[c] = e
+        # ------------------------------------------------------------------
+        # Helper: add PUCK on top of an existing VUX merged dir
+        # ------------------------------------------------------------------
+        def _merge_puck_on_vux(vux_dir: Path):
+            puck_entry = entry_map.get(puck_key)
+            if puck_entry is None:
+                raise ValueError(
+                    f"merge.puck_scanner='{puck_key}' not found. "
+                    f"Available: {list(entry_map.keys())}"
+                )
+            puck_dir = Path(puck_entry["output_dir"])
+
+            final_out_dir = scenario_root / "merged" / final_group_name
+
+            manifest_path = Path(vux_dir) / "merged_manifest.csv"
 
             print("\n======================================")
-            print("[merge] available scanner keys:")
-            for k in entry_map:
-                print(f"  - {k}")
+            print("[merge] Adding PUCK to VUX merged clouds")
+            print(f"[merge] vux_dir:      {vux_dir}")
+            print(f"[merge] puck_dir:     {puck_dir}")
+            print(f"[merge] manifest:     {manifest_path}")
+            print(f"[merge] out_dir:      {final_out_dir}")
             print("======================================\n")
 
-            for group in merge_groups:
-                group_name = group["name"]
-                group_keys = group["scanners"]
+            merged_dir = merge_vux_group_with_puck_by_time(
+                vux_dir=vux_dir,
+                puck_dir=puck_dir,
+                out_dir=final_out_dir,
+                manifest_path=manifest_path,
+                output_suffix=out_suffix_all,
+                scanner_src_vux=scanner_src_vux,
+                scanner_src_puck=scanner_src_puck,
+                chunk_size=chunk_size,
+            )
+            build_merged_time_manifest(
+                merged_dir=merged_dir,
+                cloud_fmt="las",
+                manifest_name="merged_manifest.csv",
+                time_field="gps_time",
+            )
+            merged_groups[final_group_name] = merged_dir
+            return merged_dir
 
-                group_entries = []
-                for k in group_keys:
-                    if k not in entry_map:
-                        raise ValueError(
-                            f"Merge group '{group_name}' references unknown scanner key '{k}'. "
-                            f"Available keys: {list(entry_map.keys())}"
+        # ------------------------------------------------------------------
+        # Cleanup helper — only called after full success
+        # ------------------------------------------------------------------
+        cleanup_cfg     = merge_cfg.get("cleanup", {})
+        cleanup_enabled = cleanup_cfg.get("enabled", False)
+
+        def _cleanup_dir(path: Path, label: str) -> None:
+            import shutil
+            path = Path(path)
+            if not path.exists():
+                print(f"[merge/cleanup] {label}: already absent, skipping ({path})")
+                return
+            print(f"[merge/cleanup] Removing {label}: {path}")
+            shutil.rmtree(path)
+            print(f"[merge/cleanup] Removed: {path}")
+
+        # ------------------------------------------------------------------
+        # Execute preset
+        # ------------------------------------------------------------------
+        if preset == "vux_only":
+            # Merge HA + LR only → merged/HA_LR
+            _merge_vux_scanners()
+
+        elif preset == "all":
+            # Step 1: merge HA + LR → merged/HA_LR
+            vux_dir = _merge_vux_scanners()
+            # Step 2: add PUCK → merged/ALL
+            _merge_puck_on_vux(vux_dir)
+            # Step 3: cleanup intermediates (only reached on full success)
+            if cleanup_enabled:
+                print("\n======================================")
+                print("[merge/cleanup] preset=all — removing intermediate dirs")
+                print("======================================")
+                _cleanup_dir(vux_dir, "merged/HA_LR (VUX intermediate)")
+                if cleanup_cfg.get("scanner_dirs", True):
+                    for e in scanner_entries:
+                        _cleanup_dir(
+                            Path(e["output_dir"]),
+                            f"scanner georef dir ({e.get('scanner_name', e.get('key'))})",
                         )
-                    group_entries.append(entry_map[k])
+                print("[merge/cleanup] Done.\n")
 
-                group_out_dir = scenario_root / "merged" / group_name
-
-                merged_dir = merge_scanner_group(
-                    group_name=group_name,
-                    group_entries=group_entries,
-                    out_dir=group_out_dir,
-                    delimiter=",",
+        elif preset == "puck_on_existing":
+            # Skip VUX merge: point directly to an already-merged VUX dir
+            vux_dir = merge_cfg.get("vux_input_dir", None)
+            if vux_dir is None:
+                # fallback: standard location
+                vux_dir = scenario_root / "merged" / vux_group_name
+            vux_dir = Path(vux_dir)
+            if not vux_dir.exists():
+                raise FileNotFoundError(
+                    f"[merge] preset='puck_on_existing' but vux_input_dir does not exist: {vux_dir}"
                 )
-                merged_groups[group_name] = merged_dir
+            _merge_puck_on_vux(vux_dir)
 
-            vux_puck_cfg = pipe_cfg.get("vux_puck_merge", {})
-            if vux_puck_cfg.get("enabled", False):
-                vux_group_name = vux_puck_cfg["vux_group"]
-                puck_key = vux_puck_cfg["puck_scanner"]
-
-                if vux_group_name not in merged_groups:
-                    raise ValueError(
-                        f"vux_puck_merge.vux_group='{vux_group_name}' not found in merged_groups: "
-                        f"{list(merged_groups.keys())}"
-                    )
-
-                puck_entry = entry_map.get(puck_key)
-                if puck_entry is None:
-                    raise ValueError(
-                        f"vux_puck_merge.puck_scanner='{puck_key}' not found. "
-                        f"Available keys: {list(entry_map.keys())}"
-                    )
-
-                final_group_name = vux_puck_cfg.get("name", "ALL")
-                final_out_dir = vux_puck_cfg.get("output_dir", None)
-                if final_out_dir is None:
-                    final_out_dir = scenario_root / "merged" / final_group_name
-                else:
-                    final_out_dir = Path(final_out_dir)
-
-                manifest_path = vux_puck_cfg.get("manifest_path", None)
-                if manifest_path is None:
-                    manifest_path = Path(merged_groups[vux_group_name]) / "merged_manifest.csv"
-                else:
-                    manifest_path = Path(manifest_path)
-
-                merged_dir = merge_vux_group_with_puck_by_time(
-                    vux_dir=merged_groups[vux_group_name],
-                    puck_dir=puck_entry["output_dir"],
-                    out_dir=final_out_dir,
-                    manifest_path=manifest_path,
-                    output_suffix=vux_puck_cfg.get("output_suffix", "_VUX_PUCK"),
-                    scanner_src_vux=int(vux_puck_cfg.get("scanner_src_vux", 2)),
-                    scanner_src_puck=int(vux_puck_cfg.get("scanner_src_puck", 1)),
-                    chunk_size=int(vux_puck_cfg.get("chunk_size", 10_000_000)),
-                )
-                merged_groups[final_group_name] = merged_dir
-                build_merged_time_manifest(
-                    merged_dir=merged_dir,
-                    cloud_fmt="las",
-                    manifest_name="merged_manifest.csv",
-                    time_field="gps_time",
-                )
-                    
+        else:
+            raise ValueError(
+                f"[merge] Unknown preset '{preset}'. "
+                "Expected one of: 'vux_only', 'all', 'puck_on_existing'."
+            )
 
     return {
         "scanner_entries": scanner_entries,
@@ -1918,78 +1991,6 @@ def run_pipeline(pipe_cfg: dict) -> None:
     if pipe_cfg["steps"].get("georef", False) or steps_cfg.get("merge", False):
         pipeline_state = georef_and_merge(pipe_cfg)
 
-    # ------------------------------------------------------------
-    # Standalone VUX+PUCK merge — runs even if steps.merge=false,
-    # e.g. when working on already-georeferenced clouds
-    # ------------------------------------------------------------
-    elif steps_cfg.get("vux_puck_merge", False):
-        vux_puck_cfg = pipe_cfg.get("vux_puck_merge", {})
-        if not vux_puck_cfg.get("enabled", False):
-            print("[pipeline] steps.vux_puck_merge=true but vux_puck_merge.enabled=false — skipping")
-        else:
-            scenario_root = root_out_dir / scenario_name
-            vux_group_name = vux_puck_cfg["vux_group"]
-            puck_key       = vux_puck_cfg["puck_scanner"]
-
-            # Resolve VUX merged dir — explicit override or standard structure
-            vux_dir = vux_puck_cfg.get("vux_input_dir", None)
-            if vux_dir is None:
-                vux_dir = scenario_root / "merged" / vux_group_name
-            vux_dir = Path(vux_dir)
-
-            # Resolve PUCK georef output dir from scanner cfg
-            scanner_entries = load_scanner_entries(pipe_cfg)
-            puck_entry = next(
-                (e for e in scanner_entries
-                 if e.get("key") == puck_key or e.get("scanner_name") == puck_key),
-                None,
-            )
-            if puck_entry is None:
-                raise ValueError(
-                    f"vux_puck_merge.puck_scanner='{puck_key}' not found in scanners. "
-                    f"Available: {[e.get('key') for e in scanner_entries]}"
-                )
-            puck_dir = Path(puck_entry["output_dir"])
-
-            # Resolve output dir
-            final_group_name = vux_puck_cfg.get("name", "ALL")
-            final_out_dir    = vux_puck_cfg.get("output_dir", None)
-            if final_out_dir is None:
-                final_out_dir = scenario_root / "merged" / final_group_name
-            final_out_dir = Path(final_out_dir)
-
-            # Resolve manifest
-            manifest_path = vux_puck_cfg.get("manifest_path", None)
-            if manifest_path is None:
-                manifest_path = vux_dir / "merged_manifest.csv"
-            manifest_path = Path(manifest_path)
-
-            print("\n======================================")
-            print("[pipeline] Standalone VUX+PUCK merge")
-            print(f"[pipeline] vux_dir:   {vux_dir}")
-            print(f"[pipeline] puck_dir:  {puck_dir}")
-            print(f"[pipeline] manifest:  {manifest_path}")
-            print(f"[pipeline] out_dir:   {final_out_dir}")
-            print("======================================\n")
-
-            merged_dir = merge_vux_group_with_puck_by_time(
-                vux_dir=vux_dir,
-                puck_dir=puck_dir,
-                out_dir=final_out_dir,
-                manifest_path=manifest_path,
-                output_suffix=vux_puck_cfg.get("output_suffix", "_VUX_PUCK"),
-                scanner_src_vux=int(vux_puck_cfg.get("scanner_src_vux", 2)),
-                scanner_src_puck=int(vux_puck_cfg.get("scanner_src_puck", 1)),
-                chunk_size=int(vux_puck_cfg.get("chunk_size", 10_000_000)),
-            )
-            build_merged_time_manifest(
-                merged_dir=merged_dir,
-                cloud_fmt="las",
-                manifest_name="merged_manifest.csv",
-                time_field="gps_time",
-            )
-            pipeline_state["merged_groups"][final_group_name] = merged_dir
-
     if mode == "georef_only":
         print("[pipeline] georef_only done")
         return
@@ -2323,17 +2324,11 @@ def log_pipeline_config(cfg: dict):
     logging.info("Merge:")
     merge = cfg.get("merge", {})
     if merge:
+        preset = merge.get("preset", "vux_only")
+        logging.info("   preset: %s", preset)
         for k, v in merge.items():
-            logging.info("   %s: %s", k, v)
-    else:
-        logging.info("   <none>")
-
-    logging.info("")
-    logging.info("VUX+PUCK merge:")
-    vux_puck = cfg.get("vux_puck_merge", {})
-    if vux_puck:
-        for k, v in vux_puck.items():
-            logging.info("   %s: %s", k, v)
+            if k != "preset":
+                logging.info("   %s: %s", k, v)
     else:
         logging.info("   <none>")
 
