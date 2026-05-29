@@ -91,9 +91,8 @@ class GroupedLasReader:
         y   = np.concatenate(y_chunks)
         z   = np.concatenate(z_chunks)
 
-        order      = np.argsort(t, kind="stable")
-        self._t    = t[order]
-        self._xyz  = np.column_stack([x[order], y[order], z[order]])
+        self._t = t
+        self._xyz = np.column_stack([x, y, z])
         self._idx  = 0
         self._done = len(self._t) == 0
 
@@ -300,6 +299,8 @@ def format_summary(rows: List[Dict[str, object]]) -> str:
         ("max", 10),
         ("%>0.5m", 10),
         ("%>1.0m", 10),
+        ("N_ref_unique", 14),
+        ("N_tgt_unique", 14),
     ]
 
     def fnum(x, w):
@@ -341,9 +342,23 @@ def process_pair_streaming(
     total_size = os.path.getsize(ref_path) + os.path.getsize(tgt_path)
 
     with tqdm(total=total_size, unit="B", unit_scale=True, desc=f"Streaming {tgt_path.name}") as pbar:
-        # 🔥 décimate uniquement sur REF
-        ref_reader = make_reader(ref_path, delim, tmin, tmax, pbar=pbar, decimate=decimate)
-        tgt_reader = make_reader(tgt_path, delim, tmin, tmax, pbar=pbar, decimate=1)
+        ref_reader = make_reader(
+            ref_path,
+            delim,
+            tmin,
+            tmax,
+            pbar=pbar,
+            decimate=1,
+        )
+
+        tgt_reader = make_reader(
+            tgt_path,
+            delim,
+            tmin,
+            tmax,
+            pbar=pbar,
+            decimate=decimate,
+        )       
 
         writer = None
 
@@ -375,6 +390,8 @@ def process_pair_streaming(
             "time_only_ref": 0,
             "time_only_tgt": 0,
             "N_match": 0,
+            "N_ref_unique": 0,
+            "N_tgt_unique": 0,
         }
 
         gR = ref_reader.next_group()
@@ -389,18 +406,21 @@ def process_pair_streaming(
                 counts["N_ref_raw"] += len(xyzR)
                 counts["N_tgt_raw"] += len(xyzT)
 
-                # 🔥 gérer multi-retours SANS supprimer les timestamps
                 if len(xyzR) > 1:
-                    xyzR = xyzR.mean(axis=0)
-                else:
-                    xyzR = xyzR[0]
+                    counts["ref_dup_skip"] += 1
+                    gR = ref_reader.next_group()
+                    continue
 
                 if len(xyzT) > 1:
-                    xyzT = xyzT.mean(axis=0)
-                else:
-                    xyzT = xyzT[0]
+                    counts["tgt_dup_skip"] += 1
+                    gT = tgt_reader.next_group()
+                    continue
 
-                # 🔥 matching strict
+                xyzR = xyzR[0]
+                xyzT = xyzT[0]
+                counts["N_ref_unique"] += 1
+                counts["N_tgt_unique"] += 1
+
                 if tR == tT:
 
                     dxyz = xyzT - xyzR
@@ -408,7 +428,7 @@ def process_pair_streaming(
 
                     # init writer
                     if out_las is not None and writer is None:
-                        offset_xyz = xyzR.copy()
+                        offset_xyz = xyzT.copy()
                         writer = create_las_writer(out_las, scale, offset_xyz)
 
                     counts["N_match"] += 1
@@ -433,8 +453,8 @@ def process_pair_streaming(
                     if writer is not None:
                         write_las_chunk(
                             writer,
-                            np.asarray([tR], dtype=np.float64),
-                            xyzR.reshape(1, 3),
+                            np.asarray([tT], dtype=np.float64),
+                            xyzT.reshape(1, 3),
                             np.asarray([e3d], dtype=np.float32),
                         )
 

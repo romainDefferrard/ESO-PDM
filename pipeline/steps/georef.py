@@ -491,6 +491,7 @@ def georef_one_file(cfg, trj, path):
         raise ValueError(f"Unsupported output type: {output_type}")
 
     try:
+        n_chunks_total = max(1, (n_total + subchunk_size - 1) // subchunk_size)
         for chunk_i, i0 in enumerate(range(0, n_total, subchunk_size), 1):
             i1           = min(i0 + subchunk_size, n_total)
             lasvec_chunk = lasvec[i0:i1]
@@ -509,7 +510,7 @@ def georef_one_file(cfg, trj, path):
                     epsg_out=dist_cfg["map_epsg"],
                     return_mask=True,
                     chunk_i=chunk_i, 
-                    n_chunks=n_total,
+                    n_chunks=n_chunks_total,
                 )
             else:
                 mask_keep = None
@@ -672,6 +673,46 @@ def get_ref_georef_cfg(pipe_cfg: dict, scanner_entries: list[dict]) -> Path:
         f"Reference scanner '{ref_name}' not found. "
         f"Available: {[e['scanner_name'] for e in scanner_entries]}"
     )
+
+
+# ═══════════════════════════════════════════════════════════════
+# MINIMAL GEOREF CFG (for chunk step when georef was not run)
+# ═══════════════════════════════════════════════════════════════
+
+def write_minimal_georef_cfg(pipe_cfg: dict, scenario_root: Path) -> Path:
+    """
+    Build and write a minimal georef config that only contains the trajectory
+    block — enough for the chunker to load the SBET and compute curvilinear
+    distance.  Does NOT contain scanner / lasvec / output fields.
+
+    Written to <scenario_root>/tmp/generated_configs/georef_minimal.yml.
+    """
+    out_path = (
+        scenario_root / "tmp" / "generated_configs" / "georef_minimal.yml"
+    )
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    minimal = {
+        "trj":                pipe_cfg["trajectory"],
+        "distance_filtering": pipe_cfg.get("distance_filtering", {"enable": False}),
+        "georef_time_window": {"enable": False},
+        # Dummy mount / lasvec / output so load_config() doesn't crash
+        "lasvec":  {"type": "SDC", "cols": [0, 3, 4, 5], "path": "/dev/null"},
+        "leapsec": None,
+        "mount": {
+            "R_mount":   [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]],
+            "boresight": {"roll": 0.0, "pitch": 0.0, "yaw": 0.0},
+            "lever_arm": [0.0, 0.0, 0.0],
+        },
+        "output": {
+            "type": "LAS", "lasvec": False, "lasvec_to_body": False,
+            "path": str(scenario_root / "tmp" / "dummy_output"),
+        },
+    }
+
+    _write_tmp_cfg(minimal, out_path)
+    sub(f"minimal georef cfg → {out_path}")
+    return out_path
 
 
 # ═══════════════════════════════════════════════════════════════

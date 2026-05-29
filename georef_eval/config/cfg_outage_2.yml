@@ -3,22 +3,22 @@ outage_id: outage_2
 ref_dir:      /media/b085164/LaCie/2026spring_RD/CALIB_26_02_25/georef_errors/outage_2/cropped/ref_ODyN
 ref_manifest: /media/b085164/LaCie/2026spring_RD/CALIB_26_02_25/georef_errors/outage_2/cropped/ref_ODyN/merged_manifest.csv
 
-output_dir: /media/b085164/LaCie/2026spring_RD/CALIB_26_02_25/georef_errors/outage_2
+output_dir: /media/b085164/LaCie/2026spring_RD/CALIB_26_02_25/georef_errors/outage_2/AIRINS
 
 decimate: 10
 
 methods:
-  - name: outage_traj
-    dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/merged/ALL
-    manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/merged/ALL/merged_manifest.csv
+  # - name: outage_traj
+  #   dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/merged/ALL
+  #   manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/merged/ALL/merged_manifest.csv
 
-  - name: F2B
-    dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/georef_F2B/merged/ALL
-    manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/georef_F2B/merged/ALL/merged_manifest.csv
+  # - name: F2B
+  #   dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/georef_F2B/merged/ALL
+  #   manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/georef_F2B/merged/ALL/merged_manifest.csv
 
-  - name: COMBINED
-    dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/georef_COMBINED/merged/ALL
-    manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/georef_COMBINED/merged/ALL/merged_manifest.csv
+  # - name: COMBINED
+  #   dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/georef_COMBINED/merged/ALL
+  #   manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/georef_COMBINED/merged/ALL/merged_manifest.csv
 
   - name: S2S
     dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_2/georef_S2S/merged/ALL
