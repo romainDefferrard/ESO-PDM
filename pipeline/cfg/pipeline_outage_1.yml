@@ -2,7 +2,7 @@
 # PIPELINE — CALIB AIRINS | Outage 1 | F2B + S2S
 # ==============================================================
 
-scenario_name: "georef_ALL_traj_outage_1/test_s2s_new"
+scenario_name: "georef_ALL_traj_outage_1/AIRINS/georef_S2S"
 
 scanners:
   ha_cfg:   "scanner_cfg/scanner_HA_CALIB.yml"
@@ -11,7 +11,7 @@ scanners:
 
 trajectory:
   type: "SBET"
-  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/AIRINS/Outage_1_305120_305700/OUTAGE/out/outage_1.out"
+  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/AIRINS/Outage_1_305120_305700/S2S/out/traj_S2S_1.out"
   cfg:
     type: "SBET"
 
@@ -20,7 +20,7 @@ outage: [305120.0, 580.0]   # [t_start_GPS_s, durée_s]
 
 georef_time_window:
   enable: true
-  margin_s: 30.0
+  margin_s: 10.0
 
 distance_filtering:
   enable: true
@@ -29,7 +29,7 @@ distance_filtering:
   filter_trj: null
 
 paths:
-  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
+  root_out_dir: "/media/b085164/LaCie/2026spring_RD/CALIB_26_02_25"
   limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B_1.yml"
   patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"   # requis si s2s.run_patcher=true
 
@@ -37,10 +37,10 @@ paths:
 # STEPS — 4 steps actifs, chacun porte ses propres paramètres
 # ==============================================================
 steps:
-  georef: false
-  merge:  false
+  georef: true
+  merge:  true
   chunk:  false
-  s2s:    true
+  s2s:    false
 
 # ==============================================================
 # MERGE
@@ -53,7 +53,7 @@ merge:
   scanner_src_vux:  2
   scanner_src_puck: 1
   chunk_size: 10000000
-  cleanup: true
+  cleanup: true  # eraise all HA/LR/PUCK folders
 
 # ==============================================================
 # CHUNK — paramètres du chunker + son propre bloc limatch
@@ -86,18 +86,26 @@ chunk:
 # S2S — Patcher → spatial chunking → LiMatch
 # ==============================================================
 s2s:
-  run_patcher:     true   # true = lancer Patcher d'abord (utilise paths.patcher_cfg)
-  patcher_out_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/test_s2s_new/patcher_output"  # TODO set un chemin générique comme pour les chunks
-  output_root:     null    # null = <root_out_dir>/<scenario>/s2s
+  # Sorties
+  output_root:      null    # null = <root_out_dir>/<scenario>/s2s
+  patcher_out_root: null    # null = <output_root>/patcher_output
+                            #   = <root_out_dir>/<scenario>/s2s/patcher_output
+ 
+  # PC_DIR — chemin vers les nuages merged pour Patcher
+  # null = auto depuis merged/ALL du scénario courant :
+  #   <root_out_dir>/<scenario>/merged/ALL/merged_{flight_id}<pc_dir_suffix>
+  pc_dir_override: null
+  pc_dir_suffix:   "_VUX_PUCK.las"   # suffixe après {flight_id} dans le template
+ 
+  # Spatial chunking (s2s_chunks.py)
   L:            20.0       # longueur des chunks spatiaux (m)
   min_last_m:   null       # null = 2/3 * L (automatique)
   min_points:   500
   min_time_sep: 30.0       # skip paires dont séparation temporelle < X secondes
   epsg:         "EPSG:2056"
-
+ 
   limatch:
     enabled: true
-    # Pour S2S, souvent un scalaire suffit (les paires ont un drift connu)
     uncertainty_r: 2.0
     # uncertainty_r_min: 0.0
     # uncertainty_r_max: 3.0
@@ -110,16 +118,3 @@ merge_correspondences:
   output_file: null    # null = limatch_root/LiDAR_p2p.txt
 
 
-# faut corriger deux trois trucs. en gros pour le s2s c'est bien d'utiliser la logique de l'outil Patcher mais je veux pas avoir la GUI et supervision pour devoir extraire manuellement une fois qu'il a finit de calculer les footprints. aussi je veux override les output_dir et le PC_DIR 
-
-
-
-# pour   patcher_out_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/test_s2s_new/patcher_output"  # TODO set un chemin générique comme pour les chunks
-
-
-
-# je veux un truc si je mets "null" ca mets un dossier par défaut comme pour les chunk>output_root du genre: null = <root_out_dir>/<scenario>/S2S
-
-
-
-# le pc_dir je veux garder la meme logique et override avec ou sont mes nuages pareil de comment le chunk va les chercher dans le merged/ALL dans le dossier du <scenario>. attention a la forme attendu de l'outil patcher:

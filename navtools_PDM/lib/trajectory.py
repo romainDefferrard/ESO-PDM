@@ -215,7 +215,10 @@ def _plot_error_traces(t, comparedTrj, rpy_errors, refTrj, outpath=None, name=No
 
     for i, trj in enumerate(comparedTrj):
         err_ecef = refTrj.ecef_interp - trj.ecef_interp
-        err_local_ned = np.array([quat2dcm(refTrj.q_l2e[j]) @ err_ecef[j] for j in range(len(err_ecef))])
+        err_local_ned = np.array([
+            quat2dcm(refTrj.q_l2e[j]).T @ err_ecef[j]
+            for j in range(len(err_ecef))
+        ])
         rpy_bias = np.median(rpy_errors[i], axis=0)
 
         for j in range(3):

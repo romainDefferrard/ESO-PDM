@@ -26,6 +26,7 @@ a top-level step — it lives inside chunk: and s2s: as:
     run_patcher:   false
     patcher_out_root: ...
     L: 20.0
+    min_points: 500
     limatch:
       enabled: true
       uncertainty_r: 0.5        # scalar — no _min/_max needed for s2s
@@ -108,17 +109,20 @@ def run_pipeline(pipe_cfg: dict) -> None:
         or scenario_root / "merged" / "ALL"
     )
 
-    # Resolve reference georef config path for chunk step
+    # Resolve reference georef config path for chunk step.
+    # If georef was not run (no generated cfg on disk), build a minimal one
+    # on-the-fly from the pipeline config so the chunker can load the trajectory.
     cfg_georef_path = _georef.get_ref_georef_cfg(pipe_cfg, scanner_entries) \
                       if scanner_entries else None
 
+    if steps.get("chunk", False) and (
+        cfg_georef_path is None or not Path(cfg_georef_path).exists()
+    ):
+        # Build and write a minimal georef config so the chunker can load the traj
+        cfg_georef_path = _georef.write_minimal_georef_cfg(pipe_cfg, scenario_root)
+
     # ── 3. Chunk + optional LiMatch F2B/crossings ─────────────────────────
     if steps.get("chunk", False):
-        if cfg_georef_path is None or not Path(cfg_georef_path).exists():
-            raise FileNotFoundError(
-                "Cannot chunk: reference georef config not found. "
-                "Run georef first, or set chunk.source='existing'."
-            )
         chunks_root = _chunk.run(pipe_cfg, merged_dir, cfg_georef_path)
 
         chunk_lm = pipe_cfg.get("chunk", {}).get("limatch", {})
@@ -127,6 +131,7 @@ def run_pipeline(pipe_cfg: dict) -> None:
 
     # ── 4. S2S + optional LiMatch ─────────────────────────────────────────
     if steps.get("s2s", False):
+        pipe_cfg["_merged_dir"] = str(merged_dir)
         _limatch.run_s2s(pipe_cfg)
 
     info("[pipeline] ✓ done")

@@ -4,8 +4,8 @@
 # Scenario      : georef_ALL_traj_outage_1
 # ==============================================================
  
-mode: "georef_only"
-scenario_name: "georef_ALL_traj_outage_1/APX/georef_COMBINED"
+mode: "chunk"
+scenario_name: "georef_ALL_traj_outage_1/APX/"
  
 # ==============================================================
 # SCANNER CONFIGURATIONS
@@ -24,8 +24,7 @@ merge_groups:
 # ==============================================================
 trajectory:
   type: "SBET"
-  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/APX/outage_1/combined_w_traj_f2b/out/traj_combined_1_apx.out"
-  #path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/APX/outage_1/out_v3/outage_1_APX.out"
+  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/APX/outage_1/OUTAGE/out/outage_1_APX.out"
   cfg:
     type: "SBET"
  
@@ -36,7 +35,7 @@ trajectory:
 georef_time_window:
   enable: true
   outage: [305200.0, 420.0]
-  margin_s: 60.0
+  margin_s: 30.0
  
 # ==============================================================
 # DISTANCE FILTERING
@@ -51,7 +50,7 @@ distance_filtering:
 # PATHS
 # ==============================================================
 paths:
-  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
+  root_out_dir: "/media/b085164/LaCie/2026spring_RD/CALIB_26_02_25"
   patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
   limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B_1_APX.yml"
   gps_input:    "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt"
@@ -62,8 +61,8 @@ paths:
 steps:
   georef:          true
   merge:           true
-  chunk:           false
-  limatch:         false
+  chunk:           true
+  limatch:         true
   gps_outage_file: false
 
 # ==============================================================
@@ -111,16 +110,16 @@ merge:
 # MERGE CORRESPONDENCES
 # ==============================================================
 merge_correspondences:
-  enabled: false
+  enabled: true
   output_file: null             # -> limatch_root/LiDAR_p2p.txt
  
 # ==============================================================
 # CHUNKING
 # ==============================================================
 chunk:
-  source: "existing"
-  existing_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/scenario_combined/chunks_15m"
-  merged_input_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/merged/ALL"
+  source: "generate"
+  existing_root: null
+  merged_input_root: "/media/b085164/LaCie/2026spring_RD/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/merged/ALL"
   merged_group: null
   reference_scanner: "HA"
   output_root: null
@@ -156,7 +155,7 @@ chunk_variant:
 # ==============================================================
 limatch:
   run: true
-  output_root: "/media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/limatch_F2B" # null = root_out_dir/scenario_name/limatch
+  output_root: "/media/b085164/LaCie/2026spring_RD/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/limatch_F2B" # null = root_out_dir/scenario_name/limatch
   neighbor_k: 1                 # k+1: each chunk matched with next
   do_cross_scan: true
  

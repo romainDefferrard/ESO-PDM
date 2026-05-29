@@ -33,9 +33,9 @@ trajectory:
 # Only georef points inside [305120 - 60, 305120 + 480 + 60] = [305060, 305660]
 # ==============================================================
 georef_time_window:
-  enable: true
+  enable: false
   outage: [305120.0, 580.0]
-  margin_s: 60.0
+  margin_s: 30.0
  
 # ==============================================================
 # DISTANCE FILTERING
@@ -50,7 +50,7 @@ distance_filtering:
 # PATHS
 # ==============================================================
 paths:
-  root_out_dir: "/media/b085164/Elements/CALIB_26_02_25"
+  root_out_dir: "/media/b085164/LaCie/2026spring_RD/CALIB_26_02_25"
   patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
   limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B_1.yml"
   gps_input:    "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/base_v0/in/GPS.txt"

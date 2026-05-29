@@ -5,7 +5,7 @@
 # ==============================================================
 
 mode: "georef_only"
-scenario_name: "georef_ALL_traj_outage_2/georef_S2S"
+scenario_name: "georef_ALL_traj_outage_2/georef_S2S_v2"
 
 # ==============================================================
 # SCANNER CONFIGURATIONS
@@ -20,7 +20,7 @@ scanners:
 # ==============================================================
 trajectory:
   type: "SBET"
-  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/Outage_2_305645_306120/S2S/out/S2S_outage_2.out"
+  path: "/media/b085164/Elements/CALIB_26_02_25/ODyN_calib/AIRINS/Outage_2_305645_306120/S2S/out/S2S_outage_2.out"
   cfg:
     type: "SBET"
 
@@ -29,7 +29,7 @@ trajectory:
 # Only georef points inside [305645 - 30, 305645 + 475 + 30] = [305615, 306650]
 # ==============================================================
 georef_time_window:
-  enable: true
+  enable: false
   outage: [305645.0, 475.0]
   margin_s: 30.0
 

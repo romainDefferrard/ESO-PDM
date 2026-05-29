@@ -173,7 +173,13 @@ def _build_time_manifest(merged_dir: Path, cloud_fmt: str) -> Path:
                 t_min, t_max = _las_time_bounds(f)
             else:
                 t_min, t_max = _txt_time_bounds(f)
-            rows.append({"scan_id": 0, "filename": f.name,
+            # Extract scan_id from filename (e.g. "merged_1000_HA_LR.las" → 1000)
+            sid = _extract_scan_id(f)
+            if sid is None:
+                # Fallback: parse first numeric group in stem
+                m = re.search(r'(\d+)', f.stem)
+                sid = int(m.group(1)) if m else 0
+            rows.append({"scan_id": sid, "filename": f.name,
                           "t_start": t_min, "t_end": t_max})
         except Exception as e:
             warn(f"[merge] manifest: {f.name}: {e}")

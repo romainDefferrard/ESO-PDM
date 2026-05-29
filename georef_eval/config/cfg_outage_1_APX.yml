@@ -12,13 +12,13 @@ methods:
     dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/merged/ALL
     manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/merged/ALL/merged_manifest.csv
 
-  - name: F2B
-    dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/georef_F2B/merged/ALL
-    manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/georef_F2B/merged/ALL/merged_manifest.csv
+  # - name: F2B
+  #   dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/georef_F2B/merged/ALL
+  #   manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/georef_F2B/merged/ALL/merged_manifest.csv
 
-  - name: COMBINED
-    dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/georef_COMBINED/merged/ALL
-    manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/georef_COMBINED/merged/ALL/merged_manifest.csv
+  # - name: COMBINED
+  #   dir:      /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/georef_COMBINED/merged/ALL
+  #   manifest: /media/b085164/Elements/CALIB_26_02_25/georef_ALL_traj_outage_1/APX/georef_COMBINED/merged/ALL/merged_manifest.csv
 
 time:
   buffer: 2.0
