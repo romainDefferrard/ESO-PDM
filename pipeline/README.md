@@ -320,8 +320,8 @@ chunk:
 **F2B consecutive pairs**
 
 - **`neighbor_k`** — within each scan pass, every chunk `i` is matched with chunks `i+1`, `i+2`, …, `i+k`.
-  - `k=1` → only consecutive pairs (`i` / `i+1`) — pure F2B
-  - `k=2` → consecutive + skip-one pairs (`i`/`i+1` and `i`/`i+2`) — denser F2B
+  - `k=1` → only consecutive pairs (`i` / `i+1`)
+  - `k=2` → consecutive + skip-one pairs (`i`/`i+1` and `i`/`i+2`)
 
 **Cross-scan matching**
 
