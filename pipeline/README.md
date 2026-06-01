@@ -51,6 +51,14 @@ outage: [t_start_GPS_s, duration_s]
 
 This single field controls the georef time windowing and the chunking bounds.
 
+### Matching Strategies
+
+Three strategies produce L2L correspondences for ODyN, each exploiting a different aspect of the acquisition geometry:
+
+- **F2B (Front-to-Back)** — matches each spatial chunk with its immediate successor(s) along the trajectory, exploiting the forward overlap naturally induced by the VUX scanners' scanning geometry. Geometry-independent and applicable to any acquisition, but overlap can be narrow on featureless road sections.
+- **S2S (Scan-to-Scan)** — matches spatially aligned chunks from different scan passes (back-and-forth drives, parking laps, road crossings). Provides strong constraints where crossing geometry is available, but requires at least two passes over the same area and assumes the accumulated drift between passes is small enough for footprints to overlap. This condition is satisfied by the AIRINS but not guaranteed for the APX15.
+- **Combined (F2B + S2S)** — integrates both sets of correspondences in a single ODyN run. For **AIRINS**, F2B and S2S crossing chunks are extracted simultaneously from the degraded point cloud. For **APX15**, the large accumulated drift requires a sequential approach: F2B is applied first, the corrected trajectory is used to re-georeference a new point cloud, and S2S crossings are then extracted from this intermediate cloud.
+
 ### Coordinate System
 
 All outputs use **EPSG:2056** (Swiss LV95) by default. Change via `epsg_out` in the pipeline config.
@@ -281,7 +289,7 @@ chunk:
 - **`source`** — `"generate"`: run the chunker; `"existing"`: skip and reuse chunks at `existing_root`
 - **`existing_root`** — path to an existing chunks directory (only used when `source: existing`)
 - **`output_root`** — output directory; `null` → `<root_out_dir>/<scenario>/scenario_combined`
-- **`length_m`** — chunk length in curvilinear metres along the vehicle trajectory
+- **`length_m`** — chunk length in curvilinear metres along the vehicle trajectory. L=15m was empirically determined to provide sufficient spatial overlap for the VUX scanners' forward scanning geometry
 - **`epsg_out`** — map CRS for trajectory projection
 - **`reference_scanner`** — which scanner's trajectory is used to compute curvilinear distance
 
@@ -333,6 +341,18 @@ Three mutually exclusive forms — choose one or omit entirely:
 - **`uncertainty_r`** — scalar override: replaces `uncertainty_r` in the LiMatch yml with a single radius value.
 - *(no entry)* — uses the value from the LiMatch yml unchanged.
 
+**Recommended LiMatch parameters (from thesis, Appendix 8.1)**
+
+Tiling and keypoint limits are disabled — chunks are already spatially bounded and contain a manageable number of points.
+
+| Config | `rsc_thr` | `lcd_r` | `uncertainty_r` |
+|---|---|---|---|
+| AIRINS — F2B and S2S | 0.5 m | 1.0 m | 1.5 m (scalar) |
+| APX15 — F2B | 0.5 m | 1.0 m | 1.5 m (scalar) |
+| APX15 — S2S (after F2B re-georef) | 0.8 m | 2.0 m | annular `[r_min, r_max]` |
+
+For APX15 S2S, the larger residual drift after F2B correction requires a wider `rsc_thr` and `lcd_r`, and the annular search (rather than a full sphere) to constrain the search to the expected inter-scan offset and reduce computation time.
+
 ---
 
 ### Step 4b — `s2s` (Scan-to-Scan via Patcher)
@@ -365,6 +385,8 @@ s2s:
 - **`min_points`** — spatial chunks with fewer points than this threshold are discarded
 - **`min_time_sep`** — pairs of scan passes whose temporal separation is less than this value [s] are skipped (avoids matching nearly simultaneous passes that are not independent)
 - **`limatch.uncertainty_r`** / **`uncertainty_r_min` + `uncertainty_r_max`** — same override logic as for `chunk.limatch` (see above)
+
+> **APX15 Combined (sequential):** the standalone S2S step (`steps.s2s: true`) is how the sequential Combined is run for APX15. First run the pipeline with `steps: {georef, merge, chunk, limatch F2B}` to get an intermediate corrected trajectory, re-georeference a new point cloud with it, then run the pipeline again on that new cloud with `steps.s2s: true` to extract crossing correspondences.
 
 ---
 

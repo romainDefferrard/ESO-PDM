@@ -4,11 +4,25 @@ This repository contains all tools developed during a Master's project (PDM) at 
 
 ## Overview
 
-The project investigates trajectory estimation degradation during GNSS outages and its impact on LiDAR georeferencing quality. It provides:
+This work evaluates how LiDAR-to-LiDAR (L2L) point-to-point correspondences — extracted with [LiMatch](https://github.com/ESO-EPFL/limatch) — can stabilize trajectory estimation during GNSS outages when integrated into the [ODyN](https://github.com/ESO-EPFL/odyn) Dynamic Network adjustment. Three matching strategies are compared:
+
+| Strategy | Principle |
+|---|---|
+| **F2B** (Front-to-Back) | Matches consecutive spatial chunks along the trajectory. Geometry-independent, applicable to any acquisition. |
+| **S2S** (Scan-to-Scan) | Matches chunks from different scan passes covering the same area. Requires crossing or overlapping trajectories. |
+| **Combined** | F2B + S2S simultaneously (AIRINS) or sequentially after an intermediate F2B re-georeferencing (APX15). |
+
+**Platform:** Helimap MLS system — RIEGL VUX-HA, VUX-LR (primary LiDARs), Velodyne PUCK LITE (complementary), AIRINS (navigation-grade IMU, primary), APX15 (UAV-grade IMU, secondary).
+
+**Datasets:**
+- **Dataset 1 — Épalinges/Calibration:** controlled validation with simulated GNSS outages (3 scenarios: back-and-forth, parking laps, urban mixed), AIRINS and APX15 configurations.
+- **Dataset 2 — Crissier interchange:** operational validation with natural GNSS degradation under a highway viaduct; evaluated with ALS-derived LiDAR Control Points (LCPs).
+
+The repository provides:
 
 - A **georeferencing pipeline** for multi-scanner MLS data (VUX HA, VUX LR, Velodyne PUCK)
-- A **Patcher tool** for extracting overlapping scan patches (ALS & MLS), used as input for the LiMatch point-to-point matching algorithm
-- **Evaluation scripts** for computing georeferencing RMSE, L2L constraints residuals, and LCP-based metrics
+- A **Patcher tool** for extracting overlapping scan patches (ALS & MLS), used as input for LiMatch
+- **Evaluation scripts** for computing georeferencing RMSE, L2L constraint residuals, and LCP-based metrics
 - **Utility tools** for GSD analysis, sensor alignment, and lever-arm estimation
 
 ## Repository Structure
