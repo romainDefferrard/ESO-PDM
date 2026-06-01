@@ -67,16 +67,6 @@ def _get_match_clouds() -> callable:
 # ═══════════════════════════════════════════════════════════════
 
 def _inject_uncertainty(cfg: dict, lim_pipeline_cfg: dict) -> dict:
-    """
-    Inject uncertainty values from the pipeline config into the LiMatch cfg.
-
-    If uncertainty_r_min + uncertainty_r_max are both given:
-        → set both, remove uncertainty_r
-    Elif uncertainty_r is given:
-        → set it, remove _min/_max
-    Else:
-        → leave the LiMatch yml unchanged (use whatever is in the file)
-    """
     r_min = lim_pipeline_cfg.get("uncertainty_r_min")
     r_max = lim_pipeline_cfg.get("uncertainty_r_max")
     r     = lim_pipeline_cfg.get("uncertainty_r")
@@ -89,6 +79,11 @@ def _inject_uncertainty(cfg: dict, lim_pipeline_cfg: dict) -> dict:
         cfg["uncertainty_r"] = float(r)
         cfg.pop("uncertainty_r_min", None)
         cfg.pop("uncertainty_r_max", None)
+
+    # max_kpts override
+    max_kpts = lim_pipeline_cfg.get("max_kpts")
+    if max_kpts is not None:
+        cfg["max_kpts"] = int(max_kpts)
 
     return cfg
 
@@ -284,7 +279,6 @@ def merge_correspondences(
 # ═══════════════════════════════════════════════════════════════
 # S2S — PATCHER + SPATIAL CHUNKING
 # ═══════════════════════════════════════════════════════════════
-
 def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     """
     Scan-to-Scan step: Patcher (headless) → s2s_chunks → LiMatch.
@@ -292,6 +286,7 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     Flow
     ----
     1. Build a Patcher config from pipe_cfg, overriding PC_DIR and OUTPUT_DIR.
+       Skipped automatically if patcher_out_root already contains Flights_* dirs.
     2. Run Patcher in headless mode (no GUI) — skips launch_gui(), calls extract_mls() directly.
     3. Pass the patcher output (Flights_*/  dirs) to s2s_chunks.process_pair().
     4. Optionally merge correspondences.
@@ -300,10 +295,6 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     -----------------------------------------------
     Template with {flight_id}, e.g.:
         /root/scenario/merged/ALL/merged_{flight_id}_VUX_PUCK.las
-    This matches files like:
-        merged_1000_VUX_PUCK.las
-        merged_2000_VUX_PUCK.las
-    which is exactly the naming produced by steps/merge.py.
 
     Config keys (under pipe_cfg)
     ----------------------------
@@ -314,16 +305,17 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     s2s:
       patcher_out_root: null      # null = <root_out_dir>/<scenario>/s2s/patcher_output
       output_root:      null      # null = <root_out_dir>/<scenario>/s2s
-      pc_dir_override:  null      # null = auto from merged/ALL  (merged_{flight_id}_VUX_PUCK.las)
-      pc_dir_suffix:    "_VUX_PUCK.las"   # suffix after flight_id in merged filenames
+      pc_dir_override:  null
+      pc_dir_suffix:    "_VUX_PUCK.las"
       L:            20.0
       min_last_m:   null
       min_points:   500
       min_time_sep: 0.0
       epsg:         EPSG:2056
       limatch:
-        enabled: true
-        uncertainty_r: 2.0
+        enabled:       true
+        uncertainty_r: 2.0        # optional — falls back to LiMatch yml value
+        max_kpts:      10000      # optional — falls back to LiMatch yml value
     """
     repo_root = _repo_root()
     s2s_cfg   = pipe_cfg.get("s2s", {})
@@ -351,62 +343,59 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     patcher_out_root.mkdir(parents=True, exist_ok=True)
 
     # ── Build PC_DIR from merged/ALL ─────────────────────────────
-    # Merged files are named: merged_{flight_id}_VUX_PUCK.las
-    # PC_DIR template: /path/to/merged/ALL/merged_{flight_id}_VUX_PUCK.las
     if s2s_cfg.get("pc_dir_override"):
         pc_dir = str(s2s_cfg["pc_dir_override"])
     else:
         merged_dir = (
-            pipe_cfg.get("_merged_dir")          # injected by pipeline.py if available
+            pipe_cfg.get("_merged_dir")
             or root_out_dir / scenario_name / "merged" / "ALL"
         )
         pc_suffix = s2s_cfg.get("pc_dir_suffix", "_VUX_PUCK.las")
-        # Result: /root/scenario/merged/ALL/merged_{flight_id}_VUX_PUCK.las
         pc_dir = str(Path(merged_dir) / f"merged_{{flight_id}}{pc_suffix}")
 
     sub(f"PC_DIR: {pc_dir}")
     sub(f"patcher_out: {patcher_out_root}")
 
-    # ── Load base Patcher config and override fields ──────────────
-    patcher_cfg_rel = paths_cfg.get("patcher_cfg")
-    if not patcher_cfg_rel:
-        raise ValueError("[s2s] paths.patcher_cfg is required for the s2s step.")
+    # ── Run Patcher — skip if output already exists ───────────────
+    existing_flights = list(patcher_out_root.glob("Flights_*"))
+    if existing_flights:
+        info(f"[s2s/patcher] {len(existing_flights)} existing Flights_* dir(s) found "
+             f"— skipping Patcher")
+    else:
+        patcher_cfg_rel = paths_cfg.get("patcher_cfg")
+        if not patcher_cfg_rel:
+            raise ValueError("[s2s] paths.patcher_cfg is required when Patcher output "
+                             "does not already exist.")
 
-    patcher_cfg_abs = (repo_root / patcher_cfg_rel).resolve()
-    if not patcher_cfg_abs.exists():
-        raise FileNotFoundError(f"[s2s] Patcher config not found: {patcher_cfg_abs}")
+        patcher_cfg_abs = (repo_root / patcher_cfg_rel).resolve()
+        if not patcher_cfg_abs.exists():
+            raise FileNotFoundError(
+                f"[s2s] Patcher config not found: {patcher_cfg_abs}")
 
-    import yaml as _yaml
-    patcher_config = _yaml.safe_load(open(str(patcher_cfg_abs), "r"))
+        import yaml as _yaml
+        patcher_config = _yaml.safe_load(open(str(patcher_cfg_abs), "r"))
+        patcher_config["PC_DIR"]     = pc_dir
+        patcher_config["OUTPUT_DIR"] = str(patcher_out_root)
+        patcher_config["SCAN_MODE"]  = "MLS"
 
-    # Override the two key fields
-    patcher_config["PC_DIR"]     = pc_dir
-    patcher_config["OUTPUT_DIR"] = str(patcher_out_root)
-    # Force MLS headless mode
-    patcher_config["SCAN_MODE"]  = "MLS"
+        patcher_dir = repo_root / "Patcher"
+        if str(patcher_dir) not in sys.path:
+            sys.path.insert(0, str(patcher_dir))
 
-    info("[s2s] running Patcher (headless, no GUI)…")
-
-    # ── Run Patcher headless ─────────────────────────────────────
-    # Add Patcher to sys.path
-    patcher_dir = repo_root / "Patcher"
-    if str(patcher_dir) not in sys.path:
-        sys.path.insert(0, str(patcher_dir))
-
-    from utils.Patcher import PatcherPipeline
-
-    pipeline = PatcherPipeline(patcher_config)
-    pipeline.load_data()
-    pipeline.generate_footprint()
-    # Skip launch_gui() — set extraction_state and output_dir directly
-    pipeline.extraction_state = True
-    pipeline.output_dir       = str(patcher_out_root)
-    pipeline.execute_limatch  = False   # LiMatch handled by our step below
-    pipeline.extract_mls()
-
-    info(f"[s2s/patcher] done → {patcher_out_root}")
+        info("[s2s] running Patcher (headless, no GUI)…")
+        from utils.Patcher import PatcherPipeline
+        pipeline = PatcherPipeline(patcher_config)
+        pipeline.load_data()
+        pipeline.generate_footprint()
+        pipeline.extraction_state = True
+        pipeline.output_dir       = str(patcher_out_root)
+        pipeline.execute_limatch  = False
+        pipeline.extract_mls()
+        info(f"[s2s/patcher] done → {patcher_out_root}")
 
     # ── s2s spatial chunking + LiMatch ───────────────────────────
+    import yaml as _yaml   # may not have been imported above if patcher was skipped
+
     limatch_cfg_rel = paths_cfg.get("limatch_cfg", "")
     limatch_cfg_path = (repo_root / limatch_cfg_rel).resolve()
     if not limatch_cfg_path.exists():
@@ -418,6 +407,7 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
 
     # Import s2s_chunks — search in pipeline/ then ESO-PDM root
     _s2s_candidates = [
+        Path(__file__).resolve().parent,              # pipeline/steps/  ← ajouter en premier
         Path(__file__).resolve().parents[1],          # pipeline/
         Path(__file__).resolve().parents[2],          # ESO-PDM/
         Path(__file__).resolve().parents[2] / "navtools_PDM",
@@ -448,11 +438,12 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     info(f"[s2s] {len(pairs)} pair(s) found")
 
     L          = float(s2s_cfg.get("L",          20.0))
-    min_last_m = float(s2s_cfg.get("min_last_m") or L * 2.0 / 3.0)
-    min_points = int(  s2s_cfg.get("min_points", 500))
+    min_last_m = L * 2.0 / 3.0
     min_t_sep  = float(s2s_cfg.get("min_time_sep", 0.0))
 
-    # Inject uncertainty_r into a temp LiMatch cfg
+    # ── Inject LiMatch overrides into a temp config ───────────────
+    # All fields are optional — if absent, the LiMatch yml value is kept.
+    # Supported overrides: uncertainty_r, uncertainty_r_min/max, max_kpts
     s2s_lm_cfg = s2s_cfg.get("limatch", {})
     if s2s_lm_cfg:
         import tempfile
@@ -473,7 +464,6 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
                 t_trj=t_trj, x_trj=x_trj, y_trj=y_trj,
                 L=L,
                 min_last_chunk_m=min_last_m,
-                min_points=min_points,
                 limatch_cfg_path=limatch_cfg_path,
                 repo_root=repo_root,
                 min_time_sep=min_t_sep,
