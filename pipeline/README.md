@@ -376,7 +376,7 @@ s2s:
     uncertainty_r: 1.5
     # uncertainty_r_min: 0.0
     # uncertainty_r_max: 3.0
-    # max_kpts: 10000
+    max_kpts: 10000
 ```
 
 - **`output_root`** — root output directory; `null` → `<root_out_dir>/<scenario>/s2s`
