@@ -1,0 +1,12 @@
+numpy
+scipy
+laspy[lazrs]
+pyproj
+pandas
+PyQt6
+matplotlib
+shapely
+scikit-image
+tqdm
+pyyaml
+more-itertools
