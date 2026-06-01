@@ -78,45 +78,29 @@ See [`Evaluation/README.md`](Evaluation/README.md) for full documentation.
 
 ## Dependencies
 
-The project uses Python 3.9+ with the following main packages:
+The project uses Python 3.9+. Install all dependencies with:
 
-| Package | Usage |
-|---|---|
-| `numpy`, `scipy` | Numerical processing |
-| `laspy` | LAS/LAZ point cloud I/O |
-| `pyproj` | Coordinate transformations (ECEF ↔ LV95 / EPSG:2056) |
-| `pandas` | Manifests, CSV results |
-| `PyQt6` | GUI (Patcher) |
-| `shapely` | 2D footprint geometry (Patcher) |
-| `tqdm` | Progress bars |
-| `pyyaml` | Configuration files |
-
-LiMatch is used as a submodule under `Patcher/submodules/limatch/`.
-
-## Key Concepts
-
-### Manifests
-
-The pipeline is designed around **manifest CSV files** to avoid scanning entire data directories on each run. A manifest indexes each scan file with its GPS time bounds (`scan_id`, `filename`, `t_start`, `t_end`).
-
-- **Merged cloud manifests** are created automatically by the merge step.
-- **SDC/CSV laser vector manifests** must be built once using `pipeline/build_sdc_manifest.ipynb`, then the path is set in the scanner config under `manifest_path`.
-
-### Outage Definition
-
-All experiments are driven by an outage window defined as:
-
-```yaml
-outage: [t_start_GPS_s, duration_s]
+```bash
+pip install -r requirements.txt
 ```
 
-This single field controls georef time windowing, chunking bounds, and RMSE evaluation windows.
+Main packages:
 
-### Coordinate System
+- `numpy`, `scipy` — numerical processing
+- `laspy` — LAS/LAZ point cloud I/O
+- `pyproj` — coordinate transformations (ECEF ↔ LV95 / EPSG:2056)
+- `pandas` — manifests, CSV results
+- `PyQt6` — GUI (Patcher)
+- `matplotlib` — plots (Patcher GUI, evaluation notebooks)
+- `shapely` — 2D footprint geometry (Patcher)
+- `scikit-image` — contour detection (Patcher footprint)
+- `tqdm` — progress bars
+- `pyyaml` — configuration files
+- `more-itertools` — iteration utilities
 
-All outputs use **EPSG:2056** (Swiss LV95) by default. Change via `epsg_out` in the pipeline config.
+[LiMatch](https://github.com/EPFL-ENAC/lte-limatch) is used as a submodule under `Patcher/submodules/limatch/`.
 
-## Data Flows
+## Data Flow
 
 ```
 SDC/CSV laser vectors
