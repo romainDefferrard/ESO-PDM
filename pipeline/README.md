@@ -57,7 +57,10 @@ Three strategies produce L2L correspondences for ODyN, each exploiting a differe
 
 - **F2B (Front-to-Back)** — matches each spatial chunk with its immediate successor(s) along the trajectory, exploiting the forward overlap naturally induced by the VUX scanners' scanning geometry. Geometry-independent and applicable to any acquisition, but overlap can be narrow on featureless road sections.
 - **S2S (Scan-to-Scan)** — matches spatially aligned chunks from different scan passes (back-and-forth drives, parking laps, road crossings). Provides strong constraints where crossing geometry is available, but requires at least two passes over the same area and assumes the accumulated drift between passes is small enough for footprints to overlap. This condition is satisfied by the AIRINS but not guaranteed for the APX15.
-- **Combined (F2B + S2S)** — integrates both sets of correspondences in a single ODyN run. For **AIRINS**, F2B and S2S crossing chunks are extracted simultaneously from the degraded point cloud. For **APX15**, the large accumulated drift requires a sequential approach: F2B is applied first, the corrected trajectory is used to re-georeference a new point cloud, and S2S crossings are then extracted from this intermediate cloud. **The Combined approach via `chunk.limatch` (`do_spatial_crossings: true`) is strongly preferred over the standalone `s2s` step: it reuses the existing F2B chunks without a full Patcher run, and is significantly faster.**
+- **Combined (F2B + S2S)** — integrates both sets of correspondences in a single ODyN run. For **AIRINS**, F2B and S2S crossing chunks are extracted simultaneously from the degraded point cloud. For **APX15**, the large accumulated drift requires a sequential approach: F2B is applied first, the corrected trajectory is used to re-georeference a new point cloud, and S2S crossings are then extracted from this intermediate cloud.
+
+
+**The Combined approach via `chunk.limatch` (`do_spatial_crossings: true`) is strongly preferred over the standalone `s2s` step: it reuses the existing F2B chunks without a full Patcher run, and is significantly faster.**
 
 ### Coordinate System
 
