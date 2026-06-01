@@ -19,14 +19,13 @@ Chunking logic
 
 Usage
 -----
-    python -m navtools_PDM.s2s_chunk_and_match \\
-        --pairs_dirs  /path/to/pairs_1 /path/to/pairs_2 /path/to/pairs_3 \\
-        --sbet        /path/to/ODyN_GNSS_INS.out \\
-        --limatch_cfg /path/to/MLS_F2B.yml \\
+    python -m pipeline.steps.s2s_chunks \\
+        --pairs_dirs  /path/to/pairs_1 /path/to/pairs_2 \\
+        --sbet        /path/to/ODyN.out \\
+        --limatch_cfg /path/to/MLS.yml \\
         --out_root    /path/to/output \\
         --L           20.0 \\
-        --epsg        EPSG:2056 \\
-        --min_points  500
+        --epsg        EPSG:2056
 """
 
 from __future__ import annotations
@@ -154,12 +153,11 @@ def chunk_las_spatial(
     tangent: np.ndarray,
     s_edges: np.ndarray,
     out_prefix: str = "chunk_",
-    min_points: int = 500,
     chunk_size: int = 2_000_000,
 ) -> List[int]:
     """
     Split las_path into spatial slabs perpendicular to `tangent`.
-    Returns list of kept chunk indices (point count >= min_points).
+    Returns list of chunk indices that were written (all chunks kept).
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     n_chunks = len(s_edges) - 1
@@ -183,9 +181,6 @@ def chunk_las_spatial(
                 return
             writers[k].close()
             del writers[k]
-            p = out_dir / f"{out_prefix}{k:04d}.las"
-            if counts.get(k, 0) < min_points:
-                p.unlink(missing_ok=True)
 
         with tqdm(total=reader.header.point_count, unit="pts",
                   desc=f"  chunk {las_path.name}", leave=False) as pbar:
@@ -215,8 +210,8 @@ def chunk_las_spatial(
         for k in list(writers.keys()):
             close_chunk(k)
 
-    kept = sorted([k for k, c in counts.items() if c >= min_points])
-    print(f"  → {len(kept)}/{n_chunks} chunks kept in {out_dir}")
+    kept = sorted(counts.keys())
+    print(f"  → {len(kept)}/{n_chunks} chunks written in {out_dir}")
     return kept
 
 
@@ -301,7 +296,6 @@ def process_pair(
     tangent = compute_mean_tangent(x_f, y_f)
     origin  = np.array([x_f[0], y_f[0]])
 
-    # Project forward traj onto tangent to get the actual s range
     proj_f  = (x_f - origin[0]) * tangent[0] + (y_f - origin[1]) * tangent[1]
     s_start = float(proj_f.min())
     s_end   = float(proj_f.max())
@@ -322,14 +316,12 @@ def process_pair(
     kept_fwd = chunk_las_spatial(
         las_path=fwd_path, out_dir=fwd_out,
         origin=origin, tangent=tangent, s_edges=s_edges,
-        min_points=min_points,
     )
 
     print("[pair] Chunking BACKWARD...")
     kept_bwd = chunk_las_spatial(
         las_path=bwd_path, out_dir=bwd_out,
         origin=origin, tangent=tangent, s_edges=s_edges,
-        min_points=min_points,
     )
 
     # ------------------------------------------------------------------
@@ -424,7 +416,6 @@ def resume_limatch_from_chunks(
     skipped = 0
     for k in common:
         lm_out = chunk_pair_dir / "limatch" / f"chunk_{k:04d}"
-        # Skip if output folder already exists and is non-empty
         if lm_out.exists() and any(lm_out.iterdir()):
             skipped += 1
             continue
@@ -458,33 +449,22 @@ def main():
     parser = argparse.ArgumentParser(
         description="S2S spatial chunking + LiMatch for forward/backward pass pairs"
     )
-    # --- normal chunking + matching mode ---
     parser.add_argument("--pairs_dirs", nargs="+", default=[],
-                        help="Source directories containing Patch_from_scan_*_with_*.las pairs")
-    parser.add_argument("--sbet",     default=None,
+                        help="Directories containing Patch_from_scan_*_with_*.las pairs")
+    parser.add_argument("--sbet",      default=None,
                         help="SBET trajectory file (required with --pairs_dirs)")
-    parser.add_argument("--out_root", default=None,
+    parser.add_argument("--out_root",  default=None,
                         help="Root output directory (required with --pairs_dirs)")
-
-    # --- resume mode ---
-    parser.add_argument(
-        "--resume_dirs", nargs="+", default=[],
-        help=(
-            "One or more already-chunked pair directories (each must contain fwd/ and bwd/). "
-            "LiMatch is run directly on the existing chunks; chunks whose "
-            "limatch/chunk_XXXX/ folder already exists and is non-empty are skipped."
-        ),
-    )
-
-    # --- shared options ---
+    parser.add_argument("--resume_dirs", nargs="+", default=[],
+                        help="Already-chunked pair directories — run LiMatch only")
     parser.add_argument("--limatch_cfg", default=None)
-    parser.add_argument("--L",           type=float, default=20.0, help="Chunk length in metres")
+    parser.add_argument("--L",           type=float, default=20.0,
+                        help="Chunk length in metres")
     parser.add_argument("--min_last_m",  type=float, default=10.0)
-    parser.add_argument("--min_points",  type=int,   default=500)
     parser.add_argument("--epsg",        default="EPSG:2056")
     parser.add_argument("--time_field",  default="gps_time")
     parser.add_argument("--min_time_sep", type=float, default=0.0,
-                        help="Minimum temporal separation (s) between fwd and bwd scan means. Pairs below this threshold are skipped.")
+                        help="Min temporal separation (s) between fwd/bwd scan means")
     parser.add_argument("--repo_root",   default=None)
     args = parser.parse_args()
 
@@ -495,7 +475,7 @@ def main():
     repo_root = Path(args.repo_root) if args.repo_root else Path(__file__).resolve().parents[1]
 
     # ------------------------------------------------------------------
-    # RESUME mode — skip chunking, go straight to LiMatch
+    # RESUME mode
     # ------------------------------------------------------------------
     if args.resume_dirs:
         if limatch_cfg_path is None:
@@ -508,7 +488,7 @@ def main():
             )
 
     # ------------------------------------------------------------------
-    # NORMAL mode — chunk then LiMatch
+    # NORMAL mode
     # ------------------------------------------------------------------
     if args.pairs_dirs:
         if args.sbet is None:
@@ -532,8 +512,8 @@ def main():
             print(f"  Found {len(pairs)} pair(s)")
 
             for fwd_path, bwd_path in pairs:
-                rel       = fwd_path.parent.relative_to(pairs_dir.parent) \
-                            if fwd_path.parent != pairs_dir else Path(pairs_dir.name)
+                rel = fwd_path.parent.relative_to(pairs_dir.parent) \
+                      if fwd_path.parent != pairs_dir else Path(pairs_dir.name)
                 pair_name = f"{fwd_path.stem}_vs_{bwd_path.stem}"
                 out_dir   = out_root / rel / pair_name
 
