@@ -57,7 +57,7 @@ Three strategies produce L2L correspondences for ODyN, each exploiting a differe
 
 - **F2B (Front-to-Back)** — matches each spatial chunk with its immediate successor(s) along the trajectory, exploiting the forward overlap naturally induced by the VUX scanners' scanning geometry. Geometry-independent and applicable to any acquisition, but overlap can be narrow on featureless road sections.
 - **S2S (Scan-to-Scan)** — matches spatially aligned chunks from different scan passes (back-and-forth drives, parking laps, road crossings). Provides strong constraints where crossing geometry is available, but requires at least two passes over the same area and assumes the accumulated drift between passes is small enough for footprints to overlap. This condition is satisfied by the AIRINS but not guaranteed for the APX15.
-- **Combined (F2B + S2S)** — integrates both sets of correspondences in a single ODyN run. For **AIRINS**, F2B and S2S crossing chunks are extracted simultaneously from the degraded point cloud. For **APX15**, the large accumulated drift requires a sequential approach: F2B is applied first, the corrected trajectory is used to re-georeference a new point cloud, and S2S crossings are then extracted from this intermediate cloud.
+- **Combined (F2B + S2S)** — integrates both sets of correspondences in a single ODyN run. For **AIRINS**, F2B and S2S crossing chunks are extracted simultaneously from the degraded point cloud. For **APX15**, the large accumulated drift requires a sequential approach: F2B is applied first, the corrected trajectory is used to re-georeference a new point cloud, and S2S crossings are then extracted from this intermediate cloud. **The Combined approach via `chunk.limatch` (`do_spatial_crossings: true`) is strongly preferred over the standalone `s2s` step: it reuses the existing F2B chunks without a full Patcher run, and is significantly faster.**
 
 ### Coordinate System
 
@@ -303,12 +303,24 @@ chunk:
 
 Runs [LiMatch](https://github.com/ESO-EPFL/limatch) on the generated chunks to produce point-to-point correspondences for ODyN.
 
+**1. F2B — consecutive chunk pairs**
+
 ```yaml
 chunk:
   limatch:
     enabled: true
     neighbor_k: 1
     do_cross_scan: false
+```
+
+- **`neighbor_k`** — within each scan pass, every chunk `i` is matched with chunks `i+1`, `i+2`, …, `i+k`.
+  - `k=1` → only consecutive pairs (`i` / `i+1`) — pure F2B
+  - `k=2` → consecutive + skip-one pairs (`i`/`i+1` and `i`/`i+2`) — denser F2B
+- **`do_cross_scan`** — if `true`, also matches the last chunk of scan pass N with the first chunk of scan pass N+1, creating a sequential link between consecutive passes.
+
+**2. S2S crossings — Combined scenario**
+
+```yaml
     do_spatial_crossings: true
     crossing_min_separation: 30
     crossing_overlap_margin_m: 3.0
@@ -317,28 +329,16 @@ chunk:
     # uncertainty_r: 2.0
 ```
 
-**F2B consecutive pairs**
-
-- **`neighbor_k`** — within each scan pass, every chunk `i` is matched with chunks `i+1`, `i+2`, …, `i+k`.
-  - `k=1` → only consecutive pairs (`i` / `i+1`) — pure F2B
-  - `k=2` → consecutive + skip-one pairs (`i`/`i+1` and `i`/`i+2`) — denser F2B
-
-**Cross-scan matching**
-
-- **`do_cross_scan`** — if `true`, also matches the last chunk of scan pass N with the first chunk of scan pass N+1, creating a sequential link between consecutive passes.
-
-**Spatial crossings (Combined scenario)**
-
-- **`do_spatial_crossings`** — if `true`, detects and matches chunk pairs from *different* scan passes that cover the same area (the vehicle passed through the same location at different times). This is the Scan-to-Scan (S2S) component of the **Combined** scenario (F2B + spatial crossings). Detection is based on the `chunk_bbox.csv` bounding boxes: two chunks are candidates if their 2D bounding boxes overlap and their sequential indices are sufficiently far apart.
-- **`crossing_min_separation`** — minimum sequential-index gap required between two chunks to be considered a spatial crossing. Chunks closer than this in the sequence are already covered by F2B / `do_cross_scan` and are excluded here to avoid redundant pairs.
-- **`crossing_overlap_margin_m`** — tolerance in metres added to each side of a bounding box when testing for spatial overlap. Compensates for small georeferencing errors so that genuinely overlapping chunks are not missed due to a slight bbox mismatch.
+- **`do_spatial_crossings`** — if `true`, detects and matches chunk pairs from *different* scan passes that cover the same area. This is the S2S component of the **Combined** scenario. Detection uses `chunk_bbox.csv` bounding boxes: two chunks are candidates if their 2D bounding boxes overlap (within `crossing_overlap_margin_m`) and their sequential indices differ by more than `crossing_min_separation`.
+- **`crossing_min_separation`** — minimum sequential-index gap between two chunks to be considered a spatial crossing, ensuring that only temporally distant (and therefore truly independent) passes are matched.
+- **`crossing_overlap_margin_m`** — tolerance in metres added to each side of a bounding box when testing for spatial overlap. Compensates for small georeferencing errors so that genuinely overlapping chunks are not missed.
 
 **LiMatch uncertainty radius override**
 
 Three mutually exclusive forms — choose one or omit entirely:
 
-- **`uncertainty_r_min` + `uncertainty_r_max`** — defines a hollow-ring (annulus) search: [LiMatch](https://github.com/ESO-EPFL/limatch) only accepts correspondences whose nearest-neighbour distance falls in `[r_min, r_max]`. Useful to exclude near-zero matches (duplicate or static points) while keeping an upper bound on the search radius. Both values must be provided together; they override `uncertainty_r` from the LiMatch yml.
-- **`uncertainty_r`** — scalar override: replaces `uncertainty_r` in the LiMatch yml with a single radius value.
+- **`uncertainty_r_min` + `uncertainty_r_max`** — defines a hollow-ring (annulus) search: correspondences are only accepted if their nearest-neighbour distance falls in `[r_min, r_max]`. Useful to exclude near-zero matches and bound the search radius. Both values must be provided together; they override `uncertainty_r` from the LiMatch yml. **Note: using the annular search requires that LiMatch's `get_candidates()` function supports `uncertainty_r_min` / `uncertainty_r_max` — verify this in your LiMatch version before use.**
+- **`uncertainty_r`** — scalar override: replaces `uncertainty_r` in the LiMatch yml.
 - *(no entry)* — uses the value from the LiMatch yml unchanged.
 
 **Recommended LiMatch parameters (from thesis, Appendix 8.1)**
@@ -351,7 +351,7 @@ Tiling and keypoint limits are disabled — chunks are already spatially bounded
 | APX15 — F2B | 0.5 m | 1.0 m | 1.5 m (scalar) |
 | APX15 — S2S (after F2B re-georef) | 0.8 m | 2.0 m | annular `[r_min, r_max]` |
 
-For APX15 S2S, the larger residual drift after F2B correction requires a wider `rsc_thr` and `lcd_r`, and the annular search (rather than a full sphere) to constrain the search to the expected inter-scan offset and reduce computation time.
+For APX15 S2S, the larger residual drift after F2B correction requires a wider `rsc_thr` and `lcd_r`, and the annular search to constrain the search to the expected inter-scan offset and reduce computation time.
 
 ---
 
@@ -366,25 +366,25 @@ s2s:
   pc_dir_override: null
   pc_dir_suffix: "_VUX_PUCK.las"
   L: 20.0
-  min_last_m: null
-  min_points: 500
   min_time_sep: 30.0
+  epsg: "EPSG:2056"
   limatch:
     enabled: true
-    uncertainty_r: 2.0
+    uncertainty_r: 1.5
     # uncertainty_r_min: 0.0
     # uncertainty_r_max: 3.0
+    # max_kpts: 10000
 ```
 
 - **`output_root`** — root output directory; `null` → `<root_out_dir>/<scenario>/s2s`
 - **`patcher_out_root`** — where Patcher writes extracted pairs; `null` → `<output_root>/patcher_output`
 - **`pc_dir_override`** — explicit path to the merged clouds folder for Patcher; `null` → auto-resolved from `merged/ALL` of the current scenario
 - **`pc_dir_suffix`** — suffix appended to `{flight_id}` in the merged file template (e.g. `merged_{flight_id}_VUX_PUCK.las`)
-- **`L`** — spatial chunk length [m] used to split each Patcher-extracted overlap into sub-segments before LiMatch
-- **`min_last_m`** — minimum length [m] for the last spatial chunk; `null` → 2/3 × L (auto)
-- **`min_points`** — spatial chunks with fewer points than this threshold are discarded
+- **`L`** — spatial chunk length [m] for splitting each Patcher-extracted overlap before LiMatch. L=20m used in thesis experiments.
 - **`min_time_sep`** — pairs of scan passes whose temporal separation is less than this value [s] are skipped (avoids matching nearly simultaneous passes that are not independent)
+- **`epsg`** — map CRS for spatial chunking
 - **`limatch.uncertainty_r`** / **`uncertainty_r_min` + `uncertainty_r_max`** — same override logic as for `chunk.limatch` (see above)
+- **`limatch.max_kpts`** — optional override for the maximum number of keypoints per cloud passed to LiMatch; omit to use the LiMatch yml value
 
 > **APX15 Combined (sequential):** the standalone S2S step (`steps.s2s: true`) is how the sequential Combined is run for APX15. First run the pipeline with `steps: {georef, merge, chunk, limatch F2B}` to get an intermediate corrected trajectory, re-georeference a new point cloud with it, then run the pipeline again on that new cloud with `steps.s2s: true` to extract crossing correspondences.
 
