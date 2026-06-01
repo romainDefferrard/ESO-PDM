@@ -386,7 +386,7 @@ s2s:
 - **`limatch.uncertainty_r`** / **`uncertainty_r_min` + `uncertainty_r_max`** — same override logic as for `chunk.limatch` (see above)
 - **`limatch.max_kpts`** — optional override for the maximum number of keypoints per cloud passed to LiMatch; omit to use the LiMatch yml value
 
-> **APX15 Combined (sequential):** the standalone S2S step (`steps.s2s: true`) is how the sequential Combined is run for APX15. First run the pipeline with `steps: {georef, merge, chunk, limatch F2B}` to get an intermediate corrected trajectory, re-georeference a new point cloud with it, then run the pipeline again on that new cloud with `steps.s2s: true` to extract crossing correspondences.
+> **APX15 Combined (sequential):** after obtaining an intermediate corrected trajectory with F2B, re-georeference a new point cloud and attempt S2S with `steps.s2s: true` on that cloud. If the remaining drift is still too large for Patcher to detect overlaps automatically, use `Evaluation/L2L_eval/L2L_S2S.ipynb` instead: it allows manually specifying the GPS time windows of the scan lines to match and adjusting the LiMatch config accordingly.
 
 ---
 
