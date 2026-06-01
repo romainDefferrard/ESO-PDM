@@ -98,7 +98,7 @@ Main packages:
 - `pyyaml` — configuration files
 - `more-itertools` — iteration utilities
 
-[LiMatch](https://github.com/EPFL-ENAC/lte-limatch) is used as a submodule under `Patcher/submodules/limatch/`.
+[LiMatch](https://github.com/ESO-EPFL/limatch) is used as a submodule under `Patcher/submodules/limatch/`.
 
 ## Data Flow
 

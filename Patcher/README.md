@@ -1,6 +1,6 @@
 # Patcher — ALS & MLS Patch Extraction Tool
 
-Patcher was developed as part of a semester project at the ESO laboratory (EPFL, Spring 2025). It extracts overlapping point cloud patches between flight lines or scan passes and feeds them to the [LiMatch](https://github.com/EPFL-ENAC/lte-limatch) point-to-point matching algorithm. It supports both ALS (Airborne Laser Scanning) and MLS (Mobile Laser Scanning) modes.
+Patcher was developed as part of a semester project at the ESO laboratory (EPFL, Spring 2025). It extracts overlapping point cloud patches between flight lines or scan passes and feeds them to the [LiMatch](https://github.com/ESO-EPFL/limatch) point-to-point matching algorithm. It supports both ALS (Airborne Laser Scanning) and MLS (Mobile Laser Scanning) modes.
 
 ## Running Patcher
 
@@ -201,7 +201,7 @@ The pipeline overrides `PC_DIR` and `OUTPUT_DIR` automatically from the scenario
 
 ## Submodules
 
-[LiMatch](https://github.com/EPFL-ENAC/lte-limatch) lives at `Patcher/submodules/limatch/`. Make sure submodules are initialized:
+[LiMatch](https://github.com/ESO-EPFL/limatch) lives at `Patcher/submodules/limatch/`. Make sure submodules are initialized:
 
 ```bash
 git submodule update --init --recursive

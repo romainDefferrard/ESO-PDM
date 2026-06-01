@@ -98,9 +98,9 @@ pipeline/
 
 ```yaml
 scenario_name: "georef_ALL_traj_outage_1/AIRINS/georef_S2S"
-# Used as the output subdirectory under root_out_dir.
-# Nested paths are supported (e.g. "dataset/method/variant").
 ```
+
+Used as the output subdirectory under `root_out_dir`. Nested paths are supported (e.g. `"dataset/method/variant"`).
 
 ### `scanners`
 
@@ -140,7 +140,7 @@ Drives the georef time window filter and the chunker bounds.
 ```yaml
 georef_time_window:
   enable: true
-  margin_s: 10.0     # Buffer added on each side of the outage window
+  margin_s: 10.0
 ```
 
 When enabled, only laser vector files whose time range overlaps `[t_start - margin_s, t_end + margin_s]` are georeferenced. Requires `manifest_path` in the scanner config.
@@ -150,18 +150,18 @@ When enabled, only laser vector files whose time range overlaps `[t_start - marg
 ```yaml
 distance_filtering:
   enable: true
-  max_distance_m: 30        # Horizontal distance threshold [m]
+  max_distance_m: 30
   map_epsg: "EPSG:2056"
   filter_trj: null
 ```
 
-Filters out georeferenced points that are more than `max_distance_m` away from the vehicle trajectory. The distance is computed in the map plane (EPSG:2056) as the 2D horizontal separation between each point and the SBET position interpolated at the same GPS timestamp — it is **not** a range in the scanner frame.
+Filters out georeferenced points that are more than `max_distance_m` away from the vehicle trajectory. The distance is computed in the map plane (EPSG:2056) as the 2D horizontal separation between each georeferenced point and the SBET position interpolated at the same GPS timestamp — it is **not** a range in the scanner frame.
 
 ### `paths`
 
 ```yaml
 paths:
-  root_out_dir: "/media/.../output_root"   # All outputs go here
+  root_out_dir: "/media/.../output_root"
   limatch_cfg:  "Patcher/submodules/limatch/configs/MLS_F2B_1.yml"
   patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"
 ```
@@ -172,10 +172,10 @@ Toggle each step on/off independently:
 
 ```yaml
 steps:
-  georef: true    # Step 1
-  merge:  true    # Step 2
-  chunk:  false   # Step 3
-  s2s:    false   # Step 4 (S2S variant)
+  georef: true
+  merge:  true
+  chunk:  false
+  s2s:    false
 ```
 
 ---
@@ -193,7 +193,7 @@ No dedicated block in the config; parameters come from the scanner config YAMLs.
 #### Scanner config (`scanner_cfg/*.yml`)
 
 ```yaml
-scanner_name: "HA"            # Must match the directory name used in outputs
+scanner_name: "HA"
 
 lasvec:
   type: 'SDC'                 # 'SDC' or 'CSV'
@@ -207,12 +207,11 @@ mount:
     - [ 0.3838, -0.7431, -0.5481]
     - [-0.4263, -0.6691,  0.6087]
     - [-0.8192,  0.0000, -0.5736]
-
   boresight:
     roll:  0.00506            # Boresight angles [rad]
     pitch: 0.00151
     yaw:   0.00085
-  lever_arm: [-0.365, 0.331, -0.247]   # Lever arm [x, y, z] in body frame [m]
+  lever_arm: [-0.365, 0.331, -0.247]   # [x, y, z] in body frame [m]
 
 output_defaults:
   type: 'LAS'                 # 'LAS' or 'ASCII'
@@ -220,9 +219,18 @@ output_defaults:
   lasvec_to_body: true        # Express laser vectors in body frame
 
 manifest_path: "/path/to/manifests/manifest_HA.csv"
-# Required for georef_time_window filtering.
-# Build once with pipeline/build_sdc_manifest.ipynb.
 ```
+
+#### Building SDC/CSV Manifests
+
+Before running the pipeline for the first time on a dataset, build the manifest for each scanner. This is a **one-time operation per dataset**.
+
+1. Open `pipeline/build_sdc_manifest.ipynb`
+2. Set the path to your SDC/CSV folder and the output CSV path
+3. Run the notebook — it scans each file and records `(filename, t_min, t_max)`
+4. Set the resulting path in the scanner config under `manifest_path`
+
+The manifest enables the georef step to select only the files whose time range overlaps the outage window, without reading every file in the folder.
 
 ---
 
@@ -232,141 +240,131 @@ Merges per-scanner point clouds into unified per-scan clouds.
 
 ```yaml
 merge:
-  preset: "all"               # "all" | "vux_only" | "puck_on_existing"
-  vux_scanners: ["ha_cfg", "lr_cfg"]   # Keys merged pairwise (HA + LR)
-  puck_scanner: "puck_cfg"             # Key for the PUCK scanner
-  output_suffix: "_VUX_PUCK"          # Appended to merged file stems
-  scanner_src_vux:  2                  # scanner_src value for VUX points
-  scanner_src_puck: 1                  # scanner_src value for PUCK points
-  chunk_size: 10000000                 # Points per chunk for LAS I/O
-  cleanup: true                        # After merge, delete the individual
-                                       # scanner dirs (HA/, LR/, PUCK/) and
-                                       # the intermediate HA_LR/ folder to
-                                       # free disk space
+  preset: "all"
+  vux_scanners: ["ha_cfg", "lr_cfg"]
+  puck_scanner: "puck_cfg"
+  output_suffix: "_VUX_PUCK"
+  scanner_src_vux:  2
+  scanner_src_puck: 1
+  chunk_size: 10000000
+  cleanup: true
 ```
 
-**Presets:**
-- `all` — merge VUX HA+LR pairwise, then interleave PUCK by GPS time
-- `vux_only` — only merge HA+LR
-- `puck_on_existing` — add PUCK to an already-merged VUX folder
+- **`preset`** — `"all"`: merge VUX HA+LR pairwise then interleave PUCK by GPS time; `"vux_only"`: only merge HA+LR; `"puck_on_existing"`: add PUCK to an already-merged VUX folder
+- **`vux_scanners`** — scanner keys to merge pairwise
+- **`puck_scanner`** — scanner key for the Velodyne PUCK
+- **`output_suffix`** — appended to merged file stems (e.g. `merged_1000_VUX_PUCK.las`)
+- **`scanner_src_vux` / `scanner_src_puck`** — integer tag stored in the `scanner_src` extra dim of the merged LAS to identify point origin
+- **`chunk_size`** — points per chunk during LAS I/O (memory control)
+- **`cleanup`** — if `true`, deletes the individual scanner dirs (`HA/`, `LR/`, `PUCK/`) and the intermediate `HA_LR/` folder after the final merge to free disk space
 
 **Outputs:**
 - `merged/HA_LR/` — VUX merged clouds + `merged_manifest.csv`
 - `merged/ALL/` — VUX+PUCK clouds + `merged_manifest.csv`
 
-The `merged_manifest.csv` is created automatically and indexes each file with its GPS time bounds. It is used by the chunk step to select only the relevant scan files for a given outage window.
-
 ---
 
 ### Step 3 — `chunk`
 
-Splits the merged point clouds into spatial chunks around the outage window. These chunks are the direct input for the LiMatch matching step, which produces the point-to-point correspondences used in **F2B** (Front-to-Back) and **Combined** (F2B + spatial crossings) trajectory estimation scenarios.
+Splits the merged point clouds into spatial chunks around the outage window. These chunks are the input for [LiMatch](https://github.com/ESO-EPFL/limatch), which produces point-to-point correspondences for the **F2B** (Front-to-Back) and **Combined** (F2B + spatial crossings) trajectory estimation scenarios.
 
 ```yaml
 chunk:
-  source: "generate"          # "generate" | "existing"
-  existing_root: null         # Path to reuse existing chunks (source=existing)
-  output_root: null           # null = <root_out_dir>/<scenario>/scenario_combined
-  length_m: 15.0              # Chunk length in curvilinear meters
+  source: "generate"
+  existing_root: null
+  output_root: null
+  length_m: 15.0
   epsg_out: "EPSG:2056"
-  reference_scanner: "HA"     # Scanner used to load the trajectory for chunking
+  reference_scanner: "HA"
 ```
+
+- **`source`** — `"generate"`: run the chunker; `"existing"`: skip and reuse chunks at `existing_root`
+- **`existing_root`** — path to an existing chunks directory (only used when `source: existing`)
+- **`output_root`** — output directory; `null` → `<root_out_dir>/<scenario>/scenario_combined`
+- **`length_m`** — chunk length in curvilinear metres along the vehicle trajectory
+- **`epsg_out`** — map CRS for trajectory projection
+- **`reference_scanner`** — which scanner's trajectory is used to compute curvilinear distance
 
 **What it does:**
 1. Loads the trajectory and computes the cumulative curvilinear distance along the vehicle path
-2. Reads the `merged_manifest.csv` and selects all merged scan files whose time range `[t_start, t_end]` overlaps the window `[t_outage - margin_s, t_outage + duration + margin_s]`
-3. For each selected scan, splits the point cloud into chunks of `length_m` metres of curvilinear distance
-4. Writes one sub-directory per scan with `chunk_XXXX.las` files + `chunk_bbox.csv` (bounding boxes used by spatial crossing detection)
+2. Reads `merged_manifest.csv` and selects scan files whose time range `[t_start, t_end]` overlaps the window `[t_outage - margin_s,  t_outage + duration + margin_s]`
+3. Splits each selected scan into chunks of `length_m` metres
+4. Writes one sub-directory per scan with `chunk_XXXX.las` files + `chunk_bbox.csv` (spatial bounding boxes used for crossing detection)
 
 #### `chunk.limatch` — LiMatch on chunks (F2B and Combined)
 
-This sub-block runs [LiMatch](https://github.com/EPFL-ENAC/lte-limatch) on the generated chunks to produce point-to-point correspondences for ODyN.
+Runs [LiMatch](https://github.com/ESO-EPFL/limatch) on the generated chunks to produce point-to-point correspondences for ODyN.
 
 ```yaml
 chunk:
-  ...
   limatch:
     enabled: true
-
-    # ── F2B consecutive pairs ──────────────────────────────────
     neighbor_k: 1
-    # Within each scan pass, every chunk i is matched with chunk i+1,
-    # i+2, ..., up to i+k.
-    #   k=1 → only consecutive pairs (i / i+1)        ← pure F2B
-    #   k=2 → consecutive + skip-one (i/i+1 + i/i+2) ← denser F2B
-
-    # ── Cross-scan matching ────────────────────────────────────
     do_cross_scan: false
-    # If true, matches the last chunk of scan pass N with the first
-    # chunk of scan pass N+1 (sequential cross-scan link between passes).
-
-    # ── Spatial crossings (Combined scenario) ─────────────────
     do_spatial_crossings: true
-    # If true, detects and matches chunk pairs from *different* scan
-    # passes that spatially overlap — i.e. the vehicle drove through
-    # the same area at different times. This is the S2S component of
-    # the Combined scenario (F2B + spatial crossings).
-    #
-    # Detection uses the chunk_bbox.csv bounding boxes:
-    # two chunks are candidate crossings if their 2D bounding boxes
-    # overlap (with a tolerance of crossing_overlap_margin_m) AND
-    # their sequential indices differ by more than crossing_min_separation.
-
     crossing_min_separation: 30
-    # Minimum sequential-index gap between two chunks to be considered
-    # a spatial crossing. Chunks closer than this in the sequence are
-    # assumed to belong to the same or adjacent passes and are already
-    # covered by F2B / do_cross_scan — they are excluded here to avoid
-    # redundant pairs.
-
     crossing_overlap_margin_m: 3.0
-    # Tolerance [m] added to each side of a chunk's bounding box when
-    # testing for spatial overlap. Compensates for small georeferencing
-    # errors so that genuinely overlapping chunks are not missed due to
-    # a slight bbox mismatch.
-
-    # ── LiMatch uncertainty radius override ───────────────────
-    # Three mutually exclusive forms — choose one:
-
     uncertainty_r_min: 0.0
     uncertainty_r_max: 2.0
-    # Hollow-ring search: LiMatch only accepts correspondences whose
-    # distance to the nearest point falls in [r_min, r_max].
-    # Useful to exclude near-zero matches (duplicate/static points)
-    # while keeping an upper bound. Both must be given together;
-    # they override uncertainty_r from the LiMatch yml.
-
     # uncertainty_r: 2.0
-    # Scalar override: replaces uncertainty_r in the LiMatch yml.
-
-    # (no entry) → use the value from the LiMatch yml unchanged
 ```
+
+**F2B consecutive pairs**
+
+- **`neighbor_k`** — within each scan pass, every chunk `i` is matched with chunks `i+1`, `i+2`, …, `i+k`.
+  - `k=1` → only consecutive pairs (`i` / `i+1`) — pure F2B
+  - `k=2` → consecutive + skip-one pairs (`i`/`i+1` and `i`/`i+2`) — denser F2B
+
+**Cross-scan matching**
+
+- **`do_cross_scan`** — if `true`, also matches the last chunk of scan pass N with the first chunk of scan pass N+1, creating a sequential link between consecutive passes.
+
+**Spatial crossings (Combined scenario)**
+
+- **`do_spatial_crossings`** — if `true`, detects and matches chunk pairs from *different* scan passes that cover the same area (the vehicle passed through the same location at different times). This is the Scan-to-Scan (S2S) component of the **Combined** scenario (F2B + spatial crossings). Detection is based on the `chunk_bbox.csv` bounding boxes: two chunks are candidates if their 2D bounding boxes overlap and their sequential indices are sufficiently far apart.
+- **`crossing_min_separation`** — minimum sequential-index gap required between two chunks to be considered a spatial crossing. Chunks closer than this in the sequence are already covered by F2B / `do_cross_scan` and are excluded here to avoid redundant pairs.
+- **`crossing_overlap_margin_m`** — tolerance in metres added to each side of a bounding box when testing for spatial overlap. Compensates for small georeferencing errors so that genuinely overlapping chunks are not missed due to a slight bbox mismatch.
+
+**LiMatch uncertainty radius override**
+
+Three mutually exclusive forms — choose one or omit entirely:
+
+- **`uncertainty_r_min` + `uncertainty_r_max`** — defines a hollow-ring (annulus) search: [LiMatch](https://github.com/ESO-EPFL/limatch) only accepts correspondences whose nearest-neighbour distance falls in `[r_min, r_max]`. Useful to exclude near-zero matches (duplicate or static points) while keeping an upper bound on the search radius. Both values must be provided together; they override `uncertainty_r` from the LiMatch yml.
+- **`uncertainty_r`** — scalar override: replaces `uncertainty_r` in the LiMatch yml with a single radius value.
+- *(no entry)* — uses the value from the LiMatch yml unchanged.
 
 ---
 
 ### Step 4b — `s2s` (Scan-to-Scan via Patcher)
 
-Runs the full S2S pipeline: Patcher extracts overlapping time windows, then LiMatch is applied on each pair.
+Runs the standalone S2S pipeline: Patcher detects temporal overlaps between scan passes, extracts the corresponding point cloud sub-windows, and runs [LiMatch](https://github.com/ESO-EPFL/limatch) on each pair. This produces S2S correspondences independently of the chunk step — as opposed to `do_spatial_crossings` in `chunk.limatch`, which produces S2S correspondences from the same chunks used for F2B.
 
 ```yaml
 s2s:
-  output_root: null           # null = <root_out_dir>/<scenario>/s2s
-  patcher_out_root: null      # null = <output_root>/patcher_output
-
-  pc_dir_override: null       # Override path to merged clouds for Patcher
+  output_root: null
+  patcher_out_root: null
+  pc_dir_override: null
   pc_dir_suffix: "_VUX_PUCK.las"
-
-  L:            20.0          # Spatial chunk length [m]
-  min_last_m:   null          # null = 2/3 * L (auto)
-  min_points:   500
-  min_time_sep: 30.0          # Skip pairs with time separation < X s
-
+  L: 20.0
+  min_last_m: null
+  min_points: 500
+  min_time_sep: 30.0
   limatch:
     enabled: true
     uncertainty_r: 2.0
     # uncertainty_r_min: 0.0
     # uncertainty_r_max: 3.0
 ```
+
+- **`output_root`** — root output directory; `null` → `<root_out_dir>/<scenario>/s2s`
+- **`patcher_out_root`** — where Patcher writes extracted pairs; `null` → `<output_root>/patcher_output`
+- **`pc_dir_override`** — explicit path to the merged clouds folder for Patcher; `null` → auto-resolved from `merged/ALL` of the current scenario
+- **`pc_dir_suffix`** — suffix appended to `{flight_id}` in the merged file template (e.g. `merged_{flight_id}_VUX_PUCK.las`)
+- **`L`** — spatial chunk length [m] used to split each Patcher-extracted overlap into sub-segments before LiMatch
+- **`min_last_m`** — minimum length [m] for the last spatial chunk; `null` → 2/3 × L (auto)
+- **`min_points`** — spatial chunks with fewer points than this threshold are discarded
+- **`min_time_sep`** — pairs of scan passes whose temporal separation is less than this value [s] are skipped (avoids matching nearly simultaneous passes that are not independent)
+- **`limatch.uncertainty_r`** / **`uncertainty_r_min` + `uncertainty_r_max`** — same override logic as for `chunk.limatch` (see above)
 
 ---
 
@@ -403,32 +401,3 @@ merge_correspondences:
     └── tmp/
         └── generated_configs/  # Auto-generated georef YAMLs (debug)
 ```
-
----
-
-## Building SDC/CSV Manifests
-
-Before running the pipeline for the first time on a dataset, build the manifest for each scanner:
-
-1. Open `pipeline/build_sdc_manifest.ipynb`
-2. Set the path to your SDC/CSV folder and the output CSV path
-3. Run the notebook — it scans each file and records `(filename, t_min, t_max)`
-4. Add the manifest path to the scanner config:
-
-```yaml
-manifest_path: "/path/to/manifests/manifest_HA.csv"
-```
-
-This is a one-time operation per dataset.
-
----
-
-## Standalone Georef
-
-The georef step can also be run standalone without a full pipeline config:
-
-```bash
-python -m pipeline.steps.georef -c /path/to/georef_config.yml
-```
-
-A standalone georef config has a slightly different structure (see `navtools_PDM/PDM_configs/` for examples).
