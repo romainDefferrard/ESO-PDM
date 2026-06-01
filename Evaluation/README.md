@@ -152,16 +152,10 @@ Results are saved to a `.summary.csv` next to the config file. The output LAS st
 
 ### Step 3 — `analyse_rmse.ipynb`
 
-Loads all `*.summary.csv` files, aggregates metrics by study zone / scan, and produces:
-- Summary tables comparing INS-only / F2B / S2S / Combined
-- RMSE time series along the outage window
-- Per-zone box plots
-
-Open with Jupyter:
-
-```bash
-jupyter notebook Evaluation/georef_eval/analyse_rmse.ipynb
-```
+Loads all `rmse_*.las` files produced by Step 2 (reads the `e3d` extra dimension — per-point 3D error in metres). Configure the `OUTAGES` list at the top of the notebook: for each outage, set the output directory, the list of methods, the GPS time bounds (`t_min` / `t_max`), and any exclusion zones. The notebook then:
+- Computes RMSE, Q50, Q75, Q90, Q95, Q99, max and threshold percentages per method per outage, with the configured bounds and exclusions applied
+- Produces a summary metrics table (multi-index: outage × IMU × method)
+- Plots per-point `e3d` vs GPS time with smoothed curves, per-method RMSE/Q95 markers, and exclusion zone overlays
 
 ---
 
