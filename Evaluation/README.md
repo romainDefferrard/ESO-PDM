@@ -69,7 +69,7 @@ time:
 las:
   scale: 0.001      # LAS output scale
 
-decimate: 1         # Keep 1 point every N in target cloud (memory saving)
+decimate: 10         # Keep 1 point every N in target cloud (memory saving)
 
 methods:
   - name: "INS_only"
