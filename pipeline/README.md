@@ -57,10 +57,7 @@ Three strategies produce L2L correspondences for ODyN, each exploiting a differe
 
 - **F2B (Front-to-Back)** — matches each spatial chunk with its immediate successor(s) along the trajectory, exploiting the forward overlap naturally induced by the VUX scanners' scanning geometry. Geometry-independent and applicable to any acquisition, but overlap can be narrow on featureless road sections.
 - **S2S (Scan-to-Scan)** — matches spatially aligned chunks from different scan passes (back-and-forth drives, parking laps, road crossings). Provides strong constraints where crossing geometry is available, but requires at least two passes over the same area and assumes the accumulated drift between passes is small enough for footprints to overlap. This condition is satisfied by the AIRINS but not guaranteed for the APX15.
-- **Combined (F2B + S2S)** — integrates both sets of correspondences in a single ODyN run. For **AIRINS**, F2B and S2S crossing chunks are extracted simultaneously from the degraded point cloud. For **APX15**, the large accumulated drift requires a sequential approach: F2B is applied first, the corrected trajectory is used to re-georeference a new point cloud, and S2S crossings are then extracted from this intermediate cloud.
-
-
-**The Combined approach via `chunk.limatch` (`do_spatial_crossings: true`) is strongly preferred over the standalone `s2s` step: it reuses the existing F2B chunks without a full Patcher run, and is significantly faster.**
+- **Combined (F2B + S2S)** — integrates both sets of correspondences in a single ODyN run. For **AIRINS**, F2B and S2S crossing chunks are extracted simultaneously from the degraded point cloud. For **APX15**, the large accumulated drift requires a sequential approach: F2B is applied first, the corrected trajectory is used to re-georeference a new point cloud, and S2S crossings are then extracted from this intermediate cloud. If the remaining drift after F2B is still too large for Patcher to detect overlaps automatically, use `Evaluation/L2L_eval/L2L_S2S.ipynb` instead: it allows manually specifying the GPS time windows of the scan lines to match and adjusting the LiMatch config accordingly. **The Combined approach via `chunk.limatch` (`do_spatial_crossings: true`) is strongly preferred over the standalone `s2s` step: it reuses the existing F2B chunks without a full Patcher run, and is significantly faster.**
 
 ### Coordinate System
 
@@ -388,8 +385,6 @@ s2s:
 - **`epsg`** — map CRS for spatial chunking
 - **`limatch.uncertainty_r`** / **`uncertainty_r_min` + `uncertainty_r_max`** — same override logic as for `chunk.limatch` (see above)
 - **`limatch.max_kpts`** — optional override for the maximum number of keypoints per cloud passed to LiMatch; omit to use the LiMatch yml value
-
-> **APX15 Combined (sequential):** after obtaining an intermediate corrected trajectory with F2B, re-georeference a new point cloud and attempt S2S with `steps.s2s: true` on that cloud. If the remaining drift is still too large for Patcher to detect overlaps automatically, use `Evaluation/L2L_eval/L2L_S2S.ipynb` instead: it allows manually specifying the GPS time windows of the scan lines to match and adjusting the LiMatch config accordingly.
 
 ---
 
