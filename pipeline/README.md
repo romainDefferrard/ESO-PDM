@@ -3,7 +3,9 @@
 This module orchestrates the full MLS processing chain for GNSS outage experiments:
 **Georef → Merge → Chunk → LiMatch (F2B and/or S2S)**.
 
-![Pipeline diagram](pipeline_diagram.png)
+<p align="center">
+  <img src="img/pipeline_diagram.png" width="33%">
+</p>
 
 ---
 
