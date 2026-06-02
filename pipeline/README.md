@@ -3,32 +3,7 @@
 This module orchestrates the full MLS processing chain for GNSS outage experiments:
 **Georef → Merge → Chunk → LiMatch (F2B and/or S2S)**.
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│         SDC/CSV laser vectors  +  SBET trajectory            │
-└────────────────────────┬─────────────────────────────────────┘
-                         │  Step 1 — georef
-                         ▼
-          per-scanner LAS point clouds
-          (HA/   LR/   PUCK/)
-                         │  Step 2 — merge
-                         ▼
-     merged LAS per scan  +  merged_manifest.csv
-     (merged/HA_LR/  →  merged/ALL/)
-                         │  Step 3 — chunk
-                         ▼
-      spatial chunks around outage window
-      (scenario_combined/chunks_15m/)
-               ┌──────────┴──────────┐
-    Step 4a    │                     │   Step 4b
-  chunk.limatch│                     │   steps.s2s
-(F2B / Combined)                   (S2S via Patcher)
-               │                     │
-               └──────────┬──────────┘
-                           │
-                           ▼
-              LiDAR_p2p.txt  →  ODyN bundle adjustment
-```
+![Pipeline diagram](pipeline_diagram.png)
 
 ---
 
