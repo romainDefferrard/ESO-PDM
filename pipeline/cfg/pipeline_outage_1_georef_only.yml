@@ -1,0 +1,121 @@
+# ==============================================================
+# PIPELINE — CALIB AIRINS | Outage 1 | F2B + S2S
+# ==============================================================
+
+scenario_name: "georef_ALL_traj_outage_1/AIRINS/georef_outage"
+
+scanners:
+  ha_cfg:   "scanner_cfg/scanner_HA_CALIB.yml"
+  lr_cfg:   "scanner_cfg/scanner_LR_CALIB.yml"
+  puck_cfg: "scanner_cfg/scanner_PUCK_CALIB.yml"
+
+trajectory:
+  type: "SBET"
+  path: "/media/b085164/LaCie/2026spring_RD/ODyN/CALIB/AIRINS/Outage_1_305120_305700/OUTAGE/out/outage_1.out"
+  cfg:
+    type: "SBET"
+
+# Outage — source unique pour georef_time_window + chunker
+outage: [305120.0, 580.0]   # [t_start_GPS_s, durée_s]
+
+georef_time_window:
+  enable: true
+  margin_s: 10.0
+
+distance_filtering:
+  enable: true
+  max_distance_m: 30
+  map_epsg: "EPSG:2056"
+  filter_trj: null
+
+paths:
+  root_out_dir: "..."
+  limatch_cfg:  ".../MLS_F2B.yml"
+  patcher_cfg:  "Patcher/config/MLS_Epalinges_config.yml"   # requis si s2s.run_patcher=true
+
+# ==============================================================
+# STEPS — 4 steps actifs, chacun porte ses propres paramètres
+# ==============================================================
+steps:
+  georef: true
+  merge:  true
+  chunk:  false
+  s2s:    false
+
+# ==============================================================
+# MERGE
+# ==============================================================
+merge:
+  preset: "all"
+  vux_scanners: ["ha_cfg", "lr_cfg"]
+  puck_scanner: "puck_cfg"
+  output_suffix: "_VUX_PUCK"
+  scanner_src_vux:  2
+  scanner_src_puck: 1
+  chunk_size: 10000000
+  cleanup: true  # eraise all HA/LR/PUCK folders
+  
+
+# ==============================================================
+# CHUNK — paramètres du chunker + son propre bloc limatch
+# ==============================================================
+chunk:
+  source: "generate"     # generate | existing
+  existing_root: null    # seulement si source=existing
+  output_root:   null    # null = <root_out_dir>/<scenario>/scenario_combined
+  length_m: 15.0
+  epsg_out: "EPSG:2056"
+  reference_scanner: "HA"
+
+  limatch:
+    enabled: true
+    neighbor_k: 1          # paires consécutives (k+1 voisins)
+    do_cross_scan: false   # cross-scan entre dernier chunk scan N et premier scan N+1
+    do_spatial_crossings: true
+    crossing_min_separation: 30
+    crossing_overlap_margin_m: 3.0
+
+    # Incertitude LiMatch — choisir l'une ou l'autre forme :
+    #   - uncertainty_r_min + uncertainty_r_max : anneau creux (ignore uncertainty_r du yml)
+    #   - uncertainty_r : scalaire (override le yml)
+    #   - rien : utilise la valeur du fichier LiMatch yml tel quel
+    uncertainty_r_min: 0.0
+    uncertainty_r_max: 2.0
+    # uncertainty_r: 2.0
+
+# ==============================================================
+# S2S — Patcher → spatial chunking → LiMatch
+# ==============================================================
+s2s:
+  # Sorties
+  output_root:      null    # null = <root_out_dir>/<scenario>/s2s
+  patcher_out_root: null    # null = <output_root>/patcher_output
+                            #   = <root_out_dir>/<scenario>/s2s/patcher_output
+ 
+  # PC_DIR — chemin vers les nuages merged pour Patcher
+  # null = auto depuis merged/ALL du scénario courant :
+  #   <root_out_dir>/<scenario>/merged/ALL/merged_{flight_id}<pc_dir_suffix>
+  pc_dir_override: null
+  pc_dir_suffix:   "_VUX_PUCK.las"   # suffixe après {flight_id} dans le template
+ 
+  # Spatial chunking (s2s_chunks.py)
+  L:            20.0       # longueur des chunks spatiaux (m)
+  min_last_m:   null       # null = 2/3 * L (automatique)
+  min_points:   500
+  min_time_sep: 30.0       # skip paires dont séparation temporelle < X secondes
+  epsg:         "EPSG:2056"
+ 
+  limatch:
+    enabled: true
+    uncertainty_r: 2.0
+    # uncertainty_r_min: 0.0
+    # uncertainty_r_max: 3.0
+
+# ==============================================================
+# FUSION DES CORRESPONDANCES (commune aux deux steps)
+# ==============================================================
+merge_correspondences:
+  enabled: true
+  output_file: null    # null = limatch_root/LiDAR_p2p.txt
+
+
