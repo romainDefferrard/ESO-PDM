@@ -1,3 +1,19 @@
+"""
+georef_eval/rmse_streaming.py
+==============================
+Streaming RMSE computation between a reference point cloud and one or more
+target clouds, matched by identical GPS timestamps.
+
+Processes files chunk-by-chunk to stay memory efficient on large clouds.
+Supports LAS/LAZ and ASCII (CSV) formats. Outputs per-point error as a
+LAS file with an `e3d` field, and writes a summary CSV with RMSE, percentiles,
+and per-axis bias statistics.
+
+Usage
+-----
+    python rmse_streaming.py --config path/to/config.yml
+"""
+
 import argparse
 import logging
 import math
@@ -20,9 +36,7 @@ def setup_logger():
     )
 
 
-# ---------------------------------------------------------------------------
-# LAS / LAZ reader  (loads full file, sorts by gps_time, yields groups)
-# ---------------------------------------------------------------------------
+# === LAS/LAZ reader ============================================
 
 class GroupedLasReader:
     """
@@ -216,9 +230,7 @@ class GroupedTxtReader:
         return t0, np.vstack(pts)
 
 
-# ---------------------------------------------------------------------------
-# Factory: pick the right reader based on file extension
-# ---------------------------------------------------------------------------
+# === Factory: pick reader by file extension ====================
 
 def make_reader(path: Path, delim: str, tmin: float, tmax: float, pbar=None, decimate: int = 1):
     suffix = path.suffix.lower()
@@ -228,9 +240,7 @@ def make_reader(path: Path, delim: str, tmin: float, tmax: float, pbar=None, dec
         return GroupedTxtReader(path, delim, tmin, tmax, pbar=pbar)
 
 
-# ---------------------------------------------------------------------------
-# LAS output helpers (unchanged)
-# ---------------------------------------------------------------------------
+# === LAS output helpers ========================================
 
 def create_las_writer(out_las: Path, scale: float, offset_xyz: np.ndarray):
     hdr = laspy.LasHeader(point_format=6, version="1.4")
@@ -253,9 +263,7 @@ def write_las_chunk(writer, t: np.ndarray, xyz: np.ndarray, e3d: np.ndarray):
     writer.write_points(las)
 
 
-# ---------------------------------------------------------------------------
-# Statistics
-# ---------------------------------------------------------------------------
+# === Statistics ================================================
 
 def compute_summary_from_temp_e3d(temp_path: Path, accum: Dict[str, float]) -> Dict[str, float]:
     e3d = np.fromfile(temp_path, dtype=np.float32)
@@ -325,9 +333,7 @@ def format_summary(rows: List[Dict[str, object]]) -> str:
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# Core processing (now format-agnostic via make_reader)
-# ---------------------------------------------------------------------------
+# === Core processing ===========================================
 def process_pair_streaming(
     ref_path: Path,
     tgt_path: Path,
@@ -488,9 +494,7 @@ def process_pair_streaming(
     return metrics
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+# === Main ======================================================
 
 def main():
     setup_logger()

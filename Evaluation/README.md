@@ -165,7 +165,8 @@ Loads all `rmse_*.las` files produced by Step 2 (reads the `e3d` extra dimension
 
 Analyses the LiDAR-to-LiDAR constraint residuals produced by the S2S combined trajectory. This is used to assess the quality and consistency of the S2S LiMatch correspondences before and after ODyN optimisation.
 
-> Note: This notebook is also used as an intermediate step to compute the APX15 Combined trajectory.
+> **APX15 Combined — special case outside the pipeline.**
+> For the APX15 Combined trajectory, the S2S step cannot be automated via the standard pipeline (see [`pipeline/README.md`](../pipeline/README.md)). Instead, S2S constraints are applied manually and locally: only at locations where a preliminary F2B re-georeferencing allowed estimating the cloud-to-cloud offset, making it possible to determine reliable LiMatch parameters. This notebook serves as the intermediate step for that manual S2S matching.
 
 ---
 
