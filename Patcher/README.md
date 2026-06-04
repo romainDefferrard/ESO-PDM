@@ -20,9 +20,7 @@ The original patch generator placed patches along a single PCA centerline per ov
 
 ### MLS — spatial footprint instead of shapefiles
 
-The original MLS mode detected overlaps by buffering road segments from a shapefile and computing geometric intersections. This version replaces that with a **rasterization-based approach**: each scan's spatial footprint is computed directly from its point cloud, and overlaps are detected by comparing the resulting raster masks. No shapefile or road network data is needed.
-
-Extraction uses a **grouped single-pass strategy**: each large merged LAS is read once and all time windows for that scan are extracted in a single pass, avoiding repeated file reads for memory efficiency.
+The original MLS mode detected overlaps by buffering road segments from a shapefile and computing geometric intersections. This version replaces that with a **rasterization-based approach**: each scan's spatial footprint is computed directly from its point cloud, and overlaps are detected by comparing the resulting raster masks. No shapefile data is needed.
 
 ### Headless execution and pipeline integration
 
@@ -167,8 +165,7 @@ OUTPUT_DIR/
 
 ## GUI Overview
 
-The GUI (PyQt6) shows:
-- The raster footprint of each flight/scan
+The GUI shows:
 - Overlap zones between pairs
 - Generated patches (ALS) or temporal overlap zones (MLS)
 
@@ -233,8 +230,4 @@ The pipeline overrides `PC_DIR` and `OUTPUT_DIR` automatically from the scenario
 
 ## Submodules
 
-[LiMatch](https://github.com/ESO-EPFL/limatch) lives at `Patcher/submodules/limatch/`. Make sure submodules are initialized:
-
-```bash
-git submodule update --init --recursive
-```
+[LiMatch](https://github.com/ESO-EPFL/limatch) lives at `Patcher/submodules/limatch/`.
