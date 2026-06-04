@@ -1,31 +1,28 @@
 """
-s2s_chunk_and_match.py
-======================
+steps/s2s_chunks.py
+===================
 Scan-to-Scan spatial chunking + LiMatch for forward/backward pass pairs.
 
-Chunking logic
---------------
-- Load SBET trajectory, project to local CRS (LV95 by default).
-- Use the FORWARD file timestamps to clip the trajectory to the forward pass.
-- Compute the mean travel direction (tangent) of that pass.
-- Build chunk edges every L metres along that tangent axis.
-- Assign every point (fwd AND bwd) to a chunk by projecting its XY onto the
-  tangent: chunk k contains all points where
-      s_edges[k] <= dot(p_xy - origin, tangent) < s_edges[k+1]
-  This is equivalent to slicing the scene with parallel planes perpendicular
-  to the direction of travel — NO timestamps used for assignment.
-- Both files use the SAME origin/tangent/s_edges → chunks are perfectly
-  co-located spatially.
+Receives a pair of LAS files (forward and backward scan) produced by the
+Patcher and splits them into spatially co-located chunks perpendicular to
+the direction of travel.
 
-Usage
------
+Chunking strategy:
+  - Trajectory is projected to local CRS (LV95/EPSG:2056 by default).
+  - The FORWARD pass timestamps define the trajectory slice and spatial
+    reference frame (origin + travel tangent + chunk edges).
+  - Both fwd and bwd files are chunked on the SAME spatial grid so that
+    matching chunk indices always cover the same ground region.
+  - No timestamps are used for chunk assignment — only XY projection.
+
+CLI usage
+---------
     python -m pipeline.steps.s2s_chunks \\
-        --pairs_dirs  /path/to/pairs_1 /path/to/pairs_2 \\
+        --pairs_dirs  /path/to/patcher_output \\
         --sbet        /path/to/ODyN.out \\
         --limatch_cfg /path/to/MLS.yml \\
         --out_root    /path/to/output \\
-        --L           20.0 \\
-        --epsg        EPSG:2056
+        --L           20.0
 """
 
 from __future__ import annotations
@@ -44,9 +41,7 @@ from pyproj import Transformer
 from tqdm import tqdm
 
 
-# ---------------------------------------------------------------------------
-# Trajectory helpers
-# ---------------------------------------------------------------------------
+# === Trajectory helpers ========================================
 
 def load_sbet(sbet_path: Path, epsg_out: str = "EPSG:2056"):
     """Load binary SBET (17 float64 cols), project to local CRS. Returns t,x,y sorted by time."""
@@ -77,9 +72,7 @@ def trajectory_slice_for_time(t_trj, x_trj, y_trj, t0, t1):
     return t_trj[mask], x_trj[mask], y_trj[mask]
 
 
-# ---------------------------------------------------------------------------
-# Spatial chunking helpers
-# ---------------------------------------------------------------------------
+# === Spatial chunking helpers ==================================
 
 def build_chunk_edges_s(s_start: float, s_end: float,
                          L: float, min_last: float) -> np.ndarray:
@@ -142,9 +135,7 @@ def las_time_bounds(las_path: Path, time_field: str = "gps_time",
     return t_first, t_last
 
 
-# ---------------------------------------------------------------------------
-# Core: spatially chunk one LAS file
-# ---------------------------------------------------------------------------
+# === Core: spatially chunk one LAS file ========================
 
 def chunk_las_spatial(
     las_path: Path,
@@ -215,9 +206,7 @@ def chunk_las_spatial(
     return kept
 
 
-# ---------------------------------------------------------------------------
-# Pair discovery
-# ---------------------------------------------------------------------------
+# === Pair discovery ============================================
 
 PAIR_RE = re.compile(r"Patch_from_scan_(\d+)_with_(\d+)\.las$", re.IGNORECASE)
 
@@ -245,9 +234,7 @@ def find_pairs(pair_dir: Path) -> List[Tuple[Path, Path]]:
     return pairs
 
 
-# ---------------------------------------------------------------------------
-# Process one pair
-# ---------------------------------------------------------------------------
+# === Process one pair ==========================================
 
 def process_pair(
     fwd_path: Path,
@@ -269,9 +256,7 @@ def process_pair(
     print(f"[pair] out: {out_dir}")
     print(f"{'='*60}")
 
-    # ------------------------------------------------------------------
-    # 1. Read time bounds + temporal separation filter
-    # ------------------------------------------------------------------
+    # === 1. Read time bounds + temporal separation filter ========
     print("[pair] Reading fwd time bounds...")
     t0_fwd, t1_fwd = las_time_bounds(fwd_path, time_field)
     print(f"  fwd: [{t0_fwd:.3f}, {t1_fwd:.3f}]")
@@ -290,9 +275,7 @@ def process_pair(
 
     _, x_f, y_f = trajectory_slice_for_time(t_trj, x_trj, y_trj, t0_fwd, t1_fwd)
 
-    # ------------------------------------------------------------------
-    # 2. Define the spatial grid from the forward trajectory
-    # ------------------------------------------------------------------
+    # === 2. Define the spatial grid from the forward trajectory ==
     tangent = compute_mean_tangent(x_f, y_f)
     origin  = np.array([x_f[0], y_f[0]])
 
@@ -306,9 +289,7 @@ def process_pair(
     print(f"[pair] tangent: ({tangent[0]:.4f}, {tangent[1]:.4f})")
     print(f"[pair] strip:   {s_end - s_start:.1f} m  →  {n_chunks} chunks × ~{L} m")
 
-    # ------------------------------------------------------------------
-    # 3. Spatial chunking — same grid for both files
-    # ------------------------------------------------------------------
+    # === 3. Spatial chunking — same grid for both files ==========
     fwd_out = out_dir / "fwd"
     bwd_out = out_dir / "bwd"
 
@@ -324,9 +305,7 @@ def process_pair(
         origin=origin, tangent=tangent, s_edges=s_edges,
     )
 
-    # ------------------------------------------------------------------
-    # 4. LiMatch on matching chunk pairs
-    # ------------------------------------------------------------------
+    # === 4. LiMatch on matching chunk pairs ======================
     if limatch_cfg_path is None or repo_root is None:
         print("[pair] LiMatch skipped (no cfg provided)")
         return
@@ -363,9 +342,7 @@ def process_pair(
             print(f"  [limatch] chunk_{k:04d} FAILED: {e}")
 
 
-# ---------------------------------------------------------------------------
-# Resume: run LiMatch on already-chunked directories
-# ---------------------------------------------------------------------------
+# === Resume: run LiMatch on already-chunked directories ========
 
 def resume_limatch_from_chunks(
     chunk_pair_dir: Path,
@@ -441,9 +418,7 @@ def resume_limatch_from_chunks(
         print(f"  [resume] {skipped}/{len(common)} chunks already done — skipped.")
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
+# === Entry point ===============================================
 
 def main():
     parser = argparse.ArgumentParser(
@@ -474,9 +449,7 @@ def main():
     limatch_cfg_path = Path(args.limatch_cfg) if args.limatch_cfg else None
     repo_root = Path(args.repo_root) if args.repo_root else Path(__file__).resolve().parents[1]
 
-    # ------------------------------------------------------------------
-    # RESUME mode
-    # ------------------------------------------------------------------
+    # === Resume mode =============================================
     if args.resume_dirs:
         if limatch_cfg_path is None:
             parser.error("--limatch_cfg is required with --resume_dirs")
@@ -487,9 +460,7 @@ def main():
                 repo_root=repo_root,
             )
 
-    # ------------------------------------------------------------------
-    # NORMAL mode
-    # ------------------------------------------------------------------
+    # === Normal mode =============================================
     if args.pairs_dirs:
         if args.sbet is None:
             parser.error("--sbet is required with --pairs_dirs")

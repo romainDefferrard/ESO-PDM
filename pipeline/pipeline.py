@@ -1,35 +1,38 @@
 """
-pipeline.py — slim orchestrator.
+pipeline.py — MLS processing pipeline.
 
-Steps
------
+Reads a YAML configuration file and executes a sequence of steps on
+Mobile Laser Scanning (MLS) data. Each step is individually toggled via
+the `steps` block in the config and carries its own parameter sub-block.
+
+Pipeline steps (in order)
+--------------------------
+1. Georef  : Georeferences raw scanner data using trajectory + calibration.
+             Produces one output directory per scanner.
+2. Merge   : Merges georeferenced point clouds into unified spatial groups
+             (e.g. ALL, HA_LR).
+3. Chunk   : Splits the merged cloud into overlapping spatial chunks.
+             Optionally runs LiMatch F2B / crossings on the resulting chunks.
+4. S2S     : Runs LiMatch scan-to-scan matching on the merged cloud.
+             Optionally applies a patcher before matching.
+
+Config — steps block
+---------------------
 steps:
   georef: true
   merge:  true
-  chunk:  true   # has its own limatch sub-block
-  s2s:    false  # has its own limatch sub-block
+  chunk:  true   # has its own limatch sub-block (F2B matching)
+  s2s:    false  # has its own limatch sub-block (S2S matching)
 
-Each step block carries its own parameters.  'limatch' is no longer
-a top-level step — it lives inside chunk: and s2s: as:
-
-  chunk:
-    ...
-    limatch:
-      enabled: true
-      neighbor_k: 1
-      do_crossings: true
-      uncertainty_r_min: 0.0    # optional, overrides uncertainty_r in LiMatch yml
-      uncertainty_r_max: 2.0    # must give both _min and _max together
-      # uncertainty_r: 2.0      # alternative: single scalar
-
-  s2s:
-    run_patcher:   false
-    patcher_out_root: ...
-    L: 20.0
-    min_points: 500
-    limatch:
-      enabled: true
-      uncertainty_r: 0.5        # scalar — no _min/_max needed for s2s
+Config — limatch sub-block (inside chunk or s2s)
+-------------------------------------------------
+  limatch:
+    enabled:           true
+    neighbor_k:        1
+    do_crossings:      true
+    uncertainty_r_min: 0.0   # optional — overrides uncertainty_r in LiMatch yml
+    uncertainty_r_max: 2.0   # must provide both _min and _max together
+    # uncertainty_r: 2.0     # alternative: single scalar (convenient for s2s)
 """
 
 from __future__ import annotations
@@ -71,8 +74,7 @@ def run_pipeline(pipe_cfg: dict) -> None:
     scenario_name = pipe_cfg["scenario_name"]
     scenario_root = root_out_dir / scenario_name
 
-    # ── Always build scanner_entries from config ──────────────────────────
-    # Needed by merge even when georef=false (to locate existing output dirs)
+    # Build scanner_entries from config — needed by merge even when georef=false
     pkg_dir      = Path(__file__).resolve().parent
     scanners_raw = pipe_cfg.get("scanners", {})
     scanner_entries: list[dict] = []
@@ -92,11 +94,11 @@ def run_pipeline(pipe_cfg: dict) -> None:
             "output_dir":         root_out_dir / scenario_name / name,
         })
 
-    # ── 1. Georef ─────────────────────────────────────────────────────────
+    # === 1. Georef ======================================================
     if steps.get("georef", False):
         scanner_entries = _georef.run(pipe_cfg)
 
-    # ── 2. Merge ──────────────────────────────────────────────────────────
+    # === 2. Merge =======================================================
     merged_groups: dict = {}
     if steps.get("merge", False):
         merged_groups = _merge.run(pipe_cfg, scanner_entries)
@@ -121,7 +123,7 @@ def run_pipeline(pipe_cfg: dict) -> None:
         # Build and write a minimal georef config so the chunker can load the traj
         cfg_georef_path = _georef.write_minimal_georef_cfg(pipe_cfg, scenario_root)
 
-    # ── 3. Chunk + optional LiMatch F2B/crossings ─────────────────────────
+    # === 3. Chunk + optional LiMatch F2B/crossings ======================
     if steps.get("chunk", False):
         chunks_root = _chunk.run(pipe_cfg, merged_dir, cfg_georef_path)
 
@@ -129,7 +131,7 @@ def run_pipeline(pipe_cfg: dict) -> None:
         if chunk_lm.get("enabled", False):
             _limatch.run(pipe_cfg, chunks_root, lm_block=chunk_lm)
 
-    # ── 4. S2S + optional LiMatch ─────────────────────────────────────────
+    # === 4. S2S + optional LiMatch ======================================
     if steps.get("s2s", False):
         pipe_cfg["_merged_dir"] = str(merged_dir)
         _limatch.run_s2s(pipe_cfg)

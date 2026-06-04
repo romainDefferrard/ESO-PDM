@@ -1,23 +1,25 @@
 """
 steps/georef.py
 ===============
-Georeferencing step — replaces Georef.py entirely.
+Georeferencing step — processes raw scanner data into georeferenced point
+clouds using an SBET trajectory and per-scanner calibration.
 
-Absorbs from old codebase:
-  - Georef.py  (loadLasVecSDC, loadLasVecAscii, georefLidar, run, run_from_yaml,
-                sync_times_day_shift, apply_leapsec, apply_time_window_filter,
-                filter_lasvec_paths_by_manifest, filter_pcd_by_vehicle_distance,
-                load_and_prepare_trajectory, trajectory_positions_mapping)
-  - pipeline.py (build_georef_cfg, load_scanner_entries, get_scanner_name)
+Supports SDC and ASCII (CSV) input formats. Outputs LAS or ASCII point
+clouds. Distance filtering and time-window filtering around GNSS outages
+are applied per chunk during processing.
 
 Public API
 ----------
 run(pipe_cfg) -> list[dict]
-    Georef all scanners in pipe_cfg["scanners"].
-    Returns scanner_entries list.
+    Georef all scanners declared in pipe_cfg["scanners"].
+    Returns scanner_entries (one dict per scanner).
 
 get_ref_georef_cfg(pipe_cfg, scanner_entries) -> Path
-    Returns path to the generated georef config for the reference scanner.
+    Returns the generated config path for the reference scanner.
+
+write_minimal_georef_cfg(pipe_cfg, scenario_root) -> Path
+    Builds a trajectory-only config for the chunk step when georef was
+    not run.
 """
 
 from __future__ import annotations
@@ -52,18 +54,14 @@ from pipeline.lib.rotations import (
 from pipeline.lib.loaders import loadSBET
 
 
-# ═══════════════════════════════════════════════════════════════
-# CONFIG
-# ═══════════════════════════════════════════════════════════════
+# === Config ====================================================
 
 def load_config(path: Union[str, Path]) -> Dict[str, Any]:
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
 
-# ═══════════════════════════════════════════════════════════════
-# TIME SYNC
-# ═══════════════════════════════════════════════════════════════
+# === Time sync =================================================
 
 def sync_times_day_shift(t_lasvec: np.ndarray, t_trj: np.ndarray) -> np.ndarray:
     t_lasvec = np.asarray(t_lasvec, dtype=np.float64)
@@ -89,9 +87,7 @@ def apply_leapsec(t: np.ndarray, leapsec: Optional[float]) -> np.ndarray:
     return t + float(leapsec)
 
 
-# ═══════════════════════════════════════════════════════════════
-# TIME WINDOW FILTER
-# ═══════════════════════════════════════════════════════════════
+# === Time window filter ========================================
 
 def filter_lasvec_paths_by_manifest(
     paths: list,
@@ -165,9 +161,7 @@ def apply_time_window_filter(
     return lasvec
 
 
-# ═══════════════════════════════════════════════════════════════
-# LASVEC LOADERS
-# ═══════════════════════════════════════════════════════════════
+# === Lasvec loaders ============================================
 
 def loadLasVecAscii(path, cfg):
     import pandas as pd
@@ -263,9 +257,7 @@ def loadLasVecSDC(sdc_file, chunk_records=2_000_000):
     return records[:write_pos]
 
 
-# ═══════════════════════════════════════════════════════════════
-# TRAJECTORY
-# ═══════════════════════════════════════════════════════════════
+# === Trajectory ================================================
 
 def load_and_prepare_trajectory(cfg: Dict[str, Any]):
     trj     = load_trajectory(cfg["trj"])
@@ -307,9 +299,7 @@ def trajectory_positions_mapping(trj, epsg_out: str = "EPSG:2056") -> np.ndarray
     raise AttributeError("Could not find trajectory positions in trj object.")
 
 
-# ═══════════════════════════════════════════════════════════════
-# DISTANCE FILTER
-# ═══════════════════════════════════════════════════════════════
+# === Distance filter ===========================================
 
 def filter_pcd_by_vehicle_distance(pcd, trj, max_dist_m, epsg_out, return_mask=False, chunk_i=None, n_chunks=None):
     t_pts = pcd[:, 0]
@@ -325,9 +315,7 @@ def filter_pcd_by_vehicle_distance(pcd, trj, max_dist_m, epsg_out, return_mask=F
     return pcd[mask]
 
 
-# ═══════════════════════════════════════════════════════════════
-# GEOREFERENCING CORE
-# ═══════════════════════════════════════════════════════════════
+# === Georeferencing core =======================================
 
 def get_R_sensor2body(cfg):
     mount_cfg = cfg["mount"]
@@ -393,9 +381,7 @@ def georefLidar(lasvec, trj, cfg):
     return np.vstack(results)
 
 
-# ═══════════════════════════════════════════════════════════════
-# SINGLE FILE PROCESSING
-# ═══════════════════════════════════════════════════════════════
+# === Single file processing ====================================
 
 def georef_one_file(cfg, trj, path):
     sub(f"Processing: {Path(path).name}")
@@ -537,9 +523,7 @@ def georef_one_file(cfg, trj, path):
     return out_path
 
 
-# ═══════════════════════════════════════════════════════════════
-# RUN (full scanner)
-# ═══════════════════════════════════════════════════════════════
+# === Run (full scanner) ========================================
 
 def run_scanner(cfg: Dict[str, Any]) -> None:
     """Georef one scanner using a pre-built config dict."""
@@ -565,9 +549,7 @@ def run_from_yaml(cfg_path: Union[str, Path]) -> None:
     run_scanner(load_config(cfg_path))
 
 
-# ═══════════════════════════════════════════════════════════════
-# BUILD GEOREF CFG (from pipeline config + scanner YAML)
-# ═══════════════════════════════════════════════════════════════
+# === Build georef config =======================================
 
 def _scanner_name(cfg_path: Union[str, Path]) -> str:
     d = yaml.safe_load(open(cfg_path, "r"))
@@ -611,9 +593,7 @@ def _write_tmp_cfg(cfg: dict, path: Path) -> None:
         yaml.safe_dump(cfg, f, sort_keys=False)
 
 
-# ═══════════════════════════════════════════════════════════════
-# PIPELINE-FACING API
-# ═══════════════════════════════════════════════════════════════
+# === Pipeline-facing API =======================================
 
 def run(pipe_cfg: dict) -> list[dict]:
     """
@@ -675,9 +655,7 @@ def get_ref_georef_cfg(pipe_cfg: dict, scanner_entries: list[dict]) -> Path:
     )
 
 
-# ═══════════════════════════════════════════════════════════════
-# MINIMAL GEOREF CFG (for chunk step when georef was not run)
-# ═══════════════════════════════════════════════════════════════
+# === Minimal georef config (for chunk step when georef skipped)
 
 def write_minimal_georef_cfg(pipe_cfg: dict, scenario_root: Path) -> Path:
     """
@@ -715,9 +693,7 @@ def write_minimal_georef_cfg(pipe_cfg: dict, scenario_root: Path) -> Path:
     return out_path
 
 
-# ═══════════════════════════════════════════════════════════════
-# CLI (standalone use)
-# ═══════════════════════════════════════════════════════════════
+# === CLI (standalone use) ======================================
 
 def main():
     p = argparse.ArgumentParser(description="Georeference LiDAR data")

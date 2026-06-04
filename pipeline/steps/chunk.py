@@ -1,33 +1,24 @@
 """
 steps/chunk.py
 ==============
-Chunking step — replaces Chunker.py entirely.
+Chunking step — splits merged point clouds into overlapping spatial
+chunks around a GNSS outage window.
 
-Absorbs:
-  - Chunker.py  (all functions: chunk_las_by_distance_streaming_intervals,
-                 chunk_txt_by_distance_streaming_intervals, build_chunk_edges_s,
-                 write_gps_multi_outage, merge_intervals, file_time_bounds_fast,
-                 file_time_bounds_fast_las, build_trajectory_bbox, etc.)
-  - pipeline.py (combined_multi_outage_scenario logic)
+Chunk boundaries are defined in curvilinear distance along the vehicle
+trajectory. Supports both LAS and ASCII (CSV) inputs. Writes a
+chunk_bbox.csv spatial index per scan directory, used downstream for
+crossing-pair detection in the LiMatch step.
 
-Design changes vs old code
---------------------------
-- chunk_variant removed: chunks always around the outage window.
-- outage is pipe_cfg["outage"] = [t_start, duration_s].
-- margin_s from georef_time_window.margin_s is reused as pre/post buffer.
-- min_last_chunk_m = 2/3 * length_m (enforced here, not in config).
-- min_points removed from config (hardcoded to 0 — keep all chunks).
-- cloud_fmt auto-detected from merged_dir.
-- delimiter, skiprows, time_field hardcoded (CSV col0 = GPS time).
+Key config parameters:
+  outage          : [t_start, duration_s] — defines the time window.
+  chunk.length_m  : target chunk length (default 15 m).
+  chunk.epsg_out  : output CRS (default EPSG:2056).
 
 Public API
 ----------
 run(pipe_cfg, merged_dir, cfg_georef_path) -> Path
-    Returns chunks_root directory.
+    Generate chunks and return the chunks_root directory.
 
-Utility functions also exported for standalone use:
-  write_gps_multi_outage, merge_intervals, file_time_bounds_fast,
-  file_time_bounds_fast_las, extract_scan_id, build_trajectory_bbox
 """
 
 from __future__ import annotations
@@ -47,9 +38,7 @@ from pipeline._log import info, sub, warn
 from pipeline.steps.georef import load_config, load_and_prepare_trajectory, trajectory_positions_mapping
 
 
-# ═══════════════════════════════════════════════════════════════
-# SCAN ID HELPERS
-# ═══════════════════════════════════════════════════════════════
+# === Scan ID helpers ===========================================
 
 MERGED_SCAN_RE = re.compile(r"merged_(\d+)")
 
@@ -60,9 +49,7 @@ def extract_scan_id(p: Path) -> int:
     return int(m.group(1))
 
 
-# ═══════════════════════════════════════════════════════════════
-# TIME BOUNDS (fast, head+tail only)
-# ═══════════════════════════════════════════════════════════════
+# === Time bounds (fast, head+tail only) ========================
 
 def _parse_time_from_line(line: str, delimiter: str) -> float:
     parts = line.strip().split() if delimiter == "whitespace" else line.strip().split(delimiter)
@@ -116,55 +103,7 @@ def file_time_bounds_fast_las(las_path, time_field: str = "gps_time",
     return t_min, t_max
 
 
-# ═══════════════════════════════════════════════════════════════
-# INTERVAL UTILITIES
-# ═══════════════════════════════════════════════════════════════
-
-def merge_intervals(intervals: list[tuple[float, float]]) -> list[tuple[float, float]]:
-    if not intervals: return []
-    intervals = sorted((float(a), float(b)) for a, b in intervals)
-    out = [intervals[0]]
-    for a, b in intervals[1:]:
-        la, lb = out[-1]
-        out[-1] = (la, max(lb, b)) if a <= lb else out.append((a, b)) or out[-1]
-    return out
-
-
-def write_gps_multi_outage(
-    gps_in:    Union[str, Path],
-    gps_out:   Union[str, Path],
-    outages:   list[tuple[float, float]],
-    delimiter: str = ",",
-) -> tuple[int, int]:
-    """Remove GNSS samples during outage windows. Returns (kept, removed)."""
-    gps_in, gps_out = Path(gps_in), Path(gps_out)
-    gps_out.parent.mkdir(parents=True, exist_ok=True)
-    intervals = sorted((float(s), float(s) + float(d)) for s, d in outages)
-    kept = removed = j = 0
-    with gps_in.open("r", encoding="utf-8", errors="ignore") as fin, \
-         gps_out.open("w", encoding="utf-8") as fout:
-        for line in fin:
-            s = line.strip()
-            if not s: continue
-            parts = s.split(delimiter) if delimiter != "whitespace" else s.split()
-            try:
-                t = float(parts[0])
-            except Exception:
-                fout.write(line if line.endswith("\n") else line + "\n")
-                continue
-            while j < len(intervals) and t > intervals[j][1]:
-                j += 1
-            if j < len(intervals) and intervals[j][0] <= t <= intervals[j][1]:
-                removed += 1
-            else:
-                fout.write(line if line.endswith("\n") else line + "\n")
-                kept += 1
-    return kept, removed
-
-
-# ═══════════════════════════════════════════════════════════════
-# TRAJECTORY → CURVILINEAR DISTANCE
-# ═══════════════════════════════════════════════════════════════
+# === Trajectory → curvilinear distance =========================
 
 def _cumulative_distance_xy(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     dx = np.diff(x); dy = np.diff(y)
@@ -194,9 +133,7 @@ def _load_traj_xy(cfg_georef_path: Union[str, Path], epsg_out: str = "EPSG:2056"
     return t[order], x[order], y[order]
 
 
-# ═══════════════════════════════════════════════════════════════
-# CHUNK EDGE BUILDER
-# ═══════════════════════════════════════════════════════════════
+# === Chunk edge builder ========================================
 
 def build_chunk_edges_s(s_start: float, s_end: float,
                          chunk_length: float, min_last_chunk: float) -> np.ndarray:
@@ -211,9 +148,7 @@ def build_chunk_edges_s(s_start: float, s_end: float,
     return np.array(edges, dtype=np.float64)
 
 
-# ═══════════════════════════════════════════════════════════════
-# BBOX INDEX
-# ═══════════════════════════════════════════════════════════════
+# === Bbox index ================================================
 
 def _write_bbox_for_dir(
     out_dir:   Path,
@@ -280,9 +215,7 @@ def build_trajectory_bbox(
                                  t_trj=t_trj, x_trj=x_trj, y_trj=y_trj)
 
 
-# ═══════════════════════════════════════════════════════════════
-# LAS CHUNKER
-# ═══════════════════════════════════════════════════════════════
+# === LAS chunker ===============================================
 
 def chunk_las_by_distance_streaming_intervals(
     las_path:        Union[str, Path],
@@ -377,9 +310,7 @@ def chunk_las_by_distance_streaming_intervals(
     return len(counts)
 
 
-# ═══════════════════════════════════════════════════════════════
-# TXT CHUNKER
-# ═══════════════════════════════════════════════════════════════
+# === TXT chunker ===============================================
 
 def chunk_txt_by_distance_streaming_intervals(
     txt_path:        Union[str, Path],
@@ -462,9 +393,7 @@ def chunk_txt_by_distance_streaming_intervals(
     return len(counts)
 
 
-# ═══════════════════════════════════════════════════════════════
-# FILE SELECTION BY WINDOW
-# ═══════════════════════════════════════════════════════════════
+# === File selection by window ==================================
 
 def _detect_fmt(folder: Path) -> str:
     for ext in ("las", "laz", "txt"):
@@ -502,9 +431,7 @@ def _select_files_by_window(
     return selected
 
 
-# ═══════════════════════════════════════════════════════════════
-# PIPELINE-FACING API
-# ═══════════════════════════════════════════════════════════════
+# === Pipeline-facing API =======================================
 
 def run(
     pipe_cfg:        dict,
@@ -522,7 +449,7 @@ def run(
     scenario_name = pipe_cfg["scenario_name"]
     chunk_cfg     = pipe_cfg.get("chunk", {})
 
-    # ── Outage window ──────────────────────────────────────────
+    # === Outage window =========================================
     outage = pipe_cfg.get("outage")
     if outage is None:
         raise ValueError("pipe_cfg['outage'] = [t_start, duration_s] is required.")
@@ -533,7 +460,7 @@ def run(
     intervals = [(t_lo, t_hi)]
     info(f"[chunk] window: [{t_lo:.1f}, {t_hi:.1f}] s  ({duration:.0f}s ± {margin_s:.0f}s)")
 
-    # ── Parameters ─────────────────────────────────────────────
+    # === Parameters ============================================
     chunk_source = chunk_cfg.get("source", "generate")
     L            = float(chunk_cfg.get("length_m", 15.0))
     min_last_m   = round(L * 2.0 / 3.0, 2)   # 2/3 rule, not in config

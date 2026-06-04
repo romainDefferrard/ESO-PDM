@@ -108,8 +108,7 @@ s2s:
   limatch:
     enabled: true
     uncertainty_r: 1.5
-    # uncertainty_r_min: 0.0
-    # uncertainty_r_max: 3.0
+
 
 # ==============================================================
 # FUSION DES CORRESPONDANCES (commune aux deux steps)

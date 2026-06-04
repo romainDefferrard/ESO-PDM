@@ -1,16 +1,23 @@
 """
 steps/merge.py
 ==============
-Merge step — replaces Merging.py (singleBeamMerging.py) entirely.
+Merge step — combines georeferenced point clouds from multiple scanners
+into unified spatial groups.
 
-Absorbs:
-  - Merging.py  (merge_two_las, merge_two_txt, merge_cloud_pairs, index_by_scan)
-  - pipeline.py (merge_scanner_group, merge_vux_puck, preset logic, cleanup)
+Three presets are supported:
+  vux_only        : pairwise merge of VUX scanner outputs (HA + LR).
+  all             : vux_only, then overlays PUCK points time-sliced onto
+                    each VUX scan.
+  puck_on_existing: overlays PUCK onto an existing VUX merge, skipping
+                    the VUX merge step.
+
+Writes a merged_manifest.csv index in each output directory for
+downstream time-windowed file selection.
 
 Public API
 ----------
 run(pipe_cfg, scanner_entries) -> dict
-    Returns {group_name: Path}
+    Returns {group_name: Path} for each merged group produced.
 """
 
 from __future__ import annotations
@@ -29,9 +36,7 @@ import pandas as pd
 
 from pipeline._log import info, sub, warn
 
-# ═══════════════════════════════════════════════════════════════
-# LOW-LEVEL FILE UTILITIES  (from Merging.py)
-# ═══════════════════════════════════════════════════════════════
+# === Low-level file utilities ==================================
 
 SCAN_RE = re.compile(r"^(\d{6})_(\d{6})")
 
@@ -160,9 +165,7 @@ def merge_cloud_pairs(
     info(f"[merge] {len(scans)} pairs merged → {out_dir}")
 
 
-# ═══════════════════════════════════════════════════════════════
-# TIME MANIFEST
-# ═══════════════════════════════════════════════════════════════
+# === Time manifest =============================================
 
 def _build_time_manifest(merged_dir: Path, cloud_fmt: str) -> Path:
     rows = []
@@ -222,9 +225,7 @@ def get_all_dim_names(header_or_record):
             dims.append(d)
     return dims
 
-# ═══════════════════════════════════════════════════════════════
-# VUX MERGE (HA + LR pairwise)
-# ═══════════════════════════════════════════════════════════════
+# === VUX merge (HA + LR pairwise) ==============================
 
 def _merge_vux_scanners(
     scanner_entries: list[dict],
@@ -264,9 +265,7 @@ def _merge_vux_scanners(
     return current_dir
 
 
-# ═══════════════════════════════════════════════════════════════
-# VUX + PUCK MERGE (time-based)
-# ═══════════════════════════════════════════════════════════════
+# === VUX + PUCK merge (time-based) =============================
 
 def make_output_header_from_vux_header(vux_header, add_scanner_src: bool = True):
     out_header = copy.deepcopy(vux_header)
@@ -453,9 +452,7 @@ def _merge_puck_on_vux(
 
 
 
-# ═══════════════════════════════════════════════════════════════
-# PIPELINE-FACING API
-# ═══════════════════════════════════════════════════════════════
+# === Pipeline-facing API =======================================
 
 def run(pipe_cfg: dict, scanner_entries: list[dict]) -> dict:
     """

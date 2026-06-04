@@ -1,29 +1,29 @@
 """
 steps/limatch.py
 ================
-LiMatch step.
+LiMatch step — runs point cloud correspondence matching on spatial chunks.
 
-Changes vs previous version
-----------------------------
-cfg_overrides removed from public API.
-uncertainty_r / uncertainty_r_min / uncertainty_r_max are now first-class
-fields in the pipeline config under the limatch: block.
+Two matching modes:
+  F2B (forward-to-backward): matches consecutive chunk pairs within and
+      across scan passes, controlled by neighbor_k and do_cross_scan.
+  Crossings: detects spatially overlapping chunks from different passes
+      via the chunk_bbox.csv index and runs LiMatch on those pairs.
 
-  Rule:
-    - if both uncertainty_r_min AND uncertainty_r_max are present → use those,
-      ignore uncertainty_r from the LiMatch yml
-    - elif uncertainty_r is present → use that scalar
-    - else → use whatever is in the LiMatch yml unchanged
-
-New step: s2s (Scan-to-Scan via Patcher + s2s_chunks.py)
-  Activated by steps.s2s: true in the pipeline config.
-  Requires: paths.patcher_cfg and limatch.s2s block.
+uncertainty_r injection (from the limatch: block in pipe_cfg):
+  - uncertainty_r_min + uncertainty_r_max present → range mode
+  - uncertainty_r present                         → scalar mode
+  - neither                                       → keep LiMatch yml value
 
 Public API
 ----------
-run(pipe_cfg, chunks_root)          -> Path | None   (F2B + crossings)
-run_s2s(pipe_cfg)                   -> Path | None   (Patcher + s2s_chunks)
+run(pipe_cfg, chunks_root, lm_block) -> Path | None
+    F2B + spatial crossings on pre-generated chunks.
+
+run_s2s(pipe_cfg) -> Path | None
+    Patcher (headless) + S2S spatial chunking + LiMatch.
+
 merge_correspondences(root, output) -> Path
+    Collect all cor_outputs/ files into a single correspondence file.
 """
 
 from __future__ import annotations
@@ -41,18 +41,14 @@ from pipeline._log import info, sub, warn
 from .chunk import extract_scan_id
 
 
-# ═══════════════════════════════════════════════════════════════
-# REPO ROOT
-# ═══════════════════════════════════════════════════════════════
+# === Repo root =================================================
 
 def _repo_root() -> Path:
     # pipeline/steps/limatch.py → pipeline/ → ESO-PDM/
     return Path(__file__).resolve().parents[2]
 
 
-# ═══════════════════════════════════════════════════════════════
-# LIMATCH IMPORT
-# ═══════════════════════════════════════════════════════════════
+# === LiMatch import ============================================
 
 def _get_match_clouds() -> callable:
     parent = _repo_root() / "Patcher" / "submodules"
@@ -62,9 +58,7 @@ def _get_match_clouds() -> callable:
     return match_clouds
 
 
-# ═══════════════════════════════════════════════════════════════
-# UNCERTAINTY_R INJECTION
-# ═══════════════════════════════════════════════════════════════
+# === uncertainty_r injection ===================================
 
 def _inject_uncertainty(cfg: dict, lim_pipeline_cfg: dict) -> dict:
     r_min = lim_pipeline_cfg.get("uncertainty_r_min")
@@ -88,9 +82,7 @@ def _inject_uncertainty(cfg: dict, lim_pipeline_cfg: dict) -> dict:
     return cfg
 
 
-# ═══════════════════════════════════════════════════════════════
-# RUN ONE PAIR
-# ═══════════════════════════════════════════════════════════════
+# === Run one pair ==============================================
 
 def _run_pair(
     limatch_cfg_path: Path,
@@ -110,9 +102,7 @@ def _run_pair(
     match_clouds(str(cloud1), str(cloud2), cfg)
 
 
-# ═══════════════════════════════════════════════════════════════
-# F2B — CONSECUTIVE PAIRS
-# ═══════════════════════════════════════════════════════════════
+# === F2B — consecutive pairs ===================================
 
 def _run_f2b(
     chunks_root:      Path,
@@ -167,9 +157,7 @@ def _run_f2b(
                      f"{type(e).__name__}: {e}")
 
 
-# ═══════════════════════════════════════════════════════════════
-# SPATIAL CROSSINGS
-# ═══════════════════════════════════════════════════════════════
+# === Spatial crossings =========================================
 
 def _find_crossing_pairs(
     chunks_root: Path, cloud_fmt: str, min_sep: int, margin_m: float,
@@ -244,9 +232,7 @@ def _run_crossings(
     info("[limatch/crossings] done")
 
 
-# ═══════════════════════════════════════════════════════════════
-# MERGE CORRESPONDENCES
-# ═══════════════════════════════════════════════════════════════
+# === Merge correspondences =====================================
 
 def merge_correspondences(
     limatch_root: Union[str, Path],
@@ -276,9 +262,7 @@ def merge_correspondences(
     return output_file
 
 
-# ═══════════════════════════════════════════════════════════════
-# S2S — PATCHER + SPATIAL CHUNKING
-# ═══════════════════════════════════════════════════════════════
+# === S2S — Patcher + spatial chunking ==========================
 def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     """
     Scan-to-Scan step: Patcher (headless) → s2s_chunks → LiMatch.
@@ -329,7 +313,7 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     root_out_dir  = Path(pipe_cfg["paths"]["root_out_dir"])
     scenario_name = pipe_cfg["scenario_name"]
 
-    # ── Resolve output dirs ───────────────────────────────────────
+    # === Resolve output dirs =====================================
     out_root = Path(
         s2s_cfg.get("output_root") or
         root_out_dir / scenario_name / "s2s"
@@ -342,7 +326,7 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     )
     patcher_out_root.mkdir(parents=True, exist_ok=True)
 
-    # ── Build PC_DIR from merged/ALL ─────────────────────────────
+    # === Build PC_DIR from merged/ALL ============================
     if s2s_cfg.get("pc_dir_override"):
         pc_dir = str(s2s_cfg["pc_dir_override"])
     else:
@@ -356,7 +340,7 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     sub(f"PC_DIR: {pc_dir}")
     sub(f"patcher_out: {patcher_out_root}")
 
-    # ── Run Patcher — skip if output already exists ───────────────
+    # === Run Patcher — skip if output already exists =============
     existing_flights = list(patcher_out_root.glob("Flights_*"))
     if existing_flights:
         info(f"[s2s/patcher] {len(existing_flights)} existing Flights_* dir(s) found "
@@ -393,7 +377,7 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
         pipeline.extract_mls()
         info(f"[s2s/patcher] done → {patcher_out_root}")
 
-    # ── s2s spatial chunking + LiMatch ───────────────────────────
+    # === S2S spatial chunking + LiMatch ==========================
     import yaml as _yaml   # may not have been imported above if patcher was skipped
 
     limatch_cfg_rel = paths_cfg.get("limatch_cfg", "")
@@ -441,9 +425,8 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
     min_last_m = L * 2.0 / 3.0
     min_t_sep  = float(s2s_cfg.get("min_time_sep", 0.0))
 
-    # ── Inject LiMatch overrides into a temp config ───────────────
+    # === Inject LiMatch overrides into a temp config =============
     # All fields are optional — if absent, the LiMatch yml value is kept.
-    # Supported overrides: uncertainty_r, uncertainty_r_min/max, max_kpts
     s2s_lm_cfg = s2s_cfg.get("limatch", {})
     if s2s_lm_cfg:
         import tempfile
@@ -471,7 +454,7 @@ def run_s2s(pipe_cfg: dict) -> Optional[Path]:
         except Exception as e:
             warn(f"[s2s] FAIL {pair_name}: {type(e).__name__}: {e}")
 
-    # ── Merge correspondences ─────────────────────────────────────
+    # === Merge correspondences ===================================
     if merge_cor.get("enabled", False):
         mc_out = merge_cor.get("output_file")
         try:
