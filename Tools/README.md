@@ -1,6 +1,6 @@
 # Tools — Standalone Utility Scripts
 
-Miscellaneous tools that do not belong to the main pipeline but are used for analysis, calibration, and future research directions.
+Tools that do not belong to the main pipeline but are used for analysis, calibration, and future research directions.
 
 ---
 
@@ -20,14 +20,14 @@ Requires `lasvec_x/y/z` and `scanner_src` extra dims in the LAS files.
 
 Aligns the body frame of the APX15 IMU with the AIRINS IMU using rotation matrices.
 
-The alignment uses the **Fréchet mean** on the Lie group SO(3), which minimises the sum of squared geodesic distances between a set of rotation matrices. This is the proper Riemannian generalisation of the Euclidean mean for rotations.
+The alignment uses the **Fréchet mean** on the SO(3) group, which minimises the sum of squared geodesic distances between a set of rotation matrices.
 
 **Method:**
-1. Collect a set of relative rotation matrices R_AIRINS_to_APX from overlapping segments
+1. Collect a set of relative rotation matrices R_AIRINS_to_APX
 2. Compute the Fréchet mean of these rotations on SO(3)
 3. Use the result as the body-to-body rotation R_bb for trajectory alignment
 
-**Input:** SBET trajectories from both INS systems, GPS time window for alignment.
+**Input:** SBET trajectories from both INS systems.
 
 ---
 
@@ -46,8 +46,4 @@ Estimates the lever arm of the Velodyne PUCK scanner relative to the vehicle bod
 
 ## `ALS_MLS_limatch.ipynb` — ALS–MLS Matching (Future Research)
 
-Prototype notebook for matching ALS (Airborne) and MLS (Mobile) point clouds using LiMatch. This is a **future research direction** exploring cross-platform point-to-point constraints.
-
-> Note: This notebook needs to be cleaned up and translated to English before use.
-
-**Concept:** Use temporally co-acquired ALS and MLS clouds of the same area to establish cross-sensor correspondences that could constrain both trajectory solutions simultaneously in ODyN.
+Notebook for matching ALS and MLS point clouds. This is a **future research direction** exploring cross-platform point-to-point constraints.
