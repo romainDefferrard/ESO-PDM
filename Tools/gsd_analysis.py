@@ -1,12 +1,12 @@
 """
 gsd_analysis.py
----------------
-Mesure la GSD (distance au plus proche voisin) sur plusieurs nuages MLS.
+===============
+Measures GSD (nearest-neighbour distance) on multiple MLS point clouds.
 
-- Traite tous les merged_*.las d'un dossier séquentiellement
-- Un fichier est chargé, traité, puis libéré avant le suivant (RAM safe)
-- Résultats intermédiaires sauvegardés dans un CSV après chaque fichier
-- Agrégation finale sur tous les fichiers
+- Processes all merged_*.las in a directory sequentially
+- Each file is loaded, processed, then freed before the next (memory safe)
+- Intermediate results saved to CSV after each file
+- Final aggregation across all files
 
 Usage:
     python gsd_analysis.py --dir /path/to/merged_dir [--every 1000] [--out results.csv]
@@ -44,33 +44,33 @@ def metrics(vals):
 
 def process_subset(xyz, range_vals, label, sample_idx, range_bins, filename):
     """
-    Construit le KDTree, requête NN, calcule métriques.
-    Retourne une liste de dicts (une ligne par tranche + une ligne globale).
+    Build KDTree, run NN query, compute metrics.
+    Returns a list of dicts (one row per range bin + one global row).
     """
     rows = []
 
     if len(xyz) < 2:
-        print_step(f"  [{label}] Pas assez de points — skip")
+        print_step(f"  [{label}] Not enough points — skip")
         return rows
 
-    print_step(f"  [{label}] KDTree sur {len(xyz):,} pts ...")
+    print_step(f"  [{label}] KDTree on {len(xyz):,} pts ...")
     t0 = time.time()
     tree = cKDTree(xyz)
-    print_step(f"  [{label}] KDTree en {time.time()-t0:.1f}s")
+    print_step(f"  [{label}] KDTree in {time.time()-t0:.1f}s")
 
     valid_idx = sample_idx[sample_idx < len(xyz)]
     if len(valid_idx) == 0:
-        print_step(f"  [{label}] Aucun point échantillonné — skip")
+        print_step(f"  [{label}] No sampled points — skip")
         return rows
 
-    print_step(f"  [{label}] NN query sur {len(valid_idx):,} pts ...")
+    print_step(f"  [{label}] NN query on {len(valid_idx):,} pts ...")
     t0 = time.time()
     dists, _ = tree.query(xyz[valid_idx], k=2, workers=-1)
     nn_dists = dists[:, 1]
     range_q  = range_vals[valid_idx]
-    print_step(f"  [{label}] NN query en {time.time()-t0:.1f}s")
+    print_step(f"  [{label}] NN query in {time.time()-t0:.1f}s")
 
-    del tree  # libère la RAM du KDTree
+    del tree  # free KDTree memory
 
     # Globale
     m = metrics(nn_dists)
@@ -94,19 +94,19 @@ def process_subset(xyz, range_vals, label, sample_idx, range_bins, filename):
 
 def process_file(las_path, every, range_bins):
     """
-    Charge un fichier LAS, traite les 3 sous-ensembles, libère la RAM.
-    Retourne une liste de dicts résultats.
+    Load a LAS file, process the 3 subsets, free memory.
+    Returns a list of result dicts.
     """
     print_step(f"{'='*60}")
-    print_step(f"Fichier : {las_path.name}  ({las_path.stat().st_size/1e9:.2f} GB)")
+    print_step(f"File: {las_path.name}  ({las_path.stat().st_size/1e9:.2f} GB)")
 
     t0 = time.time()
     las = laspy.read(las_path)
     n_total = len(las.x)
-    print_step(f"Chargé : {n_total:,} pts en {time.time()-t0:.1f}s")
+    print_step(f"Loaded: {n_total:,} pts in {time.time()-t0:.1f}s")
 
-    # Extraction
-    print_step("Extraction xyz / lasvec / scanner_src ...")
+    # Extract fields
+    print_step("Extracting xyz / lasvec / scanner_src ...")
     xyz = np.column_stack([
         np.asarray(las.x,           dtype=np.float64),
         np.asarray(las.y,           dtype=np.float64),
@@ -118,17 +118,17 @@ def process_file(las_path, every, range_bins):
         np.asarray(las['lasvec_z'], dtype=np.float32),
     ])
     scanner_src = np.asarray(las['scanner_src'], dtype=np.uint8)
-    del las  # libère le fichier LAS de la RAM
+    del las  # free LAS from memory
     gc.collect()
 
     range_vals = np.linalg.norm(lasvec, axis=1).astype(np.float32)
     del lasvec
-    print_step(f"Range : min={range_vals.min():.2f} m  max={range_vals.max():.2f} m  "
+    print_step(f"Range: min={range_vals.min():.2f} m  max={range_vals.max():.2f} m  "
                f"mean={range_vals.mean():.2f} m")
 
-    # Echantillonnage
+    # Sampling
     sample_global = np.arange(0, n_total, every)
-    print_step(f"Echantillonnage : 1/{every} → {len(sample_global):,} pts")
+    print_step(f"Sampling: 1/{every} → {len(sample_global):,} pts")
 
     subsets = {
         "ALL":  np.ones(n_total, dtype=bool),
@@ -171,12 +171,12 @@ def process_file(las_path, every, range_bins):
     return all_rows
 
 
-def print_aggregated(df, title="Résultats agrégés"):
-    """Affiche les métriques agrégées (moyenne pondérée par N) par scanner × tranche."""
+def print_aggregated(df, title="Aggregated results"):
+    """Print aggregated metrics (N-weighted average) by scanner × range bin."""
     print(f"\n{'='*70}")
     print(f"  {title}")
     print(f"{'='*70}")
-    print(f"  {'Scanner':8s}  {'Tranche':12s}  {'Files':>5}  {'N total':>10}  "
+    print(f"  {'Scanner':8s}  {'Range bin':12s}  {'Files':>5}  {'N total':>10}  "
           f"{'RMSE(cm)':>9}  {'Q50(cm)':>8}  {'Q90(cm)':>8}  {'STD(cm)':>8}")
     print(f"  {'─'*80}")
 
@@ -204,14 +204,14 @@ def print_aggregated(df, title="Résultats agrégés"):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--las",   help="Fichier LAS unique")
-    ap.add_argument("--dir",   help="Dossier contenant les merged_*.las")
+    ap.add_argument("--las",   help="Single LAS file")
+    ap.add_argument("--dir",   help="Directory containing merged_*.las files")
     ap.add_argument("--glob",  default="merged_*.las",
-                    help="Pattern glob (défaut: merged_*.las)")
+                    help="Glob pattern (default: merged_*.las)")
     ap.add_argument("--every", type=int, default=1000,
-                    help="1 point tous les N (défaut: 1000)")
+                    help="Sample 1 point every N (default: 1000)")
     ap.add_argument("--out",   default="gsd_results.csv",
-                    help="CSV de sortie (défaut: gsd_results.csv)")
+                    help="Output CSV (default: gsd_results.csv)")
     args = ap.parse_args()
 
     RANGE_BINS = [(0, 10), (10, 20), (20, 30)]
@@ -222,21 +222,21 @@ def main():
     elif args.dir:
         files = sorted(Path(args.dir).glob(args.glob))
         if not files:
-            print(f"Aucun fichier trouvé avec {args.glob} dans {args.dir}")
+            print(f"No files found matching {args.glob} in {args.dir}")
             return
     else:
-        print("Spécifie --las ou --dir")
+        print("Specify --las or --dir")
         return
 
     out_csv = Path(args.out)
-    print_step(f"{len(files)} fichier(s) à traiter")
-    print_step(f"CSV de sortie : {out_csv}")
+    print_step(f"{len(files)} file(s) to process")
+    print_step(f"Output CSV: {out_csv}")
 
     all_rows = []
     t_total = time.time()
 
     for i, las_path in enumerate(files):
-        print_step(f"Fichier {i+1}/{len(files)} : {las_path.name}")
+        print_step(f"File {i+1}/{len(files)}: {las_path.name}")
         try:
             rows = process_file(las_path, args.every, RANGE_BINS)
             all_rows.extend(rows)
@@ -244,23 +244,23 @@ def main():
             # Sauvegarde incrémentale après chaque fichier
             df_tmp = pd.DataFrame(all_rows)
             df_tmp.to_csv(out_csv, index=False, float_format="%.6f")
-            print_step(f"CSV mis à jour ({len(df_tmp)} lignes)")
+            print_step(f"CSV updated ({len(df_tmp)} rows)")
 
         except Exception as e:
-            print_step(f"  ERREUR sur {las_path.name}: {e}")
+            print_step(f"  ERROR on {las_path.name}: {e}")
             continue
 
     if not all_rows:
-        print_step("Aucun résultat.")
+        print_step("No results.")
         return
 
     df = pd.DataFrame(all_rows)
     df.to_csv(out_csv, index=False, float_format="%.6f")
 
-    print_step(f"Traitement total : {(time.time()-t_total)/60:.1f} min")
-    print_step(f"CSV final : {out_csv}  ({len(df)} lignes)")
+    print_step(f"Total processing time: {(time.time()-t_total)/60:.1f} min")
+    print_step(f"Final CSV: {out_csv}  ({len(df)} rows)")
 
-    print_aggregated(df, title=f"Résultats agrégés — {len(files)} fichiers")
+    print_aggregated(df, title=f"Aggregated results — {len(files)} files")
 
 
 if __name__ == "__main__":
