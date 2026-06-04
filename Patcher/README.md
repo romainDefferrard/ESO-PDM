@@ -2,15 +2,35 @@
 
 Patcher was developed as part of a semester project at the ESO laboratory (EPFL, Spring 2025). It extracts overlapping point cloud patches between flight lines or scan passes and feeds them to the [LiMatch](https://github.com/ESO-EPFL/limatch) point-to-point matching algorithm. It supports both ALS (Airborne Laser Scanning) and MLS (Mobile Laser Scanning) modes.
 
-## Origin & MLS adaptations
+## Origin & changes vs the original
 
-The original Patcher is available at [github.com/romainDefferrard/Patcher](https://github.com/romainDefferrard/Patcher). It was initially designed for ALS datasets (Arpette, Vallet2020) and a basic MLS workflow based on shapefile road buffers with manual GUI selection.
+The original Patcher is available at [github.com/romainDefferrard/Patcher](https://github.com/romainDefferrard/Patcher). It was developed as a semester project (Spring 2025) for ALS datasets (Arpette, Vallet2020) and included a basic MLS workflow based on shapefile road buffers with manual GUI selection.
 
-This version extends it for the PDM context:
+This version introduces several changes for the PDM context:
 
-- **MLS mode reworked** for the Helimap system (VUX HA/LR + PUCK merged LAS): overlap detection is based on spatial footprint rather than road shapefiles, and extraction uses a grouped single-pass strategy for memory efficiency on large scans.
-- **Headless execution**: can be called programmatically from the pipeline (`steps.s2s: true`) without launching the GUI, with `PC_DIR` and `OUTPUT_DIR` overridden automatically from the scenario context.
-- **Output format** aligned with `s2s_chunks.py`: produces `Patch_from_scan_A_with_B.las` / `Patch_from_scan_B_with_A.las` pairs ready for spatial chunking and LiMatch.
+### ALS — DTM and trajectory removed
+
+The original ALS footprint was computed using line-of-sight angles from the sensor to the terrain: it required a DTM (`.tif`), a trajectory file, and explicit sensor parameters (FOV, tilt angle, scan direction mode). The footprint was then derived by checking which raster cells fell within the angular field of view from each sensor position.
+
+In this version, all of that is replaced by **point cloud occupancy**: the footprint is simply the set of raster cells where points fall, computed directly from the LAS/TXT files. No DTM, no trajectory, no sensor geometry parameters (`DTM_PATH`, `TRAJECTORY_PATH`, `LOG_DIR`, `LIDAR_FOV`, `LIDAR_TILT_ANGLE`, `LIDAR_SCAN_MODE`) are needed.
+
+### ALS — multiple parallel centerlines
+
+The original patch generator placed patches along a single PCA centerline per overlap zone. This version adds `n_lines` and `line_offset` parameters: patches can be generated along multiple parallel lines offset perpendicularly from the main centerline, all sharing the same starting position for perfect alignment across lines.
+
+### MLS — spatial footprint instead of shapefiles
+
+The original MLS mode detected overlaps by buffering road segments from a shapefile and computing geometric intersections. This version replaces that with a **rasterization-based approach**: each scan's spatial footprint is computed directly from its point cloud, and overlaps are detected by comparing the resulting raster masks. No shapefile or road network data is needed.
+
+Extraction uses a **grouped single-pass strategy**: each large merged LAS is read once and all time windows for that scan are extracted in a single pass, avoiding repeated file reads for memory efficiency.
+
+### Headless execution and pipeline integration
+
+The GUI remains available for interactive use, but Patcher can also be called programmatically from the pipeline (`steps.s2s: true`) without launching any window. `PC_DIR` and `OUTPUT_DIR` are overridden automatically from the scenario context.
+
+### Output format
+
+The MLS output is aligned with `s2s_chunks.py`: produces `Patch_from_scan_A_with_B.las` / `Patch_from_scan_B_with_A.las` pairs per overlap zone, ready for spatial chunking and LiMatch.
 
 ---
 
