@@ -2,6 +2,18 @@
 
 Patcher was developed as part of a semester project at the ESO laboratory (EPFL, Spring 2025). It extracts overlapping point cloud patches between flight lines or scan passes and feeds them to the [LiMatch](https://github.com/ESO-EPFL/limatch) point-to-point matching algorithm. It supports both ALS (Airborne Laser Scanning) and MLS (Mobile Laser Scanning) modes.
 
+## Origin & MLS adaptations
+
+The original Patcher is available at [github.com/romainDefferrard/Patcher](https://github.com/romainDefferrard/Patcher). It was initially designed for ALS datasets (Arpette, Vallet2020) and a basic MLS workflow based on shapefile road buffers with manual GUI selection.
+
+This version extends it for the PDM context:
+
+- **MLS mode reworked** for the Helimap system (VUX HA/LR + PUCK merged LAS): overlap detection is based on spatial footprint rather than road shapefiles, and extraction uses a grouped single-pass strategy for memory efficiency on large scans.
+- **Headless execution**: can be called programmatically from the pipeline (`steps.s2s: true`) without launching the GUI, with `PC_DIR` and `OUTPUT_DIR` overridden automatically from the scenario context.
+- **Output format** aligned with `s2s_chunks.py`: produces `Patch_from_scan_A_with_B.las` / `Patch_from_scan_B_with_A.las` pairs ready for spatial chunking and LiMatch.
+
+---
+
 ## Running Patcher
 
 ```bash
