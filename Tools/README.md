@@ -6,42 +6,13 @@ Miscellaneous tools that do not belong to the main pipeline but are used for ana
 
 ## `gsd_analysis.py` — Ground Sampling Distance Analysis
 
-Measures the Ground Sampling Distance (GSD) of MLS point clouds as the nearest-neighbour distance between points. Analyses the full cloud and subsets by scanner source (VUX vs PUCK) and by range bin.
+Measures nearest-neighbour distance on MLS point clouds, split by scanner source (VUX / PUCK) and range bin (0–10 m, 10–20 m, 20–30 m). Results saved to CSV.
 
 ```bash
-# Single file
-python Tools/gsd_analysis.py --las /path/to/merged_1000_VUX_PUCK.las --every 500
-
-# All merged_*.las in a folder
 python Tools/gsd_analysis.py --dir /path/to/merged/ALL --every 1000 --out gsd_results.csv
 ```
 
-**Arguments:**
-
-| Argument | Default | Description |
-|---|---|---|
-| `--las` | — | Path to a single LAS file |
-| `--dir` | — | Folder containing `merged_*.las` files |
-| `--glob` | `merged_*.las` | Glob pattern for `--dir` mode |
-| `--every` | `1000` | Subsample: keep 1 point every N for NN query |
-| `--out` | `gsd_results.csv` | Output CSV path |
-
-**What it measures:**
-- Builds a KDTree on the point cloud
-- Queries the 2nd nearest neighbour for each sampled point
-- Reports RMSE, Q50, Q90, STD of NN distances
-
-**Subsets analysed:**
-- `ALL` — all points combined
-- `VUX` — points with `scanner_src == 2`
-- `PUCK` — points with `scanner_src == 1`
-
-**Range bins** (hardcoded, edit in `main()` if needed):
-- 0–10 m, 10–20 m, 20–30 m from scanner
-
-Results are saved incrementally to CSV after each file (RAM-safe for large datasets). A weighted-average aggregation is printed at the end.
-
-**Required LAS extra dims:** `lasvec_x`, `lasvec_y`, `lasvec_z` (used to compute range), `scanner_src`.
+Requires `lasvec_x/y/z` and `scanner_src` extra dims in the LAS files.
 
 ---
 
